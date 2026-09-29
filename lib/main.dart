@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/harvest_screen.dart';
+import 'screens/activity_screen.dart';
 import 'widgets/pawon_bottom_nav.dart';
 
 void main() {
@@ -64,7 +65,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             },
           ),
           const HarvestScreen(), // Lahan & Data Panen screen
-          _buildPlaceholderScreen('Aktivitas'),
+          ActivityScreen(
+            onBackToHome: () {
+              setState(() {
+                _currentIndex = 0;
+              });
+            },
+          ),
           _buildPlaceholderScreen('Panen'),
           _buildPlaceholderScreen('Penjualan'),
           _buildPlaceholderScreen('Edukasi'),

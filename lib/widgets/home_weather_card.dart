@@ -45,39 +45,42 @@ class HomeWeatherCard extends StatelessWidget {
             children: [
               // Weather graphic (Sun behind cloud)
               const SizedBox(
-                width: 44,
-                height: 38,
+                width: 40,
+                height: 36,
                 child: CustomPaint(
                   painter: _SunCloudWeatherPainter(),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
               // Temperature
               const Text(
                 '28°C',
                 style: TextStyle(
-                  fontSize: 25,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF162A1D),
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
 
               // Condition & Location
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Cerah\nBerawan',
+                      'Cerah Berawan',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF162A1D),
                         height: 1.15,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Row(
@@ -88,7 +91,7 @@ class HomeWeatherCard extends StatelessWidget {
                           color: Color(0xFF718679),
                         ),
                         SizedBox(width: 2),
-                        Flexible(
+                        Expanded(
                           child: Text(
                             'Lahan Sukamaju',
                             style: TextStyle(
@@ -96,6 +99,7 @@ class HomeWeatherCard extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF718679),
                             ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -104,6 +108,7 @@ class HomeWeatherCard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
 
               // Action button
               InkWell(

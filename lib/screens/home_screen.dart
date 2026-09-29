@@ -7,6 +7,7 @@ import '../widgets/home_quick_actions.dart';
 import '../widgets/home_articles_section.dart';
 import '../widgets/home_latest_harvest_section.dart';
 import 'record_harvest_screen.dart';
+import 'record_activity_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -60,7 +61,22 @@ class HomeScreen extends StatelessWidget {
               HomeQuickActionsSection(
                 onAllTap: () => _showQuickActionsModal(context),
                 onTambahLahan: () => _showQuickActionMessage(context, 'Tambah Lahan'),
-                onCatatAktivitas: () => _showQuickActionMessage(context, 'Catat Aktivitas'),
+                onCatatAktivitas: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => RecordActivityScreen(
+                        onSave: (newItem) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Aktivitas ${newItem.title} berhasil dicatat!'),
+                              backgroundColor: const Color(0xFF285438),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
                 onCatatPanen: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -673,7 +689,20 @@ class HomeScreen extends StatelessWidget {
                 title: const Text('Catat Jadwal Pemupukan & Penyiraman'),
                 onTap: () {
                   Navigator.pop(context);
-                  _showQuickActionMessage(context, 'Catat Aktivitas');
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => RecordActivityScreen(
+                        onSave: (newItem) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Aktivitas ${newItem.title} berhasil dicatat!'),
+                              backgroundColor: const Color(0xFF285438),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
                 },
               ),
               ListTile(
