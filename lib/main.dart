@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'screens/home_screen.dart';
 import 'screens/harvest_screen.dart';
 import 'widgets/pawon_bottom_nav.dart';
 
@@ -46,8 +47,8 @@ class MainNavigationShell extends StatefulWidget {
 }
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
-  // In the reference screenshot, index 1 ("Lahan") has the active indicator
-  int _currentIndex = 1;
+  // Index 0: Beranda
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +56,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          _buildPlaceholderScreen('Beranda'),
+          HomeScreen(
+            onNavigateTab: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+          ),
           const HarvestScreen(), // Lahan & Data Panen screen
           _buildPlaceholderScreen('Aktivitas'),
           _buildPlaceholderScreen('Panen'),
