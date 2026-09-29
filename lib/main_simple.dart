@@ -1,3 +1,4 @@
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -15,7 +16,7 @@ class SimpleTestApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF285438),
+          seedColor: WarnaAplikasi.primary,
         ),
       ),
       home: const TestScreen(),
@@ -39,7 +40,7 @@ class TestScreen extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF285438),
+                  color: WarnaAplikasi.primary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
@@ -54,7 +55,7 @@ class TestScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF285438),
+                  color: WarnaAplikasi.primary,
                 ),
               ),
               const SizedBox(height: 8),

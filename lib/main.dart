@@ -1,12 +1,13 @@
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/home_screen.dart';
-import 'screens/harvest_screen.dart';
-import 'screens/activity_screen.dart';
-import 'screens/land_screen.dart';
-import 'screens/penjualan_screen.dart';
-import 'widgets/pawon_bottom_nav.dart';
+import 'package:pawon_mobile/features/beranda/screens/layar_beranda.dart';
+import 'package:pawon_mobile/features/panen/screens/layar_panen.dart';
+import 'package:pawon_mobile/features/aktivitas/screens/layar_aktivitas.dart';
+import 'package:pawon_mobile/features/lahan/screens/layar_lahan.dart';
+import 'package:pawon_mobile/features/penjualan/screens/layar_penjualan.dart';
+import 'package:pawon_mobile/core/widgets/navigasi_bawah_pawon.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,10 +30,10 @@ class PawonTaniApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF9FAF9),
+        scaffoldBackgroundColor: WarnaAplikasi.primaryBackground,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF285438),
-          primary: const Color(0xFF285438),
+          seedColor: WarnaAplikasi.primary,
+          primary: WarnaAplikasi.primary,
           surface: Colors.white,
         ),
         fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
@@ -98,7 +99,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   Widget _buildPlaceholderScreen(String title) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAF9),
+      backgroundColor: WarnaAplikasi.primaryBackground,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -108,12 +109,12 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F4EC),
+                  color: WarnaAplikasi.greenLight,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Icon(
                   Icons.spa_rounded,
-                  color: Color(0xFF285438),
+                  color: WarnaAplikasi.primary,
                   size: 32,
                 ),
               ),
@@ -123,7 +124,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF162A1D),
+                  color: WarnaAplikasi.primaryDark,
                 ),
               ),
               const SizedBox(height: 6),
@@ -131,7 +132,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                 'Halaman sedang dalam pengembangan',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF6B8072),
+                  color: WarnaAplikasi.textGray,
                 ),
               ),
               const SizedBox(height: 20),
@@ -142,7 +143,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF285438),
+                  backgroundColor: WarnaAplikasi.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -157,3 +158,4 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 }
+

@@ -1,7 +1,8 @@
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/penjualan_screen.dart';
+import 'package:pawon_mobile/features/penjualan/screens/layar_penjualan.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,10 +25,10 @@ class PenjualanTestApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF9FAF9),
+        scaffoldBackgroundColor: WarnaAplikasi.primaryBackground,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF285438),
-          primary: const Color(0xFF285438),
+          seedColor: WarnaAplikasi.primary,
+          primary: WarnaAplikasi.primary,
           surface: Colors.white,
         ),
         fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
@@ -36,3 +37,4 @@ class PenjualanTestApp extends StatelessWidget {
     );
   }
 }
+
