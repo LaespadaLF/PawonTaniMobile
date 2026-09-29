@@ -147,110 +147,60 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
 
-        // Action Icons: Notification & Profile
+        // Action Icons: Notification & Profile (Style Penjualan)
         Row(
           children: [
             // Notification Button with Badge '2'
             InkWell(
               onTap: () => _showNotificationsModal(context),
-              borderRadius: BorderRadius.circular(22),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFE8EFEA),
-                    width: 1,
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F7F4),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      size: 20,
+                      color: Color(0xFF52685B),
+                    ),
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x06000000),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    const Center(
-                      child: Icon(
-                        Icons.notifications_none_rounded,
-                        color: Color(0xFF283A2E),
-                        size: 22,
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE53935),
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    // Red Notification Badge '2'
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(3.5),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '2',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              height: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
 
-            // Profile Avatar
+            // Profile Button
             InkWell(
               onTap: () => _showProfileModal(context),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
-                width: 42,
-                height: 42,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFE8EFEA),
-                    width: 1.5,
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x06000000),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+                  color: const Color(0xFFF2F7F4),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: WarnaAplikasi.primary,
-                      child: const Center(
-                        child: Icon(
-                          Icons.person_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    );
-                  },
+                child: const Icon(
+                  Icons.person_outline_rounded,
+                  size: 20,
+                  color: Color(0xFF52685B),
                 ),
               ),
             ),

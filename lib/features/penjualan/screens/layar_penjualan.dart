@@ -1,6 +1,7 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/penjualan/models/item_penjualan.dart';
+import 'package:pawon_mobile/core/widgets/ikon_tanaman_kustom.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_detail_penjualan.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_tambah_penjualan.dart';
 
@@ -152,78 +153,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildHeader() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.greenPill,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.eco_rounded, color: _primaryGreen, size: 18),
-          ),
-          const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'PAWON TANI',
-                style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: _primaryGreen,
-                    letterSpacing: 1.2),
-              ),
-              Text(
-                'Penjualan',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: _textDark,
-                    letterSpacing: -0.3),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Stack(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFF2F7F4),
-                    borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.notifications_outlined,
-                    size: 20, color: _textMedium),
-              ),
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                        color: Color(0xFFE53935), shape: BoxShape.circle)),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-                color: const Color(0xFFF2F7F4),
-                borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.person_outline_rounded,
-                size: 20, color: _textMedium),
-          ),
-        ],
-      ),
-    );
+    return const PawonFixedHeader(title: 'Penjualan');
   }
 
   Widget _buildSummaryBanner() {

@@ -19,7 +19,6 @@ class PawonBottomNav extends StatelessWidget {
       _NavItem(icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today_rounded, label: 'Aktivitas'),
       _NavItem(icon: Icons.eco_outlined, activeIcon: Icons.eco_rounded, label: 'Panen'),
       _NavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded, label: 'Penjualan'),
-      _NavItem(icon: Icons.school_outlined, activeIcon: Icons.school_rounded, label: 'Edukasi'),
     ];
 
     return Container(
@@ -52,7 +51,6 @@ class PawonBottomNav extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Icon container (active has light green pill)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
@@ -99,7 +97,7 @@ class _NavItem {
   final IconData activeIcon;
   final String label;
 
-  const _NavItem({
+  _NavItem({
     required this.icon,
     required this.activeIcon,
     required this.label,

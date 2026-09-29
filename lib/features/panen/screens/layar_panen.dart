@@ -19,7 +19,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
   int _selectedFilterIndex = 0; // 0: Semua, 1: Menunggu, 2: Disetujui, 3: Ditolak
   String _selectedSort = 'Terbaru';
 
-  // Initial list matching the exact data from the screenshot
   late List<HarvestItem> _harvestItems;
 
   @override
@@ -85,7 +84,6 @@ class _HarvestScreenState extends State<HarvestScreen> {
     ];
   }
 
-  // Calculate dynamic totals
   double get _totalPadiTon {
     return _harvestItems
         .where((i) => i.cropType == CropType.padi)
@@ -189,264 +187,254 @@ class _HarvestScreenState extends State<HarvestScreen> {
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // 1. Top Logo Header
-                  Row(
-                    children: [
-                      const PawonTaniLogo(size: 26),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'PawonTani',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E3325),
-                          letterSpacing: -0.4,
+        child: Column(
+          children: [
+            // Fixed Top Header (Style Penjualan)
+            const PawonFixedHeader(title: 'Panen'),
+            Expanded(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        // Title and Subtitle
+                        const Text(
+                          'Data Panen',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: WarnaAplikasi.primaryDark,
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // 2. Title and Subtitle
-                  const Text(
-                    'Data Panen',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: WarnaAplikasi.primaryDark,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Kelola dan pantau hasil panen Anda',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: WarnaAplikasi.textGray,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // 3. Total Harvest Summary Card
-                  HarvestSummaryCard(
-                    totalTon: _totalTon > 0 ? _totalTon : 12.8,
-                    padiTon: _totalPadiTon > 0 ? _totalPadiTon : 9.60,
-                    jagungTon: _totalJagungTon > 0 ? _totalJagungTon : 3.20,
-                    seasonName: 'Musim Tanam 2024',
-                  ),
-                  const SizedBox(height: 14),
-
-                  // 4. "+ Tambah Panen" Pill Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton.icon(
-                      onPressed: _openAddHarvestModal,
-                      icon: const Icon(
-                        Icons.add_circle_outline_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      label: const Text(
-                        'Tambah Panen',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Kelola dan pantau hasil panen Anda',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: WarnaAplikasi.textGray,
+                            letterSpacing: -0.2,
+                          ),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                        const SizedBox(height: 18),
 
-                  // 5. Filter Chips Row (Scrollable horizontally)
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: List.generate(filterChips.length, (index) {
-                        final isSelected = _selectedFilterIndex == index;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedFilterIndex = index;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? WarnaAplikasi.primary
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? WarnaAplikasi.primary
-                                      : WarnaAplikasi.border,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                filterChips[index],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF4A6252),
-                                ),
-                              ),
+                        // Total Harvest Summary Card
+                        HarvestSummaryCard(
+                          totalTon: _totalTon > 0 ? _totalTon : 12.8,
+                          padiTon: _totalPadiTon > 0 ? _totalPadiTon : 9.60,
+                          jagungTon: _totalJagungTon > 0 ? _totalJagungTon : 3.20,
+                          seasonName: 'Musim Tanam 2024',
+                        ),
+                        const SizedBox(height: 14),
+
+                        // "+ Tambah Panen" Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: ElevatedButton.icon(
+                            onPressed: _openAddHarvestModal,
+                            icon: const Icon(
+                              Icons.add_circle_outline_rounded,
+                              size: 18,
+                              color: Colors.white,
                             ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 6. Partnership Card Banner
-                  PartnershipCard(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Informasi Kemitraan Bulog & Pupuk Indonesia',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 7. Section Title: "Daftar Panen" & Sort Dropdown
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Daftar Panen',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: WarnaAplikasi.primaryDark,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      PopupMenuButton<String>(
-                        initialValue: _selectedSort,
-                        onSelected: (val) {
-                          setState(() {
-                            _selectedSort = val;
-                          });
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        itemBuilder: (ctx) => [
-                          const PopupMenuItem(
-                            value: 'Terbaru',
-                            child: Text('Terbaru', style: TextStyle(fontSize: 12)),
-                          ),
-                          const PopupMenuItem(
-                            value: 'Terbesar',
-                            child: Text('Bobot Terbesar', style: TextStyle(fontSize: 12)),
-                          ),
-                          const PopupMenuItem(
-                            value: 'Terkecil',
-                            child: Text('Bobot Terkecil', style: TextStyle(fontSize: 12)),
-                          ),
-                        ],
-                        child: Row(
-                          children: [
-                            Text(
-                              _selectedSort,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF5D7364),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 16,
-                              color: Color(0xFF5D7364),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                ]),
-              ),
-            ),
-
-            // 8. Sliver List of Harvest Items
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              sliver: _filteredItems.isEmpty
-                  ? SliverToBoxAdapter(
-                      child: Container(
-                        padding: const EdgeInsets.all(32),
-                        alignment: Alignment.center,
-                        child: const Column(
-                          children: [
-                            Icon(
-                              Icons.inbox_outlined,
-                              size: 48,
-                              color: Color(0xFFADC4B5),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Tidak ada data panen pada kategori ini',
+                            label: const Text(
+                              'Tambah Panen',
                               style: TextStyle(
-                                fontSize: 13,
-                                color: WarnaAplikasi.textGray,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: WarnaAplikasi.primary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Filter Chips Row
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: List.generate(filterChips.length, (index) {
+                              final isSelected = _selectedFilterIndex == index;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedFilterIndex = index;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? WarnaAplikasi.primary
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? WarnaAplikasi.primary
+                                            : WarnaAplikasi.border,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      filterChips[index],
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF4A6252),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Partnership Card Banner
+                        PartnershipCard(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Informasi Kemitraan Bulog & Pupuk Indonesia',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Section Title: "Daftar Panen" & Sort Dropdown
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Daftar Panen',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: WarnaAplikasi.primaryDark,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              initialValue: _selectedSort,
+                              onSelected: (val) {
+                                setState(() {
+                                  _selectedSort = val;
+                                });
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              itemBuilder: (ctx) => [
+                                const PopupMenuItem(
+                                  value: 'Terbaru',
+                                  child: Text('Terbaru', style: TextStyle(fontSize: 12)),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'Terbesar',
+                                  child: Text('Bobot Terbesar', style: TextStyle(fontSize: 12)),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'Terkecil',
+                                  child: Text('Bobot Terkecil', style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _selectedSort,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF5D7364),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    size: 16,
+                                    color: Color(0xFF5D7364),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final item = _filteredItems[index];
-                          return HarvestCard(
-                            item: item,
-                            onTap: () => _openItemDetail(item),
-                          );
-                        },
-                        childCount: _filteredItems.length,
-                      ),
+                        const SizedBox(height: 10),
+                      ]),
                     ),
-            ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 20),
+                  ),
+
+                  // Sliver List of Harvest Items
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    sliver: _filteredItems.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: Container(
+                              padding: const EdgeInsets.all(32),
+                              alignment: Alignment.center,
+                              child: const Column(
+                                children: [
+                                  Icon(
+                                    Icons.inbox_outlined,
+                                    size: 48,
+                                    color: Color(0xFFADC4B5),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Tidak ada data panen pada kategori ini',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: WarnaAplikasi.textGray,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final item = _filteredItems[index];
+                                return HarvestCard(
+                                  item: item,
+                                  onTap: () => _openItemDetail(item),
+                                );
+                              },
+                              childCount: _filteredItems.length,
+                            ),
+                          ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 20),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -454,4 +442,3 @@ class _HarvestScreenState extends State<HarvestScreen> {
     );
   }
 }
-

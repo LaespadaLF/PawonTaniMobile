@@ -1,6 +1,7 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart';
+import 'package:pawon_mobile/core/widgets/ikon_tanaman_kustom.dart';
 import 'package:pawon_mobile/features/aktivitas/widgets/dialog_hapus_aktivitas.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_edit_aktivitas.dart';
@@ -147,18 +148,19 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Top Header
-              _buildTopHeader(context),
-              const SizedBox(height: 16),
-
-              // 2. Summary Banner Card
-              _buildSummaryBanner(),
+        child: Column(
+          children: [
+            // Fixed Top Header (Style PawonFixedHeader)
+            const PawonFixedHeader(title: 'Aktivitas'),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Summary Banner Card
+                    _buildSummaryBanner(),
               const SizedBox(height: 16),
 
               // 3. Filter Chips
@@ -356,96 +358,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTopHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            if (widget.onBackToHome != null) ...[
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: WarnaAplikasi.primaryDark),
-                onPressed: widget.onBackToHome,
-              ),
-              const SizedBox(width: 10),
-            ],
-            const Text(
-              'Aktivitas Tanaman',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: WarnaAplikasi.primaryDark,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            // Notification with badge '2'
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE8EFEA)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x06000000),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(Icons.notifications_none_rounded, size: 20, color: Color(0xFF283A2E)),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Avatar
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE8EFEA)),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.network(
-                'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: WarnaAplikasi.primary,
-                  child: const Icon(Icons.person, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+    ],
+  ),
+),
+);
   }
 
   Widget _buildSummaryBanner() {
