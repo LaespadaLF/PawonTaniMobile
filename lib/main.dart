@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/harvest_screen.dart';
 import 'screens/activity_screen.dart';
+import 'screens/land_screen.dart';
 import 'widgets/pawon_bottom_nav.dart';
 
 void main() {
@@ -64,7 +65,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               });
             },
           ),
-          const HarvestScreen(), // Lahan & Data Panen screen
+          LandScreen(
+            onBackToHome: () {
+              setState(() {
+                _currentIndex = 0;
+              });
+            },
+          ), // Lahan screen
           ActivityScreen(
             onBackToHome: () {
               setState(() {
@@ -72,7 +79,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               });
             },
           ),
-          _buildPlaceholderScreen('Panen'),
+          const HarvestScreen(), // Panen screen
           _buildPlaceholderScreen('Penjualan'),
           _buildPlaceholderScreen('Edukasi'),
         ],
