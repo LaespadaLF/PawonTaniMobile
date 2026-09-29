@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/harvest_screen.dart';
 import 'screens/activity_screen.dart';
 import 'screens/land_screen.dart';
+import 'screens/penjualan_screen.dart';
 import 'widgets/pawon_bottom_nav.dart';
 
 void main() {
@@ -49,8 +50,8 @@ class MainNavigationShell extends StatefulWidget {
 }
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
-  // Index 0: Beranda
-  int _currentIndex = 0;
+  // Index 4: Penjualan (Sales screen)
+  int _currentIndex = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +81,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             },
           ),
           const HarvestScreen(), // Panen screen
-          _buildPlaceholderScreen('Penjualan'),
+          const PenjualanScreen(),
           _buildPlaceholderScreen('Edukasi'),
         ],
       ),
