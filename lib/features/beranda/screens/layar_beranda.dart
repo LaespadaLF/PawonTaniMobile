@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/artikel/models/item_artikel.dart';
 import 'package:pawon_mobile/features/beranda/widgets/kartu_banner_petani.dart';
 import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.dart';
-import 'package:pawon_mobile/features/beranda/widgets/kartu_cuaca_beranda.dart';
 import 'package:pawon_mobile/features/beranda/widgets/aksi_cepat_beranda.dart';
 import 'package:pawon_mobile/features/beranda/widgets/bagian_artikel_beranda.dart';
 import 'package:pawon_mobile/features/beranda/widgets/bagian_panen_terbaru_beranda.dart';
@@ -36,7 +35,7 @@ class HomeScreen extends StatelessWidget {
               // 2. Banner: Semangat Bertani
               FarmerBannerCard(
                 onTap: () {
-                  _showBannerInfoModal(context);
+                  _showWeatherDetailModal(context);
                 },
               ),
               const SizedBox(height: 20),
@@ -52,13 +51,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // 4. Cuaca Hari Ini Card
-              HomeWeatherCard(
-                onTap: () => _showWeatherDetailModal(context),
-              ),
-              const SizedBox(height: 20),
-
-              // 5. Aksi Cepat
+              // 4. Aksi Cepat
               HomeQuickActionsSection(
                 onAllTap: () => _showQuickActionsModal(context),
                 onTambahLahan: () => _showQuickActionMessage(context, 'Tambah Lahan'),
@@ -386,30 +379,42 @@ class HomeScreen extends StatelessWidget {
               const Text(
                 'Prakiraan Cuaca Lahan Sukamaju',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: WarnaAplikasi.primaryDark,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                  letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Suhu rata-rata 28°C dengan kondisi cerah berawan. Sangat baik untuk proses penjemuran gabah atau penyemprotan pupuk daun di pagi hari.',
-                style: TextStyle(fontSize: 13.5, color: WarnaAplikasi.textGray, height: 1.45),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                  height: 1.45,
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primary,
+                    backgroundColor: const Color(0xFF264E36),
                     foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(28),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14.5),
                   ),
-                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
             ],

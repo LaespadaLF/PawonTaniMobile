@@ -1,4 +1,3 @@
-import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 
 class FarmerBannerCard extends StatelessWidget {
@@ -10,21 +9,13 @@ class FarmerBannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 148,
+      constraints: const BoxConstraints(minHeight: 155),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF3E7E4E),
-            Color(0xFF5A9467),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x18285438),
-            blurRadius: 16,
+            color: Color(0x1F1E3A2B),
+            blurRadius: 18,
             offset: Offset(0, 6),
           ),
         ],
@@ -32,185 +23,260 @@ class FarmerBannerCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Background soft circles decoration
-          Positioned(
-            right: -20,
-            bottom: -30,
-            child: Container(
-              width: 170,
-              height: 170,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x667BAE83),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 15,
-            top: 10,
-            child: Container(
-              width: 70,
-              height: 70,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x0FFFFFFF),
-              ),
-            ),
-          ),
-
-          // Right illustration of farmer
-          Positioned(
-            right: 12,
-            bottom: 0,
-            top: 0,
-            width: 120,
-            child: CustomPaint(
-              painter: _FarmerIllustrationPainter(),
-            ),
-          ),
-
-          // Left text content
+          // 1. Background Image: Pemandangan Sawah dan Padi
           Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Leaf icon
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: const Color(0x33FFFFFF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.spa_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+            child: Image.asset(
+              'assets/images/banner_sawah_padi.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.centerRight,
+            ),
+          ),
 
-                  // Headline
-                  const Text(
-                    'Semangat bertani,\nhasil terbaik menanti!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Subtitle
-                  const Text(
-                    'Pantau pertanianmu dengan lebih\nmudah.',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xE5FFFFFF),
-                      height: 1.3,
-                    ),
-                  ),
-                ],
+          // 2. Soft Gradient Overlays for optimal readability
+          // Gradient from left to right (subtle darkening over green mountain blur)
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0x73000000), // ~45% black
+                    Color(0x33000000), // ~20% black
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.58, 1.0],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
               ),
+            ),
+          ),
+
+          // Subtle top-right vignette to guarantee crisp contrast on weather info
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0x52000000), // ~32% black
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.60],
+                  begin: Alignment.topRight,
+                  end: Alignment.center,
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Foreground Content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Left Column: Leaf Icon, Headline, Subtitle
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Leaf Icon (clean white tilted leaf)
+                      Transform.rotate(
+                        angle: -0.35,
+                        child: const Icon(
+                          Icons.eco_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Headline
+                      const Text(
+                        'Semangat bertani,\nhasil terbaik menanti!',
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.22,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Subtitle
+                      const Text(
+                        'Pantau pertanianmu dengan lebih mudah.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xEBFFFFFF),
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                // Right Column: Weather Info & "Lihat detail >" Button
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Weather header: Sun behind Cloud + 28°C
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildWeatherSunCloudIcon(),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '28°C',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+
+                    // Weather condition
+                    const Text(
+                      'Cerah Berawan',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xF2FFFFFF),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+
+                    // Location pin & name
+                    const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.place_outlined,
+                          size: 13,
+                          color: Color(0xE6FFFFFF),
+                        ),
+                        SizedBox(width: 2),
+                        Text(
+                          'Sukamaju',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xEBFFFFFF),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Action Button: "Lihat detail >"
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onTap,
+                        borderRadius: BorderRadius.circular(20),
+                        splashColor: const Color(0x33FFFFFF),
+                        highlightColor: const Color(0x1AFFFFFF),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 5.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x22FFFFFF),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xA6FFFFFF),
+                              width: 1.1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Lihat detail',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _FarmerIllustrationPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centerX = size.width * 0.65;
-    final bottomY = size.height;
-
-    // Soft green background hill / circle
-    final hillPaint = Paint()
-      ..color = const Color(0xFF8FB98E)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(centerX, bottomY * 0.72), size.width * 0.46, hillPaint);
-
-    // Farmer body / dark shirt
-    final shirtPaint = Paint()
-      ..color = const Color(0xFF273E2F)
-      ..style = PaintingStyle.fill;
-    final bodyPath = Path();
-    bodyPath.moveTo(centerX - 24, bottomY);
-    bodyPath.lineTo(centerX - 20, bottomY - 36);
-    bodyPath.quadraticBezierTo(centerX, bottomY - 44, centerX + 20, bottomY - 36);
-    bodyPath.lineTo(centerX + 24, bottomY);
-    bodyPath.close();
-    canvas.drawPath(bodyPath, shirtPaint);
-
-    // Farmer head (round peach circle)
-    final facePaint = Paint()
-      ..color = const Color(0xFFF9C6B2)
-      ..style = PaintingStyle.fill;
-    final headCenter = Offset(centerX, bottomY - 50);
-    canvas.drawCircle(headCenter, 14, facePaint);
-
-    // Caping (conical straw hat - yellow triangle with slight flare)
-    final hatPaint = Paint()
-      ..color = const Color(0xFFF59E0B)
-      ..style = PaintingStyle.fill;
-    final hatPath = Path();
-    hatPath.moveTo(centerX, bottomY - 76); // Peak
-    hatPath.lineTo(centerX + 34, bottomY - 51); // Right rim
-    hatPath.quadraticBezierTo(centerX, bottomY - 55, centerX - 34, bottomY - 51); // Rim curve
-    hatPath.close();
-    canvas.drawPath(hatPath, hatPaint);
-
-    // Hat peak highlight/dot
-    final hatTipPaint = Paint()
-      ..color = WarnaAplikasi.warningOrange
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(centerX, bottomY - 74), 3, hatTipPaint);
-
-    // Smartphone held in hand
-    final phoneRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(centerX + 2, bottomY - 14),
-        width: 17,
-        height: 28,
+  /// Custom icon: Glowing Sun behind soft blue/white Cloud
+  Widget _buildWeatherSunCloudIcon() {
+    return SizedBox(
+      width: 32,
+      height: 28,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Sun in the background
+          Positioned(
+            left: 0,
+            top: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x66FBBF24),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.wb_sunny_rounded,
+                color: Color(0xFFFBBF24),
+                size: 21,
+              ),
+            ),
+          ),
+          // Cloud in foreground
+          const Positioned(
+            right: 0,
+            bottom: 0,
+            child: Icon(
+              Icons.cloud_rounded,
+              color: Color(0xFFBAE6FD),
+              size: 20,
+            ),
+          ),
+        ],
       ),
-      const Radius.circular(3),
     );
-
-    // Phone casing (dark gray)
-    final phoneCasePaint = Paint()
-      ..color = const Color(0xFF1E293B)
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(phoneRect, phoneCasePaint);
-
-    // Phone screen (bright cyan blue)
-    final phoneScreenRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(centerX + 2, bottomY - 14),
-        width: 13,
-        height: 22,
-      ),
-      const Radius.circular(2),
-    );
-    final screenPaint = Paint()
-      ..color = const Color(0xFF38BDF8)
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(phoneScreenRect, screenPaint);
-
-    // Farmer hands holding phone
-    final handPaint = Paint()
-      ..color = const Color(0xFFF9C6B2)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(centerX - 8, bottomY - 14), 4.5, handPaint);
-    canvas.drawCircle(Offset(centerX + 12, bottomY - 14), 4.5, handPaint);
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
