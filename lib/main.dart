@@ -8,6 +8,7 @@ import 'package:pawon_mobile/features/aktivitas/screens/layar_aktivitas.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_lahan.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_penjualan.dart';
 import 'package:pawon_mobile/core/widgets/navigasi_bawah_pawon.dart';
+import 'package:pawon_mobile/features/auth/screens/auth_gate.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +39,7 @@ class PawonTaniApp extends StatelessWidget {
         ),
         fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       ),
-      home: const MainNavigationShell(),
+      home: const AuthGate(),
     );
   }
 }
