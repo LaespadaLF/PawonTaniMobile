@@ -53,13 +53,13 @@ class ActivitySuccessDialog extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFF3F4F6),
+                    color: WarnaAplikasi.bgPaleGreen,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: Color(0xFF6B7280),
+                    color: WarnaAplikasi.textGrayMedium,
                   ),
                 ),
               ),
@@ -70,7 +70,7 @@ class ActivitySuccessDialog extends StatelessWidget {
               width: 62,
               height: 62,
               decoration: const BoxDecoration(
-                color: Color(0xFFE5F6EA),
+                color: WarnaAplikasi.bgSuccessLight2,
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -111,21 +111,21 @@ class ActivitySuccessDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAF9),
+                color: WarnaAplikasi.bgInput,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFFE8EFEA),
+                  color: WarnaAplikasi.borderPale,
                   width: 1,
                 ),
               ),
               child: Column(
                 children: [
                   _buildSummaryRow('Lahan', item.location),
-                  const Divider(height: 16, color: Color(0xFFEBF0EC)),
+                  const Divider(height: 16, color: WarnaAplikasi.divider),
                   _buildSummaryRow('Jenis Aktivitas', '${item.title} (${item.cropName})'),
-                  const Divider(height: 16, color: Color(0xFFEBF0EC)),
+                  const Divider(height: 16, color: WarnaAplikasi.divider),
                   _buildSummaryRow('Tanggal & Waktu', '${item.date}, ${item.time}'),
-                  const Divider(height: 16, color: Color(0xFFEBF0EC)),
+                  const Divider(height: 16, color: WarnaAplikasi.divider),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -133,7 +133,7 @@ class ActivitySuccessDialog extends StatelessWidget {
                         'Kondisi Tanaman',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF718679),
+                          color: WarnaAplikasi.textGrayGreen,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -144,10 +144,10 @@ class ActivitySuccessDialog extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: item.condition == PlantCondition.sehat
-                              ? const Color(0xFFE5F6EA)
+                              ? WarnaAplikasi.bgSuccessLight2
                               : item.condition == PlantCondition.perluPerhatian
-                                  ? const Color(0xFFFFF3E0)
-                                  : const Color(0xFFFEE2E2),
+                                  ? WarnaAplikasi.warningOrangeBg
+                                  : WarnaAplikasi.errorRedBg,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -159,7 +159,7 @@ class ActivitySuccessDialog extends StatelessWidget {
                                 ? WarnaAplikasi.primary
                                 : item.condition == PlantCondition.perluPerhatian
                                     ? WarnaAplikasi.warningOrange
-                                    : const Color(0xFFDC2626),
+                                    : WarnaAplikasi.errorRedDark,
                           ),
                         ),
                       ),
@@ -204,7 +204,7 @@ class ActivitySuccessDialog extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: WarnaAplikasi.primary,
                   side: const BorderSide(
-                    color: Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     width: 1,
                   ),
                   shape: RoundedRectangleBorder(
@@ -234,7 +234,7 @@ class ActivitySuccessDialog extends StatelessWidget {
           label,
           style: const TextStyle(
             fontSize: 12,
-            color: Color(0xFF718679),
+            color: WarnaAplikasi.textGrayGreen,
             fontWeight: FontWeight.w500,
           ),
         ),

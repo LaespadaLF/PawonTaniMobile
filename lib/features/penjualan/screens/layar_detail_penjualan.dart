@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/penjualan/models/item_penjualan.dart';
 
@@ -8,13 +9,13 @@ class SaleDetailScreen extends StatelessWidget {
   const SaleDetailScreen({super.key, required this.item});
 
   static const Color _primaryGreen = WarnaAplikasi.primary;
-  static const Color _textDark = Color(0xFF0F2018);
-  static const Color _textMedium = Color(0xFF3D5C49);
-  static const Color _textLight = Color(0xFF6B8572);
-  static const Color _bgPage = Color(0xFFF4F7F5);
+  static const Color _textDark = WarnaAplikasi.textDark;
+  static const Color _textMedium = WarnaAplikasi.textMedium;
+  static const Color _textLight = WarnaAplikasi.textLight;
+  static const Color _bgPage = WarnaAplikasi.primaryBackground;
   static const Color _cardBg = Colors.white;
-  static const Color _borderColor = Color(0xFFE2EDE5);
-  static const Color _lightGreenBg = Color(0xFFEDF7F0);
+  static const Color _borderColor = WarnaAplikasi.border;
+  static const Color _lightGreenBg = WarnaAplikasi.bgLightGreen;
 
   String _formatNum(int num) {
     final s = num.toString();
@@ -39,7 +40,10 @@ class SaleDetailScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            const PawonFormHeader(
+                    title: 'Detail Transaksi',
+                    subtitle: 'Rincian penjualan hasil panen',
+                  ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -73,86 +77,13 @@ class SaleDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                  color: const Color(0xFFF2F7F4),
-                  borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 16, color: _textMedium),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('POKTAN TANI',
-                  style: TextStyle(
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w700,
-                      color: _primaryGreen,
-                      letterSpacing: 1.2)),
-              Text('Detail Transaksi',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: _textDark,
-                      letterSpacing: -0.2)),
-            ],
-          ),
-          const Spacer(),
-          Stack(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFF2F7F4),
-                    borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.notifications_outlined,
-                    size: 18, color: _textMedium),
-              ),
-              Positioned(
-                top: 5,
-                right: 5,
-                child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                        color: Color(0xFFE53935), shape: BoxShape.circle)),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-                color: const Color(0xFFF2F7F4),
-                borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.person_outline_rounded,
-                size: 18, color: _textMedium),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildHeroSection() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A3828), WarnaAplikasi.primary, Color(0xFF2D6040)],
+          colors: [WarnaAplikasi.gradientStart, WarnaAplikasi.primary, WarnaAplikasi.gradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -184,15 +115,15 @@ class SaleDetailScreen extends StatelessWidget {
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(color: const Color(0xFF4CAF50).withValues(alpha: 0.25), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(color: WarnaAplikasi.successGreenBright, borderRadius: BorderRadius.circular(20)),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF81C784), size: 12),
+                          const Icon(Icons.check_circle_rounded, color: WarnaAplikasi.successGreenBright, size: 12),
                           const SizedBox(width: 4),
                           Text(item.status == SaleStatus.lunas
                               ? 'LUNAS (${item.paymentMethodLabel})'
                               : item.statusLabel.toUpperCase(),
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF81C784))),
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: WarnaAplikasi.successGreenBright)),
                         ],
                       ),
                     ),
@@ -226,13 +157,13 @@ class SaleDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                          color: const Color(0xFF4CAF50).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                          color: WarnaAplikasi.successGreenBright, borderRadius: BorderRadius.circular(8)),
                       child: const Row(
                         children: [
-                          Icon(Icons.arrow_upward_rounded, color: Color(0xFF81C784), size: 10),
+                          Icon(Icons.arrow_upward_rounded, color: WarnaAplikasi.successGreenBright, size: 10),
                           SizedBox(width: 3),
                           Text('+18% Musim Lalu',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF81C784))),
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: WarnaAplikasi.successGreenBright)),
                         ],
                       ),
                     ),
@@ -263,8 +194,8 @@ class SaleDetailScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.verified_user_rounded, color: Color(0xFF2E7D32), size: 16),
+            decoration: BoxDecoration(color: WarnaAplikasi.statusLunasBg, borderRadius: BorderRadius.circular(8)),
+            child: const Icon(Icons.verified_user_rounded, color: WarnaAplikasi.statusLunasText, size: 16),
           ),
           const SizedBox(width: 10),
           const Expanded(
@@ -310,7 +241,7 @@ class SaleDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -344,7 +275,7 @@ class SaleDetailScreen extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: item.volumeKg / (item.volumeKg + 2350),
                     minHeight: 8,
-                    backgroundColor: const Color(0xFFE8F0EB),
+                    backgroundColor: WarnaAplikasi.progressBg,
                     valueColor: const AlwaysStoppedAnimation<Color>(_primaryGreen),
                   ),
                 ),
@@ -381,7 +312,7 @@ class SaleDetailScreen extends StatelessWidget {
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: WarnaAplikasi.statusLunasBg, borderRadius: BorderRadius.circular(12)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -390,10 +321,10 @@ class SaleDetailScreen extends StatelessWidget {
                             const SizedBox(height: 4),
                             const Row(
                               children: [
-                                Icon(Icons.trending_up_rounded, size: 14, color: Color(0xFF2E7D32)),
+                                Icon(Icons.trending_up_rounded, size: 14, color: WarnaAplikasi.statusLunasText),
                                 SizedBox(width: 4),
                                 Text('Di Atas HPP',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF2E7D32))),
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: WarnaAplikasi.statusLunasText)),
                               ],
                             ),
                           ],
@@ -428,14 +359,14 @@ class SaleDetailScreen extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: WarnaAplikasi.statusUangMukaBg, borderRadius: BorderRadius.circular(8)),
                   child: const Text('Mitra Terdaftar Desa',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF1565C0))),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: WarnaAplikasi.statusUangMukaText)),
                 ),
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -472,7 +403,7 @@ class SaleDetailScreen extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF25D366),
+                          backgroundColor: WarnaAplikasi.whatsappGreen,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -524,14 +455,14 @@ class SaleDetailScreen extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: WarnaAplikasi.statusLunasBg, borderRadius: BorderRadius.circular(8)),
                   child: const Text('Auto-Check BRI',
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _primaryGreen)),
                 ),
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -565,13 +496,13 @@ class SaleDetailScreen extends StatelessWidget {
             children: [
               if (isGreen)
                 Container(width: 7, height: 7, margin: const EdgeInsets.only(top: 3, right: 6),
-                    decoration: const BoxDecoration(color: Color(0xFF2E7D32), shape: BoxShape.circle)),
+                    decoration: const BoxDecoration(color: WarnaAplikasi.statusLunasText, shape: BoxShape.circle)),
               Expanded(
                 child: Text(value,
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isGreen ? const Color(0xFF2E7D32) : _textDark)),
+                        color: isGreen ? WarnaAplikasi.statusLunasText : _textDark)),
               ),
             ],
           ),
@@ -601,12 +532,12 @@ class SaleDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Container(
             height: 120,
             margin: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEDF7F0),
+              color: WarnaAplikasi.bgLightGreen2,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _borderColor),
             ),
@@ -643,7 +574,7 @@ class SaleDetailScreen extends StatelessWidget {
                   right: 10,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF2E7D32), borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(color: WarnaAplikasi.statusLunasText, borderRadius: BorderRadius.circular(8)),
                     child: const Text('Terverifikasi',
                         style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700)),
                   ),
@@ -676,7 +607,7 @@ class SaleDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7FAF8),
+              color: WarnaAplikasi.bgPaleGreen3,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _borderColor),
             ),
@@ -766,7 +697,7 @@ class SaleDetailScreen extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A3828),
+                backgroundColor: WarnaAplikasi.gradientStart,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),

@@ -153,13 +153,13 @@ class HomeScreen extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF2F7F4),
+                      color: WarnaAplikasi.bgPaleGreen2,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.notifications_outlined,
                       size: 20,
-                      color: Color(0xFF52685B),
+                      color: WarnaAplikasi.primaryDark,
                     ),
                   ),
                   Positioned(
@@ -169,7 +169,7 @@ class HomeScreen extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFE53935),
+                        color: WarnaAplikasi.errorRedBright,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -187,13 +187,13 @@ class HomeScreen extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2F7F4),
+                  color: WarnaAplikasi.bgPaleGreen2,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.person_outline_rounded,
                   size: 20,
-                  color: Color(0xFF52685B),
+                  color: WarnaAplikasi.primaryDark,
                 ),
               ),
             ),
@@ -224,7 +224,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -289,7 +289,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -300,7 +300,7 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5F6EA),
+                      color: WarnaAplikasi.bgSuccessLight2,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.spa_rounded, color: WarnaAplikasi.primary, size: 22),
@@ -324,7 +324,7 @@ class HomeScreen extends StatelessWidget {
                 '• Pengecekan hama berikutnya: Besok pukul 08:00 WIB',
                 style: TextStyle(
                   fontSize: 13.5,
-                  color: Color(0xFF435A4B),
+                  color: WarnaAplikasi.grayGreenDark,
                   height: 1.6,
                 ),
               ),
@@ -370,7 +370,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -381,7 +381,7 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827),
+                  color: WarnaAplikasi.textNearBlack,
                   letterSpacing: -0.3,
                 ),
               ),
@@ -390,7 +390,7 @@ class HomeScreen extends StatelessWidget {
                 'Suhu rata-rata 28°C dengan kondisi cerah berawan. Sangat baik untuk proses penjemuran gabah atau penyemprotan pupuk daun di pagi hari.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF6B7280),
+                  color: WarnaAplikasi.textGrayMedium,
                   height: 1.45,
                 ),
               ),
@@ -400,7 +400,7 @@ class HomeScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF264E36),
+                    backgroundColor: WarnaAplikasi.primaryMedium,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -443,7 +443,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -465,7 +465,7 @@ class HomeScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFEF4444),
+                      color: WarnaAplikasi.errorRedBright,
                     ),
                   ),
                 ],
@@ -496,7 +496,7 @@ class HomeScreen extends StatelessWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
+                    color: WarnaAplikasi.hppAmberBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.monetization_on_outlined, color: WarnaAplikasi.warningOrange),
@@ -551,7 +551,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -617,7 +617,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -735,7 +735,7 @@ class HomeScreen extends StatelessWidget {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD4E0D7),
+                        color: WarnaAplikasi.borderPale,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -768,11 +768,11 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.access_time_rounded, size: 13, color: Color(0xFF718679)),
+                      const Icon(Icons.access_time_rounded, size: 13, color: WarnaAplikasi.iconGrayGreenDark),
                       const SizedBox(width: 4),
                       Text(
                         article.readTime,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF718679)),
+                        style: const TextStyle(fontSize: 12, color: WarnaAplikasi.iconGrayGreenDark),
                       ),
                     ],
                   ),
@@ -782,7 +782,7 @@ class HomeScreen extends StatelessWidget {
                         'Informasi dan panduan teknis mendalam mengenai budidaya pertanian terbaik untuk memaksimalkan hasil panen secara optimal.',
                     style: const TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF435A4B),
+                      color: WarnaAplikasi.grayGreenDark,
                       height: 1.6,
                     ),
                   ),
@@ -830,7 +830,7 @@ class HomeScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -850,7 +850,7 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5F6EA),
+                      color: WarnaAplikasi.bgSuccessLight2,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Text(
@@ -870,7 +870,7 @@ class HomeScreen extends StatelessWidget {
                 '• Lokasi Panen: Petak Cabai Blok B\n'
                 '• Kualitas: Grade A Super Segar\n'
                 '• Estimasi Nilai Jual: Rp17.500.000',
-                style: TextStyle(fontSize: 13.5, color: Color(0xFF435A4B), height: 1.6),
+                style: TextStyle(fontSize: 13.5, color: WarnaAplikasi.grayGreenDark, height: 1.6),
               ),
               const SizedBox(height: 20),
               SizedBox(

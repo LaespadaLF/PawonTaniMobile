@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 
 class RecordSaleScreen extends StatefulWidget {
@@ -10,13 +11,13 @@ class RecordSaleScreen extends StatefulWidget {
 
 class _RecordSaleScreenState extends State<RecordSaleScreen> {
   static const Color _primaryGreen = WarnaAplikasi.primary;
-  static const Color _textDark = Color(0xFF0F2018);
-  static const Color _textMedium = Color(0xFF3D5C49);
-  static const Color _textLight = Color(0xFF6B8572);
-  static const Color _bgPage = Color(0xFFF4F7F5);
+  static const Color _textDark = WarnaAplikasi.textDark;
+  static const Color _textMedium = WarnaAplikasi.textMedium;
+  static const Color _textLight = WarnaAplikasi.textLight;
+  static const Color _bgPage = WarnaAplikasi.primaryBackground;
   static const Color _cardBg = Colors.white;
-  static const Color _borderColor = Color(0xFFE2EDE5);
-  static const Color _lightGreenBg = Color(0xFFEDF7F0);
+  static const Color _borderColor = WarnaAplikasi.border;
+  static const Color _lightGreenBg = WarnaAplikasi.bgLightGreen;
 
   String? _selectedStock;
   DateTime? _saleDate;
@@ -64,7 +65,10 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
           children: [
             Column(
               children: [
-                _buildHeader(context),
+                const PawonFormHeader(
+                    title: 'Catat Penjualan',
+                    subtitle: 'Formulir pembukuan hasil panen',
+                  ),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -104,44 +108,6 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(color: const Color(0xFFF2F7F4), borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _textMedium),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('PAWON TANI', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: _primaryGreen, letterSpacing: 1.2)),
-              Text('Tambah Penjualan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textDark, letterSpacing: -0.2)),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: const Color(0xFFF2F7F4), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.notifications_outlined, size: 18, color: _textMedium),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: const Color(0xFFF2F7F4), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.person_outline_rounded, size: 18, color: _textMedium),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFinancialTag() {
     return Container(
@@ -196,7 +162,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: selected ? _lightGreenBg : const Color(0xFFF7FAF8),
+                    color: selected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: selected ? _primaryGreen : _borderColor, width: selected ? 1.5 : 1),
                   ),
@@ -205,7 +171,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                       Container(
                         width: 30, height: 30,
                         decoration: BoxDecoration(
-                          color: selected ? _primaryGreen : const Color(0xFFEDF2EF),
+                          color: selected ? _primaryGreen : WarnaAplikasi.divider,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(selected ? Icons.check_rounded : Icons.grain_rounded,
@@ -227,7 +193,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: const Color(0xFFF7FAF8), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: WarnaAplikasi.surfaceLight, borderRadius: BorderRadius.circular(10)),
               child: const Row(
                 children: [
                   Icon(Icons.info_outline_rounded, size: 13, color: _textLight),
@@ -277,7 +243,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF7FAF8),
+                    color: WarnaAplikasi.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: _borderColor)),
                 child: Row(
@@ -327,7 +293,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                       margin: const EdgeInsets.only(right: 6),
                       padding: const EdgeInsets.symmetric(vertical: 7),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7FAF8),
+                        color: WarnaAplikasi.surfaceLight,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: _borderColor),
                       ),
@@ -352,7 +318,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: _primaryGreen,
-                inactiveTrackColor: const Color(0xFFE2EDE5),
+                inactiveTrackColor: WarnaAplikasi.borderLight,
                 thumbColor: _primaryGreen,
                 overlayColor: WarnaAplikasi.primary.withValues(alpha: 0.1),
               ),
@@ -384,7 +350,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAF8),
+                  color: WarnaAplikasi.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _borderColor)),
               child: Row(
@@ -422,9 +388,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(color: const Color(0xFFFFF8E1), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFFFE082))),
+              decoration: BoxDecoration(color: WarnaAplikasi.hppAmberBg, borderRadius: BorderRadius.circular(8), border: Border.all(color: WarnaAplikasi.hppAmberBorder)),
               child: const Text('\u25B2 Acuan HPP Poktan hari ini: Rp 6.700 - Rp 7.100 /Kg',
-                  style: TextStyle(fontSize: 10.5, color: Color(0xFF7B5800), fontWeight: FontWeight.w600)),
+                  style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.hppAmberText, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -437,7 +403,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A3828), WarnaAplikasi.primary, Color(0xFF2D6040)],
+          colors: [WarnaAplikasi.gradientStart, WarnaAplikasi.primary, WarnaAplikasi.gradientEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -453,7 +419,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
               children: [
                 Text('RINGKASAN NILAI JUAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.5)),
                 Spacer(),
-                Text('\u2713 Otomatis', style: TextStyle(fontSize: 10, color: Color(0xFF81C784), fontWeight: FontWeight.w700)),
+                Text('\u2713 Otomatis', style: TextStyle(fontSize: 10, color: WarnaAplikasi.successGreenBright, fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: 10),
@@ -480,9 +446,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
 
   Widget _buildPaymentMethodSection() {
     final methods = [
-      _PayMethod(Icons.account_balance_rounded, 'Lunas (Transfer Bank BRI)', 'Rekening Poktan: 0129-01-xxx-55-01', const Color(0xFF0077B6)),
-      _PayMethod(Icons.payments_rounded, 'Lunas (Tunai Langsung)', 'Pembayaran kas kontan di area Lumbung', const Color(0xFF6D4C41)),
-      _PayMethod(Icons.schedule_rounded, 'Tempo / Berhenti (DP 50%)\nPelunasan H+7 pasca-penyerahan', 'Sisa dilunaskan setelah batas toleransi', const Color(0xFFE65100)),
+      _PayMethod(Icons.account_balance_rounded, 'Lunas (Transfer Bank BRI)', 'Rekening Poktan: 0129-01-xxx-55-01', WarnaAplikasi.paymentBRI),
+      _PayMethod(Icons.payments_rounded, 'Lunas (Tunai Langsung)', 'Pembayaran kas kontan di area Lumbung', WarnaAplikasi.paymentCash),
+      _PayMethod(Icons.schedule_rounded, 'Tempo / Berhenti (DP 50%)\nPelunasan H+7 pasca-penyerahan', 'Sisa dilunaskan setelah batas toleransi', WarnaAplikasi.paymentTempo),
     ];
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -504,7 +470,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -518,7 +484,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: selected ? _lightGreenBg : const Color(0xFFF7FAF8),
+                      color: selected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: selected ? _primaryGreen : _borderColor, width: selected ? 1.5 : 1),
                     ),
@@ -583,7 +549,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                 width: double.infinity,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAF8),
+                  color: WarnaAplikasi.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _borderColor),
                 ),
@@ -622,7 +588,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAF8),
+                  color: WarnaAplikasi.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _borderColor)),
               child: const TextField(
@@ -701,12 +667,12 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                         Container(
                           width: 70,
                           height: 70,
-                          decoration: const BoxDecoration(color: Color(0xFFE2F4E7), shape: BoxShape.circle),
+                          decoration: const BoxDecoration(color: WarnaAplikasi.borderField, shape: BoxShape.circle),
                           child: Center(
                             child: Container(
                               width: 46,
                               height: 46,
-                              decoration: const BoxDecoration(color: Color(0xFF388E52), shape: BoxShape.circle),
+                              decoration: const BoxDecoration(color: WarnaAplikasi.primaryDark, shape: BoxShape.circle),
                               child: const Icon(Icons.check_rounded, color: Colors.white, size: 26),
                             ),
                           ),
@@ -725,29 +691,29 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEDF7F1),
+                            color: WarnaAplikasi.bgSuccessLight,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: WarnaAplikasi.greenPill),
                           ),
                           child: Column(
                             children: [
                               _buildModalRow(Icons.confirmation_number_outlined, 'No. Tiket / ID', 'TRX-PN-20241115-889'),
-                              const Divider(color: Color(0xFFDCECE1), height: 16),
+                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
                               _buildModalRow(Icons.grain_rounded, 'Komoditas', 'GKP Ciherang'),
-                              const Divider(color: Color(0xFFDCECE1), height: 16),
+                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
                               _buildModalRow(Icons.scale_rounded, 'Volume & Harga',
                                   '${_formatNum(_volumeKg.toInt())} Kg x Rp ${_formatNum(_pricePerKg.toInt())}'),
-                              const Divider(color: Color(0xFFDCECE1), height: 16),
+                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
                               _buildModalRow(Icons.groups_2_outlined, 'Mitra Pembeli', 'Poktan Sumber Makmur'),
-                              const Divider(color: Color(0xFFDCECE1), height: 16),
+                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
                               _buildModalRow(Icons.inventory_rounded, 'Sisa Stok Lumbung', '2.350 Kg (tersisa)'),
-                              const Divider(color: Color(0xFFDCECE1), height: 16),
+                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
                               Row(
                                 children: [
-                                  const Icon(Icons.payments_rounded, size: 14, color: Color(0xFF556C5E)),
+                                  const Icon(Icons.payments_rounded, size: 14, color: WarnaAplikasi.grayGreenDark),
                                   const SizedBox(width: 8),
                                   const Expanded(child: Text('Total Nilai',
-                                      style: TextStyle(fontSize: 11.5, color: Color(0xFF556C5E)))),
+                                      style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.grayGreenDark))),
                                   Text('Rp ${_formatNum(_totalValue.toInt())}',
                                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _primaryGreen)),
                                 ],
@@ -784,8 +750,8 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () {},
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF25D366),
-                              side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
+                              foregroundColor: WarnaAplikasi.whatsappGreen,
+                              side: const BorderSide(color: WarnaAplikasi.whatsappGreen, width: 1.5),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             ),
                             icon: const Icon(Icons.share_rounded, size: 16),
@@ -818,14 +784,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   Widget _buildModalRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF556C5E)),
+        Icon(icon, size: 14, color: WarnaAplikasi.grayGreenDark),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 11.5, color: Color(0xFF556C5E))),
+        Text(label, style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.grayGreenDark)),
         const Spacer(),
         Flexible(
           child: Text(value,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF15261B))),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen)),
         ),
       ],
     );

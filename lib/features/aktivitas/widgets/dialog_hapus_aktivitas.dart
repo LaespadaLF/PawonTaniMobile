@@ -49,13 +49,13 @@ class DeleteActivityDialog extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: WarnaAplikasi.bgPaleGreen,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: Color(0xFF6B7280),
+                    color: WarnaAplikasi.textGrayMedium,
                   ),
                 ),
               ),
@@ -66,13 +66,13 @@ class DeleteActivityDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: const BoxDecoration(
-                color: Color(0xFFFEE2E2),
+                color: WarnaAplikasi.errorRedBg,
                 shape: BoxShape.circle,
               ),
               child: const Center(
                 child: Icon(
                   Icons.delete_outline_rounded,
-                  color: Color(0xFFDC2626),
+                  color: WarnaAplikasi.errorRedDark,
                   size: 28,
                 ),
               ),
@@ -97,7 +97,7 @@ class DeleteActivityDialog extends StatelessWidget {
               text: TextSpan(
                 style: const TextStyle(
                   fontSize: 12.5,
-                  color: Color(0xFF4B5563),
+                  color: WarnaAplikasi.textDarkGreenMedium,
                   height: 1.45,
                 ),
                 children: [
@@ -131,7 +131,7 @@ class DeleteActivityDialog extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.warning_amber_rounded,
-                    color: Color(0xFFDC2626),
+                    color: WarnaAplikasi.errorRedDark,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -140,7 +140,7 @@ class DeleteActivityDialog extends StatelessWidget {
                       'Data riwayat ${item.title.toLowerCase()}, catatan kondisi lapangan, dan foto dokumentasi pada petak ${item.location} akan terhapus secara permanen.',
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF991B1B),
+                        color: WarnaAplikasi.errorRedBright,
                         height: 1.35,
                       ),
                     ),
@@ -168,7 +168,7 @@ class DeleteActivityDialog extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
+                  backgroundColor: WarnaAplikasi.errorRedDark,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -184,9 +184,9 @@ class DeleteActivityDialog extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4B5563),
+                  foregroundColor: WarnaAplikasi.textDarkGreenMedium,
                   side: const BorderSide(
-                    color: Color(0xFFE5E7EB),
+                    color: WarnaAplikasi.errorRedBgLight,
                     width: 1,
                   ),
                   shape: RoundedRectangleBorder(

@@ -59,7 +59,7 @@ class DeleteHarvestDialog extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: const BoxDecoration(
-                color: Color(0xFFFDE8E8),
+                color: WarnaAplikasi.errorRedBgLight,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -67,7 +67,7 @@ class DeleteHarvestDialog extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626),
+                    color: WarnaAplikasi.errorRedDark,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -99,7 +99,7 @@ class DeleteHarvestDialog extends StatelessWidget {
               text: TextSpan(
                 style: const TextStyle(
                   fontSize: 12.5,
-                  color: Color(0xFF556C5E),
+                  color: WarnaAplikasi.grayGreenDark,
                   height: 1.45,
                 ),
                 children: [
@@ -129,10 +129,10 @@ class DeleteHarvestDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF5F5),
+                color: WarnaAplikasi.warningBoxBg,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xFFFFD5D5),
+                  color: WarnaAplikasi.warningBoxBorder,
                   width: 1,
                 ),
               ),
@@ -141,7 +141,7 @@ class DeleteHarvestDialog extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.warning_rounded,
-                    color: Color(0xFFDC2626),
+                    color: WarnaAplikasi.errorRedDark,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -150,7 +150,7 @@ class DeleteHarvestDialog extends StatelessWidget {
                       text: TextSpan(
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFFB91C1C),
+                          color: WarnaAplikasi.errorRedText,
                           height: 1.35,
                         ),
                         children: [
@@ -197,7 +197,7 @@ class DeleteHarvestDialog extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
+                  backgroundColor: WarnaAplikasi.errorRedDark,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
@@ -214,8 +214,8 @@ class DeleteHarvestDialog extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF1F5F2),
-                  foregroundColor: const Color(0xFF3B5243),
+                  backgroundColor: WarnaAplikasi.bgButtonSecondary,
+                  foregroundColor: WarnaAplikasi.textCropUnselected,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),

@@ -210,7 +210,7 @@ class _LandScreenState extends State<LandScreen> {
                             icon: const Icon(Icons.add, color: Colors.white, size: 20),
                             label: const Text('Tambah Lahan Baru', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: WarnaAplikasi.primaryLight,
+                              backgroundColor: WarnaAplikasi.primary,
                               elevation: 0,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                             ),
@@ -226,25 +226,25 @@ class _LandScreenState extends State<LandScreen> {
                             children: List.generate(filterChips.length, (index) {
                               final isSelected = _selectedFilterIndex == index;
                               return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedFilterIndex = index;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? WarnaAplikasi.primaryLight : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: isSelected ? WarnaAplikasi.primaryLight : WarnaAplikasi.border,
-                                        width: 1,
-                                      ),
-                                    ),
+                                                padding: const EdgeInsets.only(right: 8),
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _selectedFilterIndex = index;
+                                                    });
+                                                  },
+                                                  borderRadius: BorderRadius.circular(20),
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 200),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: isSelected ? WarnaAplikasi.primary : Colors.transparent,
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      border: Border.all(
+                                                        color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.border,
+                                                        width: 1,
+                                                      ),
+                                                    ),
                                     child: Text(
                                       filterChips[index],
                                       style: TextStyle(
@@ -291,7 +291,7 @@ class _LandScreenState extends State<LandScreen> {
                           final tagColor = isAktif ? WarnaAplikasi.greenLight : WarnaAplikasi.warningOrangeBg;
                           final tagTextColor = isAktif ? WarnaAplikasi.primary : WarnaAplikasi.warningOrange;
                           final tagText = isAktif ? 'Aktif Ditanami' : (item.status == StatusLahan.persiapan ? 'Dalam Proses' : 'Masa Olah Tanah');
-                          final dotColor = isAktif ? const Color(0xFF22C55E) : const Color(0xFFF59E0B);
+                          final dotColor = isAktif ? WarnaAplikasi.successGreen : WarnaAplikasi.hppAmberBg;
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
@@ -346,7 +346,7 @@ class _LandScreenState extends State<LandScreen> {
                                         children: [
                                           const Icon(Icons.location_on_outlined, size: 12, color: WarnaAplikasi.textGrayLight),
                                           const SizedBox(width: 4),
-                                          Expanded(child: Text(item.lokasi, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)), overflow: TextOverflow.ellipsis)),
+                                          Expanded(child: Text(item.lokasi, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight), overflow: TextOverflow.ellipsis)),
                                         ],
                                       ),
                                       const SizedBox(height: 6),
@@ -354,11 +354,11 @@ class _LandScreenState extends State<LandScreen> {
                                         children: [
                                           const Icon(Icons.wb_sunny_outlined, size: 12, color: WarnaAplikasi.primaryLight),
                                           const SizedBox(width: 4),
-                                          Text('${item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                          Text('${item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textDarkGreen)),
                                           const SizedBox(width: 12),
                                           const Icon(Icons.eco_outlined, size: 12, color: WarnaAplikasi.primaryLight),
                                           const SizedBox(width: 4),
-                                          Text(item.komoditas, style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                                          Text(item.komoditas, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textDarkGreen)),
                                         ],
                                       ),
                                       const SizedBox(height: 12),
@@ -393,7 +393,7 @@ class _LandScreenState extends State<LandScreen> {
                                               const SizedBox(width: 16),
                                               InkWell(
                                                 onTap: () => _deleteLand(item),
-                                                child: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFEF4444)),
+                                                child: const Icon(Icons.delete_outline, size: 18, color: WarnaAplikasi.errorRedBright),
                                               ),
                                             ],
                                           ),

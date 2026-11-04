@@ -155,7 +155,7 @@ class _StatCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE8EFEA),
+          color: WarnaAplikasi.borderPale,
           width: 1,
         ),
         boxShadow: const [
@@ -193,7 +193,7 @@ class _StatCard extends StatelessWidget {
                     const Icon(
                       Icons.chevron_right_rounded,
                       size: 18,
-                      color: Color(0xFFB0C2B5),
+                      color: WarnaAplikasi.iconGray,
                     ),
                   ],
                 ),
@@ -227,7 +227,7 @@ class _StatCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF718679),
+                          color: WarnaAplikasi.textGrayGreen,
                         ),
                       ),
                     ],
@@ -254,7 +254,7 @@ class _ConditionCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE8EFEA),
+          color: WarnaAplikasi.borderPale,
           width: 1,
         ),
         boxShadow: const [
@@ -314,7 +314,7 @@ class _ConditionCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE5F6EA),
+                              color: WarnaAplikasi.bgSuccessLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Text(
@@ -334,7 +334,7 @@ class _ConditionCard extends StatelessWidget {
                           Icon(
                             Icons.location_on_outlined,
                             size: 12,
-                            color: Color(0xFF718679),
+                            color: WarnaAplikasi.textGrayGreen,
                           ),
                           SizedBox(width: 3),
                           Flexible(
@@ -343,7 +343,7 @@ class _ConditionCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFF718679),
+                                color: WarnaAplikasi.textGrayGreen,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -357,7 +357,7 @@ class _ConditionCard extends StatelessWidget {
                 const Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
-                  color: Color(0xFFB0C2B5),
+                  color: WarnaAplikasi.iconGray,
                 ),
               ],
             ),

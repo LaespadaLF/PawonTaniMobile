@@ -66,7 +66,7 @@ class HarvestDetailModal extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          const Divider(height: 1, color: Color(0xFFE8EFEA)),
+          const Divider(height: 1, color: WarnaAplikasi.borderPale),
           const SizedBox(height: 16),
           _buildInfoRow('Status Verifikasi', _getStatusLabel(item.status), _getStatusColor(item.status)),
           _buildInfoRow('Lokasi & Lahan', '${item.location} (${item.blockArea})'),
@@ -83,7 +83,7 @@ class HarvestDetailModal extends StatelessWidget {
                     Navigator.pop(context);
                     onDelete!();
                   },
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const Icon(Icons.delete_outline, color: WarnaAplikasi.errorRedDark),
                   tooltip: 'Hapus',
                 ),
               Expanded(
@@ -116,7 +116,7 @@ class HarvestDetailModal extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF708577)),
+            style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textInfoLabel),
           ),
           Text(
             value,
@@ -147,9 +147,9 @@ class HarvestDetailModal extends StatelessWidget {
       case HarvestStatus.menunggu:
         return WarnaAplikasi.warningOrange;
       case HarvestStatus.disetujui:
-        return const Color(0xFF1E824C);
+        return WarnaAplikasi.approvedGreen;
       case HarvestStatus.ditolak:
-        return const Color(0xFFDC2626);
+        return WarnaAplikasi.errorRedDark;
     }
   }
 }

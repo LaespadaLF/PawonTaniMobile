@@ -15,7 +15,7 @@ class HomeWeatherCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE8EFEA),
+          color: WarnaAplikasi.borderPale,
           width: 1,
         ),
         boxShadow: const [
@@ -89,7 +89,7 @@ class HomeWeatherCard extends StatelessWidget {
                         Icon(
                           Icons.location_on_outlined,
                           size: 11,
-                          color: Color(0xFF718679),
+                          color: WarnaAplikasi.textGrayGreen,
                         ),
                         SizedBox(width: 2),
                         Expanded(
@@ -98,7 +98,7 @@ class HomeWeatherCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF718679),
+                              color: WarnaAplikasi.textGrayGreen,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -121,7 +121,7 @@ class HomeWeatherCard extends StatelessWidget {
                     vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEBF5EE),
+                    color: WarnaAplikasi.bgPaleGreen,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -163,7 +163,7 @@ class _SunCloudWeatherPainter extends CustomPainter {
     final sunRadius = size.height * 0.32;
 
     final sunPaint = Paint()
-      ..color = const Color(0xFFFBBF24)
+      ..color = WarnaAplikasi.shadowCard
       ..style = PaintingStyle.fill;
     canvas.drawCircle(sunCenter, sunRadius, sunPaint);
 
@@ -178,7 +178,7 @@ class _SunCloudWeatherPainter extends CustomPainter {
 
     // Cute Soft Cloud in front of the sun
     final cloudPaint = Paint()
-      ..color = const Color(0xFF93C5FD)
+      ..color = WarnaAplikasi.paymentBRI
       ..style = PaintingStyle.fill;
 
     final cloudPath = Path();
@@ -214,7 +214,7 @@ class _SunCloudWeatherPainter extends CustomPainter {
 
     // Cloud highlight
     final cloudHighlightPaint = Paint()
-      ..color = const Color(0xFFBAE6FD)
+      ..color = WarnaAplikasi.statusUangMukaBg
       ..style = PaintingStyle.fill;
     canvas.drawCircle(
       Offset(size.width * 0.66, size.height * 0.46),

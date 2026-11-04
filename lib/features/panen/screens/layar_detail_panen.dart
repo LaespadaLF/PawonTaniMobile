@@ -137,7 +137,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: Color(0xFFEFF3F0), width: 1),
+          bottom: BorderSide(color: WarnaAplikasi.surfaceLight, width: 1),
         ),
       ),
       child: Row(
@@ -169,7 +169,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF15261B),
+                    color: WarnaAplikasi.textDarkGreen,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -178,7 +178,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   'ID: ${_currentItem.harvestCode}',
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF708577),
+                    color: WarnaAplikasi.textGrayGreen,
                   ),
                 ),
               ],
@@ -193,11 +193,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.share_outlined, size: 20, color: Color(0xFF43584B)),
+            icon: const Icon(Icons.share_outlined, size: 20, color: WarnaAplikasi.grayGreenDark),
           ),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded, size: 22, color: Color(0xFF43584B)),
+            icon: const Icon(Icons.notifications_none_rounded, size: 22, color: WarnaAplikasi.grayGreenDark),
           ),
         ],
       ),
@@ -208,7 +208,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDF7F1),
+        color: WarnaAplikasi.bgPaleGreen2,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: WarnaAplikasi.greenPill),
       ),
@@ -254,7 +254,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                       _currentItem.validatedAt,
                       style: const TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF708577),
+                        color: WarnaAplikasi.textGrayGreen,
                       ),
                     ),
                   ],
@@ -264,7 +264,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   'Divalidasi oleh: ${_currentItem.validatedBy} langsung di timbangan panen.',
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF4A6252),
+                    color: WarnaAplikasi.grayGreenDark,
                     height: 1.3,
                   ),
                 ),
@@ -282,7 +282,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF235535), Color(0xFF1B432A)],
+          colors: [WarnaAplikasi.primaryDark, WarnaAplikasi.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -325,7 +325,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFB7DFCA),
+                          color: WarnaAplikasi.successPaleGreen,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -372,7 +372,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     'Total Berat Bersih',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFFC7EBD2),
+                      color: WarnaAplikasi.successPaleGreen,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -408,7 +408,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     'Konversi Bobot',
                     style: TextStyle(
                       fontSize: 10.5,
-                      color: Color(0xFFC7EBD2),
+                      color: WarnaAplikasi.successPaleGreen,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -435,7 +435,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EBE5)),
+        border: Border.all(color: WarnaAplikasi.borderField),
       ),
       child: Column(
         children: [
@@ -446,7 +446,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5F4EA),
+                  color: WarnaAplikasi.bgSuccessLight2,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -469,7 +469,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF235535),
+                        color: WarnaAplikasi.primaryDark,
                       ),
                     ),
                   ],
@@ -487,7 +487,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF15261B),
+                      color: WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ],
@@ -495,7 +495,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(color: Color(0xFFF0F4F1), height: 1),
+          const Divider(color: WarnaAplikasi.dividerGray, height: 1),
           const SizedBox(height: 12),
 
           // Row 2: Kualitas / Mutu Hasil
@@ -511,7 +511,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF15261B),
+                      color: WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ],
@@ -555,7 +555,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F7F4),
+          color: WarnaAplikasi.bgPaleGreen3,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -571,7 +571,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF15261B),
+                color: WarnaAplikasi.textDarkGreen,
               ),
             ),
             const SizedBox(height: 2),
@@ -596,7 +596,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EBE5)),
+        border: Border.all(color: WarnaAplikasi.borderField),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,7 +613,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF15261B),
+                      color: WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ],
@@ -621,7 +621,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDF7F1),
+                  color: WarnaAplikasi.bgPaleGreen2,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: WarnaAplikasi.greenPill),
                 ),
@@ -686,13 +686,13 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7FAF8),
+              color: WarnaAplikasi.bgPaleGreen3,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2EBE5)),
+              border: Border.all(color: WarnaAplikasi.borderField),
             ),
             child: Row(
               children: [
-                const Icon(Icons.receipt_long_outlined, size: 16, color: Color(0xFF43584B)),
+                const Icon(Icons.receipt_long_outlined, size: 16, color: WarnaAplikasi.grayGreenDark),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -707,7 +707,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF15261B),
+                          color: WarnaAplikasi.textDarkGreen,
                         ),
                       ),
                     ],
@@ -718,11 +718,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE0E7E2)),
+                    border: Border.all(color: WarnaAplikasi.borderPale2),
                   ),
                   child: Text(
                     _currentItem.costWorkers,
-                    style: const TextStyle(fontSize: 10, color: Color(0xFF43584B)),
+                    style: const TextStyle(fontSize: 10, color: WarnaAplikasi.grayGreenDark),
                   ),
                 ),
               ],
@@ -735,23 +735,23 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7FAF8),
+              color: WarnaAplikasi.bgPaleGreen3,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2EBE5)),
+              border: Border.all(color: WarnaAplikasi.borderField),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.notes_rounded, size: 14, color: Color(0xFF43584B)),
+                    Icon(Icons.notes_rounded, size: 14, color: WarnaAplikasi.grayGreenDark),
                     SizedBox(width: 6),
                     Text(
                       'Catatan Lapangan (Mandor)',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF15261B),
+                        color: WarnaAplikasi.textDarkGreen,
                       ),
                     ),
                   ],
@@ -761,7 +761,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   '"${_currentItem.fieldNotes}"',
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF556C5E),
+                    color: WarnaAplikasi.grayGreenDark,
                     height: 1.35,
                     fontStyle: FontStyle.italic,
                   ),
@@ -793,7 +793,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF15261B),
+                  color: WarnaAplikasi.textDarkGreen,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -818,7 +818,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EBE5)),
+        border: Border.all(color: WarnaAplikasi.borderField),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,14 +835,14 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF15261B),
+                      color: WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ],
               ),
               Text(
                 '2 Berkas',
-                style: TextStyle(fontSize: 11, color: Color(0xFF708577)),
+                style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
               ),
             ],
           ),
@@ -856,7 +856,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   height: 110,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFFE0E0E0),
+                    color: WarnaAplikasi.dividerGray,
                     image: const DecorationImage(
                       image: NetworkImage(
                         'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=400&q=80',
@@ -903,7 +903,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   height: 110,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFFE0E0E0),
+                    color: WarnaAplikasi.dividerGray,
                     image: const DecorationImage(
                       image: NetworkImage(
                         'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=400&q=80',
@@ -952,7 +952,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFEDF7F1),
+              color: WarnaAplikasi.bgPaleGreen2,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Row(
@@ -997,7 +997,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(color: Color(0xFFEFF3F0), width: 1),
+          top: BorderSide(color: WarnaAplikasi.surfaceLight, width: 1),
         ),
       ),
       child: Row(
@@ -1042,7 +1042,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: const Color(0xFFEDF7F1),
+                color: WarnaAplikasi.bgPaleGreen2,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: WarnaAplikasi.greenPill),
               ),
@@ -1063,13 +1063,13 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: const Color(0xFFFEEEEE),
+                color: WarnaAplikasi.errorRedBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFDCBCB)),
+                border: Border.all(color: WarnaAplikasi.errorRedBg),
               ),
               child: const Icon(
                 Icons.delete_outline_rounded,
-                color: Color(0xFFDC2626),
+                color: WarnaAplikasi.errorRedDark,
                 size: 20,
               ),
             ),

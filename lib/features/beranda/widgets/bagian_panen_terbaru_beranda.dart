@@ -53,7 +53,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFFE8EFEA),
+              color: WarnaAplikasi.borderPale,
               width: 1,
             ),
             boxShadow: const [
@@ -79,7 +79,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                       child: Container(
                         width: 58,
                         height: 58,
-                        color: const Color(0xFF1A1A1A),
+                        color: WarnaAplikasi.nearBlack,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -127,7 +127,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                               vertical: 2.5,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE5F6EA),
+                              color: WarnaAplikasi.hppAmberBg,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
@@ -147,7 +147,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                     const Icon(
                       Icons.chevron_right_rounded,
                       size: 20,
-                      color: Color(0xFFB0C2B5),
+                      color: WarnaAplikasi.textGrayGreen,
                     ),
                   ],
                 ),
@@ -173,20 +173,20 @@ class _ChiliPainter extends CustomPainter {
 
     // Red chili outer ring
     final outerRingPaint = Paint()
-      ..color = const Color(0xFFDC2626)
+      ..color = WarnaAplikasi.errorRedBright
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * 0.22;
     canvas.drawCircle(center, size.width * 0.3, outerRingPaint);
 
     // Red inner flesh
     final innerPaint = Paint()
-      ..color = const Color(0xFFEF4444)
+      ..color = WarnaAplikasi.errorRedBright
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, size.width * 0.22, innerPaint);
 
     // Center seed cluster (pale yellow)
     final corePaint = Paint()
-      ..color = const Color(0xFFFEF08A)
+      ..color = WarnaAplikasi.hppAmberBorder
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, size.width * 0.1, corePaint);
 

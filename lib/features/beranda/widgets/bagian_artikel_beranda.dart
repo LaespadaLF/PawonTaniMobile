@@ -113,16 +113,16 @@ class _ArticleCard extends StatelessWidget {
 
     switch (item.category) {
       case 'TIPS':
-        badgeBg = const Color(0xFFFFF3E0);
+        badgeBg = WarnaAplikasi.hppAmberBg;
         badgeTextColor = WarnaAplikasi.warningOrange;
         break;
       case 'ARTIKEL':
-        badgeBg = const Color(0xFFDCFCE7);
-        badgeTextColor = const Color(0xFF16A34A);
+        badgeBg = WarnaAplikasi.bgSuccessLight;
+        badgeTextColor = WarnaAplikasi.successGreenBright;
         break;
       default:
-        badgeBg = const Color(0xFFE0F2FE);
-        badgeTextColor = const Color(0xFF0284C7);
+        badgeBg = WarnaAplikasi.statusUangMukaBg;
+        badgeTextColor = WarnaAplikasi.paymentBRI;
     }
 
     return Container(
@@ -131,7 +131,7 @@ class _ArticleCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE8EFEA),
+          color: WarnaAplikasi.borderPale,
           width: 1,
         ),
         boxShadow: const [
@@ -166,8 +166,8 @@ class _ArticleCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: item.category == 'TIPS'
-                                  ? [const Color(0xFFC7B168), const Color(0xFF8C9B47)]
-                                  : [const Color(0xFF1E3A8A), const Color(0xFF047857)],
+                                  ? [WarnaAplikasi.commodityJagung, WarnaAplikasi.commodityJagungBg]
+                                  : [WarnaAplikasi.primaryDark, WarnaAplikasi.successDarkGreen],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -249,7 +249,7 @@ class _ArticleCard extends StatelessWidget {
                         const Icon(
                           Icons.access_time_rounded,
                           size: 12,
-                          color: Color(0xFF718679),
+                          color: WarnaAplikasi.textGrayGreen,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -257,7 +257,7 @@ class _ArticleCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF718679),
+                            color: WarnaAplikasi.textGrayGreen,
                           ),
                         ),
                       ],

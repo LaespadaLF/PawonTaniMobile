@@ -113,7 +113,7 @@ class _QuickActionButton extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE8EFEA),
+          color: WarnaAplikasi.borderPale,
           width: 1,
         ),
         boxShadow: const [
@@ -139,7 +139,7 @@ class _QuickActionButton extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F7F2),
+                    color: WarnaAplikasi.bgPaleGreen2,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(

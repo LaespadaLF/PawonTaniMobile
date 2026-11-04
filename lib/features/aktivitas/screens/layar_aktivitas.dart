@@ -73,7 +73,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
   List<PlantActivityItem> get _filteredActivities {
     var list = _activities;
     if (_selectedFilter != 'Semua') {
-      list = list.where((item) => item.category.label.toLowerCase() == _selectedFilter.toLowerCase()).toList();
+      list = list
+          .where(
+            (item) =>
+                item.category.label.toLowerCase() ==
+                _selectedFilter.toLowerCase(),
+          )
+          .toList();
     }
     if (_selectedSort == 'Terlama') {
       return list.reversed.toList();
@@ -133,7 +139,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Catatan aktivitas berhasil dihapus.'),
-            backgroundColor: Color(0xFFDC2626),
+            backgroundColor: WarnaAplikasi.errorRedDark,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -143,7 +149,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filterOptions = ['Semua', 'Penyiraman', 'Pemupukan', 'Pengairan', 'Penyemprotan', 'Penyiangan'];
+    final filterOptions = [
+      'Semua',
+      'Penyiraman',
+      'Pemupukan',
+      'Pengairan',
+      'Penyemprotan',
+      'Penyiangan',
+    ];
 
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
@@ -155,213 +168,268 @@ class _ActivityScreenState extends State<ActivityScreen> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Page Title & Subtitle (Harmonized with Panen & Lahan)
+                    const Text(
+                      'Data Aktivitas',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: WarnaAplikasi.primaryDark,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Pantau dan catat seluruh kegiatan perawatan tanaman Anda',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: WarnaAplikasi.textGray,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     // Summary Banner Card
                     _buildSummaryBanner(),
-              const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-              // 3. Filter Chips
-              SizedBox(
-                height: 38,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  itemCount: filterOptions.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final filter = filterOptions[index];
-                    final isSelected = _selectedFilter == filter;
-                    return InkWell(
-                      onTap: () => setState(() => _selectedFilter = filter),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? WarnaAplikasi.primary : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected ? WarnaAplikasi.primary : const Color(0xFFE2EBE5),
+                    // 3. Filter Chips
+                    SizedBox(
+                      height: 38,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        itemCount: filterOptions.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final filter = filterOptions[index];
+                          final isSelected = _selectedFilter == filter;
+                          return InkWell(
+                            onTap: () =>
+                                setState(() => _selectedFilter = filter),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? WarnaAplikasi.primary
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? WarnaAplikasi.primary
+                                      : WarnaAplikasi.borderField,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  filter,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : WarnaAplikasi.dialogText,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 4. Section Header: "Aktivitas Terbaru" & Sort Selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Aktivitas Terbaru',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: WarnaAplikasi.primaryDark,
                           ),
                         ),
-                        child: Center(
-                          child: Text(
-                            filter,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : const Color(0xFF4B5563),
+                        InkWell(
+                          onTap: _showSortPicker,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  _selectedSort,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: WarnaAplikasi.textGrayGreen,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 16,
+                                  color: WarnaAplikasi.textGrayGreen,
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 4. Section Header: "Aktivitas Terbaru" & Sort Selector
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Aktivitas Terbaru',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.primaryDark,
+                      ],
                     ),
-                  ),
-                  InkWell(
-                    onTap: _showSortPicker,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    const SizedBox(height: 12),
+
+                    // 5. Activity Cards List
+                    if (_filteredActivities.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 36,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: WarnaAplikasi.borderPale),
+                        ),
+                        child: Column(
+                          children: const [
+                            Icon(
+                              Icons.spa_outlined,
+                              size: 40,
+                              color: WarnaAplikasi.iconGray,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Belum Ada Aktivitas',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: WarnaAplikasi.primaryDark,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Tidak ada aktivitas yang sesuai dengan filter ini.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: WarnaAplikasi.textGrayGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ..._filteredActivities.map((activity) {
+                        return _buildActivityCard(activity);
+                      }),
+
+                    const SizedBox(height: 16),
+
+                    // 6. Bottom CTA Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: WarnaAplikasi.bgPaleGreen4,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: WarnaAplikasi.borderPale3),
+                      ),
                       child: Row(
                         children: [
-                          Text(
-                            _selectedSort,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF718679),
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.library_books_outlined,
+                              color: WarnaAplikasi.primary,
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(width: 2),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 16,
-                            color: Color(0xFF718679),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // 5. Activity Cards List
-              if (_filteredActivities.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE8EFEA)),
-                  ),
-                  child: Column(
-                    children: const [
-                      Icon(Icons.spa_outlined, size: 40, color: Color(0xFFB0C2B5)),
-                      SizedBox(height: 12),
-                      Text(
-                        'Belum Ada Aktivitas',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.primaryDark,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Tidak ada aktivitas yang sesuai dengan filter ini.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Color(0xFF718679)),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                ..._filteredActivities.map((activity) {
-                  return _buildActivityCard(activity);
-                }),
-
-              const SizedBox(height: 16),
-
-              // 6. Bottom CTA Banner
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEBF5EE),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD3E7D9)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.library_books_outlined,
-                        color: WarnaAplikasi.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Belum ada aktivitas lainnya',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: WarnaAplikasi.primaryDark,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'Belum ada aktivitas lainnya',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: WarnaAplikasi.primaryDark,
+                                  ),
+                                ),
+                                SizedBox(height: 1),
+                                Text(
+                                  'Catat aktivitas baru untuk memantau perkembangan tanaman.',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: WarnaAplikasi.cardBodyText,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 1),
-                          Text(
-                            'Catat aktivitas baru untuk memantau perkembangan tanaman.',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: Color(0xFF5E7567),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: _navigateToAddActivity,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: WarnaAplikasi.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              minimumSize: Size.zero,
+                            ),
+                            child: const Text(
+                              '+ Catat',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: _navigateToAddActivity,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        minimumSize: Size.zero,
-                      ),
-                      child: const Text(
-                        '+ Catat',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-),
-);
+    );
   }
 
   Widget _buildSummaryBanner() {
@@ -378,7 +446,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFD4EBD9),
+              color: WarnaAplikasi.greenLight2,
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
@@ -436,10 +504,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: isWarning ? const Color(0xFFFFF3E0) : Colors.white,
+        color: isWarning ? WarnaAplikasi.statusTempoBg : Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isWarning ? const Color(0xFFFED7AA) : const Color(0xFFE2EBE5),
+          color: isWarning
+              ? WarnaAplikasi.warningOrangeBorder
+              : WarnaAplikasi.borderField,
         ),
       ),
       child: Row(
@@ -448,7 +518,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
           Icon(
             icon,
             size: 11,
-            color: isWarning ? WarnaAplikasi.warningOrange : WarnaAplikasi.primary,
+            color: isWarning
+                ? WarnaAplikasi.warningOrange
+                : WarnaAplikasi.primary,
           ),
           const SizedBox(width: 4),
           Text(
@@ -456,7 +528,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: isWarning ? WarnaAplikasi.warningOrange : WarnaAplikasi.primary,
+              color: isWarning
+                  ? WarnaAplikasi.warningOrange
+                  : WarnaAplikasi.primary,
             ),
           ),
         ],
@@ -477,8 +551,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
         break;
       case ActivityCategory.pengairan:
       case ActivityCategory.penyiraman:
-        iconBg = const Color(0xFFE0F2FE);
-        iconColor = const Color(0xFF0284C7);
+        iconBg = WarnaAplikasi.statusBadgeBlueBg;
+        iconColor = WarnaAplikasi.statusBadgeBlueText;
         icon = Icons.water_drop_outlined;
         break;
       case ActivityCategory.penyemprotan:
@@ -497,10 +571,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EFEA)),
+        border: Border.all(color: WarnaAplikasi.borderPale),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: WarnaAplikasi.shadowCard,
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -541,7 +615,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         item.cropName,
                         style: const TextStyle(
                           fontSize: 11.5,
-                          color: Color(0xFF718679),
+                          color: WarnaAplikasi.textGrayGreen,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -549,11 +623,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: item.condition == PlantCondition.sehat
-                        ? const Color(0xFFE5F6EA)
-                        : const Color(0xFFFFF3E0),
+                        ? WarnaAplikasi.bgSuccessLight
+                        : WarnaAplikasi.statusTempoBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -574,20 +651,39 @@ class _ActivityScreenState extends State<ActivityScreen> {
             // Date & Time Row
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 12, color: Color(0xFF718679)),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 12,
+                  color: WarnaAplikasi.textGrayGreen,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   item.date,
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF718679), fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: WarnaAplikasi.textGrayGreen,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                const Text('•', style: TextStyle(color: Color(0xFFB0C2B5))),
+                const Text(
+                  '•',
+                  style: TextStyle(color: WarnaAplikasi.iconGray),
+                ),
                 const SizedBox(width: 10),
-                const Icon(Icons.access_time_rounded, size: 12, color: Color(0xFF718679)),
+                const Icon(
+                  Icons.access_time_rounded,
+                  size: 12,
+                  color: WarnaAplikasi.textGrayGreen,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   item.time,
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF718679), fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: WarnaAplikasi.textGrayGreen,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -596,12 +692,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
             // Location Row
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF718679)),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 12,
+                  color: WarnaAplikasi.textGrayGreen,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     item.location,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF718679), fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: WarnaAplikasi.textGrayGreen,
+                      fontWeight: FontWeight.w500,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -614,14 +718,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
               item.notes,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF374151),
+                color: WarnaAplikasi.textGrayDark,
                 height: 1.35,
               ),
             ),
             const SizedBox(height: 12),
 
             // Divider
-            const Divider(height: 1, color: Color(0xFFF0F4F1)),
+            const Divider(height: 1, color: WarnaAplikasi.dividerLight),
             const SizedBox(height: 8),
 
             // Footer: Lihat Detail, Edit, Delete
@@ -642,7 +746,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           ),
                         ),
                         SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_rounded, size: 14, color: WarnaAplikasi.primary),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 14,
+                          color: WarnaAplikasi.primary,
+                        ),
                       ],
                     ),
                   ),
@@ -651,7 +759,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 // Edit Button
                 IconButton(
                   onPressed: () => _navigateToEditActivity(item),
-                  icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF718679)),
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: WarnaAplikasi.textGrayGreen,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -659,7 +771,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 // Delete Button
                 IconButton(
                   onPressed: () => _confirmDelete(item),
-                  icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18,
+                    color: WarnaAplikasi.errorRedBright,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -690,7 +806,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.outlineGray,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -698,14 +814,24 @@ class _ActivityScreenState extends State<ActivityScreen> {
               const SizedBox(height: 16),
               const Text(
                 'Urutkan Aktivitas',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: WarnaAplikasi.primaryDark,
+                ),
               ),
               const SizedBox(height: 8),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Terbaru', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                title: const Text(
+                  'Terbaru',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                ),
                 trailing: _selectedSort == 'Terbaru'
-                    ? const Icon(Icons.check_circle_rounded, color: WarnaAplikasi.primary)
+                    ? const Icon(
+                        Icons.check_circle_rounded,
+                        color: WarnaAplikasi.primary,
+                      )
                     : null,
                 onTap: () {
                   setState(() => _selectedSort = 'Terbaru');
@@ -714,9 +840,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Terlama', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                title: const Text(
+                  'Terlama',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                ),
                 trailing: _selectedSort == 'Terlama'
-                    ? const Icon(Icons.check_circle_rounded, color: WarnaAplikasi.primary)
+                    ? const Icon(
+                        Icons.check_circle_rounded,
+                        color: WarnaAplikasi.primary,
+                      )
                     : null,
                 onTap: () {
                   setState(() => _selectedSort = 'Terlama');
@@ -756,7 +888,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD4E0D7),
+                        color: WarnaAplikasi.outlineGray,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -774,11 +906,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: item.condition == PlantCondition.sehat
-                              ? const Color(0xFFE5F6EA)
-                              : const Color(0xFFFFF3E0),
+                              ? WarnaAplikasi.bgSuccessLight
+                              : WarnaAplikasi.statusTempoBg,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -797,44 +932,66 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   const SizedBox(height: 4),
                   Text(
                     item.cropName,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF718679), fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: WarnaAplikasi.textGrayGreen,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Information Box
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAF9),
+                      color: WarnaAplikasi.bgInput,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE8EFEA)),
+                      border: Border.all(color: WarnaAplikasi.borderPale),
                     ),
                     child: Column(
                       children: [
                         _buildDetailRow('Petak Lahan', item.location),
-                        const Divider(height: 14, color: Color(0xFFEBF0EC)),
+                        const Divider(height: 14, color: WarnaAplikasi.divider),
                         _buildDetailRow('Luas & Varietas', item.blockArea),
-                        const Divider(height: 14, color: Color(0xFFEBF0EC)),
-                        _buildDetailRow('Waktu Catat', '${item.date}, ${item.time}'),
-                        const Divider(height: 14, color: Color(0xFFEBF0EC)),
-                        _buildDetailRow('Fase Pertumbuhan', 'Hari Ke-${item.dayNumber ?? 45}'),
+                        const Divider(height: 14, color: WarnaAplikasi.divider),
+                        _buildDetailRow(
+                          'Waktu Catat',
+                          '${item.date}, ${item.time}',
+                        ),
+                        const Divider(height: 14, color: WarnaAplikasi.divider),
+                        _buildDetailRow(
+                          'Fase Pertumbuhan',
+                          'Hari Ke-${item.dayNumber ?? 45}',
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'Catatan Lapangan',
-                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primaryDark),
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: WarnaAplikasi.primaryDark,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     item.notes,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563), height: 1.5),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: WarnaAplikasi.dialogText,
+                      height: 1.5,
+                    ),
                   ),
                   if (item.imageUrl != null) ...[
                     const SizedBox(height: 16),
                     const Text(
                       'Dokumentasi Foto',
-                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primaryDark),
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: WarnaAplikasi.primaryDark,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ClipRRect(
@@ -860,7 +1017,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           label: const Text('Edit Aktivitas'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: WarnaAplikasi.primary,
-                            side: const BorderSide(color: WarnaAplikasi.primary),
+                            side: const BorderSide(
+                              color: WarnaAplikasi.primary,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -880,7 +1039,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
+                          child: const Text(
+                            'Tutup',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                     ],
@@ -898,12 +1060,22 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF718679))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: WarnaAplikasi.textGrayGreen,
+          ),
+        ),
         Flexible(
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: WarnaAplikasi.primaryDark),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: WarnaAplikasi.primaryDark,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -911,4 +1083,3 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 }
-

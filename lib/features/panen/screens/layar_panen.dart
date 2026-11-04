@@ -302,7 +302,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                             : FontWeight.w500,
                                         color: isSelected
                                             ? Colors.white
-                                            : const Color(0xFF4A6252),
+                                            : WarnaAplikasi.grayGreenDark,
                                       ),
                                     ),
                                   ),
@@ -371,14 +371,14 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                     _selectedSort,
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF5D7364),
+                                      color: WarnaAplikasi.textGrayGreen,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   const Icon(
                                     Icons.keyboard_arrow_down_rounded,
                                     size: 16,
-                                    color: Color(0xFF5D7364),
+                                    color: WarnaAplikasi.textGrayGreen,
                                   ),
                                 ],
                               ),
@@ -403,7 +403,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                   Icon(
                                     Icons.inbox_outlined,
                                     size: 48,
-                                    color: Color(0xFFADC4B5),
+                                    color: WarnaAplikasi.iconGrayGreenDark,
                                   ),
                                   SizedBox(height: 8),
                                   Text(

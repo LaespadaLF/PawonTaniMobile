@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 
@@ -32,20 +33,9 @@ class _EditLandScreenState extends State<EditLandScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: WarnaAplikasi.primaryDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Edit Informasi Lahan', style: TextStyle(fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark, fontSize: 18)),
-            Text('Perbarui data spesifikasi dan kondisi petak garapanmu.', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGray)),
-          ],
-        ),
+      appBar: const PawonFormHeader(
+        title: 'Edit Informasi Lahan',
+        subtitle: 'Perbarui data spesifikasi dan kondisi petak garapanmu',
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -68,14 +58,14 @@ class _EditLandScreenState extends State<EditLandScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('MODE PENYUNTINGAN LAHAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFBFE0CD))),
+                          const Text('MODE PENYUNTINGAN LAHAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.borderField)),
                           Text('${widget.item.nama} | ID: LHN-SKM-04', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFF5D876C), borderRadius: BorderRadius.circular(16)),
+                      decoration: BoxDecoration(color: WarnaAplikasi.primaryDark, borderRadius: BorderRadius.circular(16)),
                       child: const Text('Aktif', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                     )
                   ],
@@ -193,7 +183,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: WarnaAplikasi.greenLight,
-                  border: Border.all(color: const Color(0xFFBFE0CD)),
+                  border: Border.all(color: WarnaAplikasi.borderField),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -452,7 +442,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: CustomPaint(
-                  painter: _DashedRectPainter(color: const Color(0xFFBFE0CD)),
+                  painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -475,7 +465,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                     Icon(Icons.info, color: WarnaAplikasi.primaryLight, size: 20),
                     SizedBox(width: 12),
                     Expanded(
-                      child: Text('Perubahan luas dan titik GPS akan diselaraskan dengan data kelompok tani serta buku saku digital PPL wilayah Sukamaju.', style: TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                      child: Text('Perubahan luas dan titik GPS akan diselaraskan dengan data kelompok tani serta buku saku digital PPL wilayah Sukamaju.', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen)),
                     ),
                   ],
                 ),
@@ -493,7 +483,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         side: const BorderSide(color: WarnaAplikasi.border),
-                        backgroundColor: const Color(0xFFF8FAFC),
+                        backgroundColor: WarnaAplikasi.bgInput,
                       ),
                       child: const Text('Batal', style: TextStyle(color: WarnaAplikasi.primaryDark, fontWeight: FontWeight.bold)),
                     ),
@@ -512,11 +502,11 @@ class _EditLandScreenState extends State<EditLandScreen> {
                       icon: const Icon(Icons.check, color: Colors.white, size: 18),
                       label: const Text('Simpan Perubahan Lahan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.primaryLight,
+                        backgroundColor: WarnaAplikasi.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         elevation: 0,
-                      ),
+                        ),
                     ),
                   ),
                 ],

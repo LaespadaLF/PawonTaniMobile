@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart';
 import 'package:pawon_mobile/features/aktivitas/widgets/dialog_sukses_aktivitas.dart';
@@ -108,89 +109,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: WarnaAplikasi.primaryDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
-              'Catat Aktivitas',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: WarnaAplikasi.primaryDark,
-              ),
-            ),
-            Text(
-              'Dokumentasikan aktivitas dan kondisi lahan Anda',
-              style: TextStyle(
-                fontSize: 11,
-                color: Color(0xFF718679),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          // Notification & Profile
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE8EFEA)),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(Icons.notifications_none_rounded, size: 19, color: WarnaAplikasi.primaryDark),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEF4444),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE8EFEA)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Image.network(
-              'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: WarnaAplikasi.primary,
-                child: const Icon(Icons.person, color: Colors.white, size: 20),
-              ),
-            ),
-          ),
-        ],
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFEBF0EC)),
-        ),
+      appBar: const PawonFormHeader(
+        title: 'Catat Aktivitas',
+        subtitle: 'Dokumentasikan aktivitas dan kondisi lahan Anda',
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -211,7 +132,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD3E8D8),
+                      color: WarnaAplikasi.bannerIconBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -238,7 +159,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                           'Dokumentasikan aktivitas harian untuk mempermudah pemantauan tanaman.',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF4B6653),
+                            color: WarnaAplikasi.textDarkGrayGreen,
                             height: 1.3,
                           ),
                         ),
@@ -261,7 +182,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2EBE5)),
+                  border: Border.all(color: WarnaAplikasi.borderField),
                 ),
                 child: Row(
                   children: [
@@ -296,7 +217,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                             _selectedLahanDetail,
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF718679),
+                              color: WarnaAplikasi.textGrayGreen,
                             ),
                           ),
                         ],
@@ -304,7 +225,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     ),
                     const Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF718679),
+                      color: WarnaAplikasi.textGrayGreen,
                       size: 22,
                     ),
                   ],
@@ -328,7 +249,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2EBE5)),
+                        border: Border.all(color: WarnaAplikasi.borderField),
                       ),
                       child: Row(
                         children: [
@@ -344,7 +265,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                               ),
                             ),
                           ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF718679)),
+                          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: WarnaAplikasi.textGrayGreen),
                         ],
                       ),
                     ),
@@ -361,7 +282,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2EBE5)),
+                        border: Border.all(color: WarnaAplikasi.borderField),
                       ),
                       child: Row(
                         children: [
@@ -377,7 +298,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                               ),
                             ),
                           ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF718679)),
+                          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: WarnaAplikasi.textGrayGreen),
                         ],
                       ),
                     ),
@@ -407,12 +328,12 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                   labelStyle: TextStyle(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : const Color(0xFF4B5563),
+                    color: isSelected ? Colors.white : WarnaAplikasi.dialogText,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
-                      color: isSelected ? WarnaAplikasi.primary : const Color(0xFFE2EBE5),
+                      color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
                     ),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -428,7 +349,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
               condition: PlantCondition.sehat,
               icon: Icons.spa_rounded,
               iconColor: WarnaAplikasi.primary,
-              iconBg: const Color(0xFFE5F6EA),
+              iconBg: WarnaAplikasi.bgSuccessLight,
               title: 'Sehat',
               subtitle: 'Pertumbuhan normal dan daun hijau segar.',
             ),
@@ -437,7 +358,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
               condition: PlantCondition.perluPerhatian,
               icon: Icons.warning_amber_rounded,
               iconColor: WarnaAplikasi.warningOrange,
-              iconBg: const Color(0xFFFFF3E0),
+              iconBg: WarnaAplikasi.statusTempoBg,
               title: 'Perlu Perhatian',
               subtitle: 'Ada gejala kekeringan atau daun mulai menguning.',
             ),
@@ -445,8 +366,8 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
             _buildConditionOption(
               condition: PlantCondition.terserangHama,
               icon: Icons.bug_report_outlined,
-              iconColor: const Color(0xFFDC2626),
-              iconBg: const Color(0xFFFEE2E2),
+              iconColor: WarnaAplikasi.errorRedDark,
+              iconBg: WarnaAplikasi.errorRedLight,
               title: 'Terserang Hama/Penyakit',
               subtitle: 'Ditemukan gejala serangan hama wereng/ulat/jamur.',
             ),
@@ -462,7 +383,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                   builder: (context, value, child) {
                     return Text(
                       '${value.text.length}/250',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF718679)),
+                      style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
                     );
                   },
                 ),
@@ -473,7 +394,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2EBE5)),
+                border: Border.all(color: WarnaAplikasi.borderField),
               ),
               child: TextField(
                 controller: _notesController,
@@ -483,7 +404,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 decoration: const InputDecoration(
                   counterText: '',
                   hintText: 'Contoh: Pemupukan susulan dengan dosis NPK Phonska...',
-                  hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFFA0B3A6)),
+                  hintStyle: TextStyle(fontSize: 12.5, color: WarnaAplikasi.iconGray),
                   contentPadding: EdgeInsets.all(14),
                   border: InputBorder.none,
                 ),
@@ -515,7 +436,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFC7DDD0),
+                    color: WarnaAplikasi.photoUploadBorder,
                     width: 1.2,
                   ),
                 ),
@@ -546,7 +467,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     const SizedBox(height: 2),
                     const Text(
                       'JPG, PNG maks 10MB',
-                      style: TextStyle(fontSize: 10.5, color: Color(0xFF718679)),
+                      style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -556,7 +477,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                         SizedBox(width: 4),
                         Text(
                           'Bantu sistem memantau kondisi petak lahan',
-                          style: TextStyle(fontSize: 10.5, color: Color(0xFF718679)),
+                          style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
                         ),
                       ],
                     ),
@@ -576,8 +497,8 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF4B5563),
-                        side: const BorderSide(color: Color(0xFFD4E0D7)),
+                        foregroundColor: WarnaAplikasi.dialogText,
+                        side: const BorderSide(color: WarnaAplikasi.outlineGray),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -657,7 +578,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? WarnaAplikasi.primary : const Color(0xFFE2EBE5),
+            color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.iconGray,
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: const [
@@ -697,7 +618,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     subtitle,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF718679),
+                      color: WarnaAplikasi.textGrayGreen,
                     ),
                   ),
                 ],
@@ -710,7 +631,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? WarnaAplikasi.primary : const Color(0xFFB0C2B5),
+                  color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.iconGray,
                   width: 2,
                 ),
               ),
@@ -752,7 +673,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4E0D7),
+                    color: WarnaAplikasi.outlineGray,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -776,7 +697,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                     child: const Icon(Icons.holiday_village_outlined, color: WarnaAplikasi.primary),
                   ),
                   title: Text(lahan['name']!, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                  subtitle: Text(lahan['detail']!, style: const TextStyle(fontSize: 11.5, color: Color(0xFF718679))),
+                  subtitle: Text(lahan['detail']!, style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayGreen)),
                   trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: WarnaAplikasi.primary) : null,
                   onTap: () {
                     setState(() {

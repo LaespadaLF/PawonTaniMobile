@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 
 class FarmerBannerCard extends StatelessWidget {
   final VoidCallback? onTap;
@@ -260,7 +261,7 @@ class FarmerBannerCard extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.wb_sunny_rounded,
-                color: Color(0xFFFBBF24),
+                color: WarnaAplikasi.hppAmberBg,
                 size: 21,
               ),
             ),
@@ -271,7 +272,7 @@ class FarmerBannerCard extends StatelessWidget {
             bottom: 0,
             child: Icon(
               Icons.cloud_rounded,
-              color: Color(0xFFBAE6FD),
+              color: WarnaAplikasi.bgPaleGreen,
               size: 20,
             ),
           ),

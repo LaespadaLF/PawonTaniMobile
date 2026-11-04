@@ -14,7 +14,7 @@ class PartnershipCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFEDF7F1),
+          color: WarnaAplikasi.bgLightGreen2,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: WarnaAplikasi.greenPill,
@@ -29,12 +29,12 @@ class PartnershipCard extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFD8EFE0),
+                color: WarnaAplikasi.bgSuccessLight2,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.eco_rounded,
-                color: Color(0xFF245738),
+                color: WarnaAplikasi.primaryDark,
                 size: 20,
               ),
             ),
@@ -60,7 +60,7 @@ class PartnershipCard extends StatelessWidget {
                     text: const TextSpan(
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF5E7567),
+                        color: WarnaAplikasi.textGrayGreen,
                         height: 1.35,
                       ),
                       children: [
@@ -69,7 +69,7 @@ class PartnershipCard extends StatelessWidget {
                           text: 'terverifikasi otomatis',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E3325),
+                            color: WarnaAplikasi.primaryDark,
                           ),
                         ),
                         TextSpan(
@@ -86,7 +86,7 @@ class PartnershipCard extends StatelessWidget {
             // Right Chevron
             const Icon(
               Icons.chevron_right_rounded,
-              color: Color(0xFF869E90),
+              color: WarnaAplikasi.iconGrayGreenDark,
               size: 20,
             ),
           ],

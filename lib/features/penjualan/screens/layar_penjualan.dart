@@ -17,13 +17,13 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   int _selectedTabIndex = 0;
 
   static const Color _primaryGreen = WarnaAplikasi.primary;
-  static const Color _textDark = Color(0xFF0F2018);
-  static const Color _textMedium = Color(0xFF3D5C49);
-  static const Color _textLight = Color(0xFF6B8572);
-  static const Color _bgPage = Color(0xFFF4F7F5);
+  static const Color _textDark = WarnaAplikasi.textDark;
+  static const Color _textMedium = WarnaAplikasi.textMedium;
+  static const Color _textLight = WarnaAplikasi.textLight;
+  static const Color _bgPage = WarnaAplikasi.primaryBackground;
   static const Color _cardBg = Colors.white;
-  static const Color _borderColor = Color(0xFFE2EDE5);
-  static const Color _lightGreenBg = Color(0xFFEDF7F0);
+  static const Color _borderColor = WarnaAplikasi.border;
+  static const Color _lightGreenBg = WarnaAplikasi.bgLightGreen;
 
   late List<SaleItem> _allItems;
 
@@ -130,12 +130,74 @@ class _PenjualanScreenState extends State<PenjualanScreen>
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Page Title & Subtitle (Harmonized with Panen & Lahan)
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(18, 12, 18, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Data Penjualan',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: WarnaAplikasi.primaryDark,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Kelola dan pantau hasil penjualan komoditas Anda',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: WarnaAplikasi.textGray,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     _buildSummaryBanner(),
                     const SizedBox(height: 14),
                     _buildAddButton(context),
                     const SizedBox(height: 16),
                     _buildTabFilter(),
+                    const SizedBox(height: 16),
+                    // Section Header: "Daftar Transaksi" & Sort (Harmonized with Panen & Lahan)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text(
+                            'Daftar Transaksi',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: WarnaAplikasi.primaryDark,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                'Terbaru',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: WarnaAplikasi.textGray,
+                                ),
+                              ),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16,
+                                color: WarnaAplikasi.textGray,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     ..._filteredItems
                         .map((item) => _buildTransactionCard(context, item)),
@@ -158,96 +220,101 @@ class _PenjualanScreenState extends State<PenjualanScreen>
 
   Widget _buildSummaryBanner() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A3828), WarnaAplikasi.primary, Color(0xFF2D6040)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: WarnaAplikasi.bgSuccessPale,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-              color: WarnaAplikasi.primary.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6))
-        ],
+        border: Border.all(
+          color: WarnaAplikasi.greenPill,
+          width: 1,
+        ),
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -20,
-            top: -30,
-            child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.04))),
+            right: 12,
+            top: 20,
+            bottom: 20,
+            width: 90,
+            child: Opacity(
+              opacity: 0.6,
+              child: CustomPaint(
+                painter: DecorativeLeavesPainter(),
+              ),
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.13),
-                          borderRadius: BorderRadius.circular(8)),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.trending_up_rounded,
-                              color: Colors.white70, size: 12),
-                          SizedBox(width: 4),
-                          Text('TOTAL PENJUALAN MUSIM INI',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white70,
-                                  letterSpacing: 0.5)),
-                        ],
+                    const Text(
+                      'TOTAL PENJUALAN MUSIM INI',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: WarnaAplikasi.textGrayGreenMedium,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                          color: const Color(0xFF4CAF50).withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(8)),
+                        color: WarnaAplikasi.seasonBadgeBg,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: WarnaAplikasi.seasonBadgeBorder,
+                          width: 0.8,
+                        ),
+                      ),
                       child: const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.arrow_upward_rounded,
-                              color: Color(0xFF81C784), size: 10),
-                          SizedBox(width: 3),
-                          Text('+18% Musim Lalu',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF81C784))),
+                          Icon(
+                            Icons.trending_up_rounded,
+                            size: 13,
+                            color: WarnaAplikasi.primary,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            '+18% Musim Lalu',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: WarnaAplikasi.primary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Text('Rp 34.250.000',
-                    style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -1)),
+                const Text(
+                  'Rp 34.250.000',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: WarnaAplikasi.primaryDark,
+                    letterSpacing: -0.8,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 const Text(
-                    'Tercatat dari 3 transaksi tuntas & 1 tempo aktif',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white60,
-                        fontWeight: FontWeight.w500)),
+                  'Tercatat dari 3 transaksi tuntas & 1 tempo aktif',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: WarnaAplikasi.textGray,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
@@ -261,18 +328,18 @@ class _PenjualanScreenState extends State<PenjualanScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SizedBox(
         width: double.infinity,
-        height: 50,
+        height: 48,
         child: ElevatedButton(
           onPressed: () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const AddSaleScreen()));
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1A3828),
+            backgroundColor: WarnaAplikasi.primary,
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(24)),
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -387,7 +454,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 ],
               ),
               const SizedBox(height: 10),
-              const Divider(color: Color(0xFFEDF2EF), height: 1, thickness: 1),
+              const Divider(color: WarnaAplikasi.divider, height: 1, thickness: 1),
               const SizedBox(height: 10),
               if (item.status == SaleStatus.tempoAktif)
                 _buildTempoContent(item)
@@ -435,7 +502,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
           ],
         ),
         const SizedBox(height: 10),
-        const Divider(color: Color(0xFFEDF2EF), height: 1),
+        const Divider(color: WarnaAplikasi.divider, height: 1),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -526,7 +593,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFD84315))),
+                        color: WarnaAplikasi.statusSisaTempoText)),
               ]),
             ),
           ],
@@ -551,14 +618,14 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 Text('Jatuh Tempo: ${_formatDate(item.dueDateTempo!)}',
                     style: const TextStyle(
                         fontSize: 10,
-                        color: Color(0xFFD84315),
+                        color: WarnaAplikasi.statusSisaTempoText,
                         fontWeight: FontWeight.w700)),
               ],
             ),
           ],
         ),
         const SizedBox(height: 10),
-        const Divider(color: Color(0xFFEDF2EF), height: 1),
+        const Divider(color: WarnaAplikasi.divider, height: 1),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -578,29 +645,29 @@ class _PenjualanScreenState extends State<PenjualanScreen>
           padding:
               const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF8E1),
+            color: WarnaAplikasi.hppAmberBg,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: const Color(0xFFFFCC02).withValues(alpha: 0.5)),
+                color: WarnaAplikasi.hppAmberBorder),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.warning_amber_rounded,
-                  size: 14, color: Color(0xFFF57F17)),
+                  size: 14, color: WarnaAplikasi.hppAmberText),
               const SizedBox(width: 6),
               const Text('Kelola Sisa Tagihan',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFF57F17))),
+                      color: WarnaAplikasi.hppAmberText)),
               const SizedBox(width: 6),
               Text(
                   '\u25cf Rp ${_formatNum(item.remainingAmount.toInt())}',
                   style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFD84315))),
+                      color: WarnaAplikasi.statusSisaTempoText)),
             ],
           ),
         ),
@@ -644,7 +711,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -695,7 +762,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: WarnaAplikasi.statusLunasBg,
                         borderRadius: BorderRadius.circular(8)),
                     child: const Text('Perbarui',
                         style: TextStyle(
@@ -737,8 +804,8 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                   color: isStable
                       ? _textLight
                       : isUp
-                          ? const Color(0xFF2E7D32)
-                          : const Color(0xFFD84315))),
+                          ? WarnaAplikasi.statusLunasText
+                          : WarnaAplikasi.statusSisaTempoText)),
         ],
       ),
     );
@@ -750,26 +817,26 @@ class _PenjualanScreenState extends State<PenjualanScreen>
     String label;
     switch (status) {
       case SaleStatus.lunas:
-        bg = const Color(0xFFE8F5E9);
-        textColor = const Color(0xFF2E7D32);
+        bg = WarnaAplikasi.statusLunasBg;
+        textColor = WarnaAplikasi.statusLunasText;
         icon = Icons.check_circle_outline_rounded;
         label = 'Lunas';
         break;
       case SaleStatus.tempoAktif:
-        bg = const Color(0xFFFFF3E0);
-        textColor = const Color(0xFFE65100);
+        bg = WarnaAplikasi.statusTempoBg;
+        textColor = WarnaAplikasi.statusTempoText;
         icon = Icons.access_time_rounded;
         label = 'Tempo Aktif';
         break;
       case SaleStatus.uangMuka:
-        bg = const Color(0xFFE3F2FD);
-        textColor = const Color(0xFF1565C0);
+        bg = WarnaAplikasi.statusUangMukaBg;
+        textColor = WarnaAplikasi.statusUangMukaText;
         icon = Icons.payment_rounded;
         label = 'Uang Muka';
         break;
       case SaleStatus.prosesVerifikasi:
-        bg = const Color(0xFFF3E5F5);
-        textColor = const Color(0xFF6A1B9A);
+        bg = WarnaAplikasi.statusVerifikasiBg;
+        textColor = WarnaAplikasi.statusVerifikasiText;
         icon = Icons.pending_rounded;
         label = 'Proses Verifikasi';
         break;
@@ -801,14 +868,14 @@ class _PenjualanScreenState extends State<PenjualanScreen>
       case CommodityType.gabahKeringPanen:
       case CommodityType.gabahKeringGiling:
         icon = Icons.grain_rounded;
-        color = const Color(0xFF6D4C41);
-        bgColor = const Color(0xFFFBEFE3);
+        color = WarnaAplikasi.commodityGabah;
+        bgColor = WarnaAplikasi.commodityGabahBg;
         break;
       case CommodityType.jagungManisPipil:
       case CommodityType.jagungManisTongkol:
         icon = Icons.spa_rounded;
-        color = const Color(0xFFF9A825);
-        bgColor = const Color(0xFFFFF8E1);
+        color = WarnaAplikasi.commodityJagung;
+        bgColor = WarnaAplikasi.hppAmberBg;
         break;
       case CommodityType.padiIr64:
         icon = Icons.grain_rounded;

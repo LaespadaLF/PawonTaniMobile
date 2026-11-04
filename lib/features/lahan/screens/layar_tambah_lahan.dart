@@ -1,5 +1,6 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 
 class AddLandScreen extends StatefulWidget {
@@ -22,17 +23,9 @@ class _AddLandScreenState extends State<AddLandScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: WarnaAplikasi.primaryDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Tambah Lahan',
-          style: TextStyle(fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark, fontSize: 18),
-        ),
+      appBar: const PawonFormHeader(
+        title: 'Tambah Lahan',
+        subtitle: 'Daftarkan petak garapanmu untuk pemantauan',
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -40,11 +33,7 @@ class _AddLandScreenState extends State<AddLandScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Daftarkan petak garapanmu untuk memudahkan pemantauan tanaman.',
-                style: TextStyle(fontSize: 13, color: WarnaAplikasi.textGray),
-              ),
-              const SizedBox(height: 24),
+              
               const Text('Informasi Lahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
               const SizedBox(height: 16),
               
@@ -285,11 +274,11 @@ class _AddLandScreenState extends State<AddLandScreen> {
                     child: Container(
                       height: 100,
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFBFE0CD), style: BorderStyle.none),
+                        border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: CustomPaint(
-                        painter: _DashedRectPainter(color: const Color(0xFFBFE0CD)),
+                        painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -409,11 +398,11 @@ class _AddLandScreenState extends State<AddLandScreen> {
                       icon: const Icon(Icons.save_outlined, color: Colors.white, size: 18),
                       label: const Text('Simpan Data Lahan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.primaryLight,
+                        backgroundColor: WarnaAplikasi.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         elevation: 0,
-                      ),
+                        ),
                     ),
                   ),
                 ],

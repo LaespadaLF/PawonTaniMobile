@@ -21,12 +21,12 @@ class HarvestCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE8EFEA),
+          color: WarnaAplikasi.borderPale,
           width: 1,
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: WarnaAplikasi.shadowSubtle,
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -60,7 +60,7 @@ class HarvestCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF15261B),
+                              color: WarnaAplikasi.nearBlack,
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -69,7 +69,7 @@ class HarvestCard extends StatelessWidget {
                             item.subtitle,
                             style: const TextStyle(
                               fontSize: 11.5,
-                              color: Color(0xFF6B7F72),
+                              color: WarnaAplikasi.textGrayGreenSoft,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
@@ -88,14 +88,14 @@ class HarvestCard extends StatelessWidget {
                     const Divider(
                       height: 1,
                       thickness: 0.8,
-                      color: Color(0xFFF0F4F1),
+                      color: WarnaAplikasi.dividerLight,
                     ),
                     Container(
                       color: Colors.white,
                       padding: const EdgeInsets.only(left: 6),
                       child: const Icon(
                         Icons.chevron_right_rounded,
-                        color: Color(0xFF9FB2A6),
+                        color: WarnaAplikasi.grayGreenMuted,
                         size: 18,
                       ),
                     ),
@@ -111,7 +111,7 @@ class HarvestCard extends StatelessWidget {
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.location_on_outlined,
-                        iconColor: const Color(0xFF627B6C),
+                        iconColor: WarnaAplikasi.iconGrayGreenMid,
                         title: item.location,
                         subtitle: item.blockArea,
                       ),
@@ -121,7 +121,7 @@ class HarvestCard extends StatelessWidget {
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.calendar_today_outlined,
-                        iconColor: const Color(0xFF627B6C),
+                        iconColor: WarnaAplikasi.iconGrayGreenMid,
                         title: item.date,
                         subtitle: item.season,
                       ),
@@ -137,8 +137,8 @@ class HarvestCard extends StatelessWidget {
                       child: _buildDetailCell(
                         icon: Icons.scale_outlined,
                         iconColor: item.cropType == CropType.padi
-                            ? const Color(0xFF2E6B46)
-                            : const Color(0xFFE59015),
+                            ? WarnaAplikasi.padiGreen
+                            : WarnaAplikasi.jagungAmber,
                         title: '${_formatNumber(item.weightKg)} Kg',
                         subtitle: '(${item.weightTon.toStringAsFixed(2)} Ton)',
                         isBoldTitle: true,
@@ -149,7 +149,7 @@ class HarvestCard extends StatelessWidget {
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.verified_outlined,
-                        iconColor: const Color(0xFF627B6C),
+                        iconColor: WarnaAplikasi.iconGrayGreenMid,
                         title: item.qualityGrade,
                         subtitle: item.moistureOrNotes,
                       ),
@@ -170,10 +170,10 @@ class HarvestCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF5E6),
+            color: WarnaAplikasi.warningOrangeBgLight,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFFDEB5),
+              color: WarnaAplikasi.warningOrangeBorderLight,
               width: 0.8,
             ),
           ),
@@ -203,10 +203,10 @@ class HarvestCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F6ED),
+            color: WarnaAplikasi.approvedGreenBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFC7EBD2),
+              color: WarnaAplikasi.approvedGreenBorder,
               width: 0.8,
             ),
           ),
@@ -216,7 +216,7 @@ class HarvestCard extends StatelessWidget {
               Icon(
                 Icons.check_rounded,
                 size: 13,
-                color: Color(0xFF1E824C),
+                color: WarnaAplikasi.approvedGreen,
               ),
               SizedBox(width: 4),
               Text(
@@ -224,7 +224,7 @@ class HarvestCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E824C),
+                  color: WarnaAplikasi.approvedGreen,
                 ),
               ),
             ],
@@ -234,10 +234,10 @@ class HarvestCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFFEEEEE),
+            color: WarnaAplikasi.rejectedRedBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFFDCBCB),
+              color: WarnaAplikasi.rejectedRedBorder,
               width: 0.8,
             ),
           ),
@@ -247,7 +247,7 @@ class HarvestCard extends StatelessWidget {
               Icon(
                 Icons.close_rounded,
                 size: 13,
-                color: Color(0xFFDC2626),
+                color: WarnaAplikasi.errorRedDark,
               ),
               SizedBox(width: 4),
               Text(
@@ -255,7 +255,7 @@ class HarvestCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFDC2626),
+                  color: WarnaAplikasi.errorRedDark,
                 ),
               ),
             ],
@@ -292,7 +292,7 @@ class HarvestCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: isBoldTitle ? FontWeight.w700 : FontWeight.w600,
-                  color: const Color(0xFF16281C),
+                  color: WarnaAplikasi.textDarkGreenDeep,
                   letterSpacing: -0.2,
                 ),
                 maxLines: 1,

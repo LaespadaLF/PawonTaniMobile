@@ -108,12 +108,12 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
                         decoration: BoxDecoration(
                           color: _selectedCrop == CropType.padi
                               ? WarnaAplikasi.primary
-                              : const Color(0xFFF3F6F4),
+                              : WarnaAplikasi.bgCropUnselected,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _selectedCrop == CropType.padi
                                 ? WarnaAplikasi.primary
-                                : const Color(0xFFE2EAE4),
+                                : WarnaAplikasi.borderCropUnselected,
                           ),
                         ),
                         child: Row(
@@ -124,7 +124,7 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
                               size: 16,
                               color: _selectedCrop == CropType.padi
                                   ? Colors.white
-                                  : const Color(0xFF3B5243),
+                                  : WarnaAplikasi.textCropUnselected,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -134,7 +134,7 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
                                 fontWeight: FontWeight.w600,
                                 color: _selectedCrop == CropType.padi
                                     ? Colors.white
-                                    : const Color(0xFF3B5243),
+                                    : WarnaAplikasi.textCropUnselected,
                               ),
                             ),
                           ],
@@ -152,12 +152,12 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
                         decoration: BoxDecoration(
                           color: _selectedCrop == CropType.jagung
                               ? WarnaAplikasi.primary
-                              : const Color(0xFFF3F6F4),
+                              : WarnaAplikasi.bgCropUnselected,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _selectedCrop == CropType.jagung
                                 ? WarnaAplikasi.primary
-                                : const Color(0xFFE2EAE4),
+                                : WarnaAplikasi.borderCropUnselected,
                           ),
                         ),
                         child: Row(
@@ -168,7 +168,7 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
                               size: 16,
                               color: _selectedCrop == CropType.jagung
                                   ? Colors.white
-                                  : const Color(0xFF3B5243),
+                                  : WarnaAplikasi.textCropUnselected,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -178,7 +178,7 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
                                 fontWeight: FontWeight.w600,
                                 color: _selectedCrop == CropType.jagung
                                     ? Colors.white
-                                    : const Color(0xFF3B5243),
+                                    : WarnaAplikasi.textCropUnselected,
                               ),
                             ),
                           ],
@@ -338,7 +338,7 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFD6E2D9)),
+        borderSide: const BorderSide(color: WarnaAplikasi.borderInputEnabled),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -349,6 +349,6 @@ class _AddHarvestModalState extends State<AddHarvestModal> {
 }
 
 class ColorBorderSide extends BorderSide {
-  const ColorBorderSide() : super(color: const Color(0xFFD6E2D9));
+  const ColorBorderSide() : super(color: WarnaAplikasi.borderInputEnabled);
 }
 

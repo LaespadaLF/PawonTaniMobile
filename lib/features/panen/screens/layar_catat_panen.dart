@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/core/widgets/dialog_sukses_simpan.dart';
@@ -159,7 +160,10 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
         child: Column(
           children: [
             // Top App Bar
-            _buildAppBar(),
+            const PawonFormHeader(
+              title: 'Catat Panen',
+              subtitle: 'Formulir hasil panen',
+            ),
 
             // Form Body
             Expanded(
@@ -226,64 +230,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     );
   }
 
-  Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFEFF3F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.greenLight,
-                borderRadius: BorderRadius.circular(19),
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: WarnaAplikasi.primary,
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Catat Panen',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF15261B),
-                  letterSpacing: -0.3,
-                ),
-              ),
-              SizedBox(height: 1),
-              Text(
-                'Formulir hasil panen',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF708577),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionHeader() {
     return Column(
@@ -318,7 +264,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B2C20),
+            color: WarnaAplikasi.nearBlack,
           ),
         ),
         if (isRequired)
@@ -327,7 +273,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFFDC2626),
+              color: WarnaAplikasi.errorRedDark,
             ),
           ),
       ],
@@ -360,7 +306,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF15261B),
+                        color: WarnaAplikasi.textDarkGreen,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -403,7 +349,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2EBE5)),
+              border: Border.all(color: WarnaAplikasi.borderField),
             ),
             child: Row(
               children: [
@@ -411,12 +357,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5F4EA),
+                    color: WarnaAplikasi.bgSuccessLight2,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.eco_rounded,
-                    color: Color(0xFF2E6A44),
+                    color: WarnaAplikasi.primaryDark,
                     size: 20,
                   ),
                 ),
@@ -430,7 +376,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                         style: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF15261B),
+                          color: WarnaAplikasi.textDarkGreen,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -446,7 +392,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                 ),
                 const Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF708577),
+                  color: WarnaAplikasi.textGrayGreen,
                   size: 22,
                 ),
               ],
@@ -460,7 +406,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDF7F1),
+                  color: WarnaAplikasi.bgPaleGreen2,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: WarnaAplikasi.greenPill),
                 ),
@@ -488,7 +434,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1B2C20),
+                              color: WarnaAplikasi.nearBlack,
                             ),
                           ),
                         ],
@@ -503,7 +449,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDF7F1),
+                  color: WarnaAplikasi.bgPaleGreen2,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: WarnaAplikasi.greenPill),
                 ),
@@ -531,7 +477,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1B2C20),
+                              color: WarnaAplikasi.nearBlack,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -574,7 +520,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2EBE5)),
+              border: Border.all(color: WarnaAplikasi.borderField),
             ),
             child: Row(
               children: [
@@ -582,14 +528,14 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5F4EA),
+                    color: WarnaAplikasi.bgSuccessLight2,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     _cropType == CropType.padi
                         ? Icons.grass_rounded
                         : Icons.bolt_rounded,
-                    color: const Color(0xFF2E6A44),
+                    color: WarnaAplikasi.primaryDark,
                     size: 20,
                   ),
                 ),
@@ -600,13 +546,13 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF15261B),
+                      color: WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ),
                 const Icon(
                   Icons.chevron_right_rounded,
-                  color: Color(0xFF869E90),
+                  color: WarnaAplikasi.iconGrayGreenDark,
                   size: 22,
                 ),
               ],
@@ -659,7 +605,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2EBE5)),
+              border: Border.all(color: WarnaAplikasi.borderField),
             ),
             child: Row(
               children: [
@@ -675,13 +621,13 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     style: const TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF15261B),
+                      color: WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ),
                 const Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF708577),
+                  color: WarnaAplikasi.textGrayGreen,
                   size: 22,
                 ),
               ],
@@ -706,7 +652,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2EBE5)),
+            border: Border.all(color: WarnaAplikasi.borderField),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -723,7 +669,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                       style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A3826),
+                        color: WarnaAplikasi.primaryDark,
                         letterSpacing: -0.5,
                       ),
                       decoration: const InputDecoration(
@@ -737,9 +683,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F6F4),
+                      color: WarnaAplikasi.bgPaleGreen3,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE0E7E2)),
+                      border: Border.all(color: WarnaAplikasi.borderPale2),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -749,14 +695,14 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF43584B),
+                            color: WarnaAplikasi.grayGreenDark,
                           ),
                         ),
                         const SizedBox(width: 2),
                         const Icon(
                           Icons.keyboard_arrow_down_rounded,
                           size: 16,
-                          color: Color(0xFF43584B),
+                          color: WarnaAplikasi.grayGreenDark,
                         ),
                       ],
                     ),
@@ -769,7 +715,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2F6F3),
+                  color: WarnaAplikasi.borderField,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -811,7 +757,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                                   : FontWeight.w500,
                               color: isSelected
                                   ? Colors.white
-                                  : const Color(0xFF556C5E),
+                                  : WarnaAplikasi.grayGreenDark,
                             ),
                           ),
                         ),
@@ -828,14 +774,14 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   const Icon(
                     Icons.balance_outlined,
                     size: 13,
-                    color: Color(0xFF708577),
+                    color: WarnaAplikasi.textGrayGreen,
                   ),
                   const SizedBox(width: 5),
                   Text(
                     'Setara dengan ${_currentTon.toStringAsFixed(2).replaceAll('.', ',')} Ton (${_currentKuintal.toStringAsFixed(1).replaceAll('.', ',')} Kuintal)',
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF708577),
+                      color: WarnaAplikasi.textGrayGreen,
                     ),
                   ),
                 ],
@@ -883,12 +829,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFF6FAF7) : Colors.white,
+                  color: isSelected ? WarnaAplikasi.bgPaleGreen2 : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
                         ? WarnaAplikasi.primary
-                        : const Color(0xFFE2EBE5),
+                        : WarnaAplikasi.borderField,
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -901,7 +847,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                           : Icons.radio_button_unchecked_rounded,
                       color: isSelected
                           ? WarnaAplikasi.primary
-                          : const Color(0xFF9FB2A6),
+                          : WarnaAplikasi.grayGreenMuted,
                       size: 20,
                     ),
                     const SizedBox(width: 10),
@@ -914,7 +860,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF15261B),
+                              color: WarnaAplikasi.textDarkGreen,
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -964,7 +910,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     border: Border.all(
                       color: _selectedHarvestMethod == 0
                           ? WarnaAplikasi.primary
-                          : const Color(0xFFE2EBE5),
+                          : WarnaAplikasi.borderField,
                     ),
                   ),
                   child: Column(
@@ -985,7 +931,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                           fontWeight: FontWeight.w700,
                           color: _selectedHarvestMethod == 0
                               ? Colors.white
-                              : const Color(0xFF15261B),
+                              : WarnaAplikasi.textDarkGreen,
                           height: 1.2,
                         ),
                       ),
@@ -995,8 +941,8 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                         style: TextStyle(
                           fontSize: 9.5,
                           color: _selectedHarvestMethod == 0
-                              ? const Color(0xFFC7EBD2)
-                              : const Color(0xFF708577),
+                              ? WarnaAplikasi.successPaleGreen
+                              : WarnaAplikasi.textGrayGreen,
                         ),
                       ),
                     ],
@@ -1022,7 +968,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     border: Border.all(
                       color: _selectedHarvestMethod == 1
                           ? WarnaAplikasi.primary
-                          : const Color(0xFFE2EBE5),
+                          : WarnaAplikasi.borderField,
                     ),
                   ),
                   child: Column(
@@ -1043,7 +989,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                           fontWeight: FontWeight.w700,
                           color: _selectedHarvestMethod == 1
                               ? Colors.white
-                              : const Color(0xFF15261B),
+                              : WarnaAplikasi.textDarkGreen,
                           height: 1.2,
                         ),
                       ),
@@ -1053,8 +999,8 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                         style: TextStyle(
                           fontSize: 9.5,
                           color: _selectedHarvestMethod == 1
-                              ? const Color(0xFFC7EBD2)
-                              : const Color(0xFF708577),
+                              ? WarnaAplikasi.successPaleGreen
+                              : WarnaAplikasi.textGrayGreen,
                         ),
                       ),
                     ],
@@ -1080,12 +1026,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF3F0),
+                color: WarnaAplikasi.surfaceLight,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
                 'Opsional',
-                style: TextStyle(fontSize: 10, color: Color(0xFF708577)),
+                style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayGreen),
               ),
             ),
           ],
@@ -1096,7 +1042,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EBE5)),
+            border: Border.all(color: WarnaAplikasi.borderField),
           ),
           child: Row(
             children: [
@@ -1105,7 +1051,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF15261B),
+                  color: WarnaAplikasi.textDarkGreen,
                 ),
               ),
               Expanded(
@@ -1115,14 +1061,14 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   style: const TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF15261B),
+                    color: WarnaAplikasi.textDarkGreen,
                   ),
                   decoration: const InputDecoration(
                     hintText: 'Masukkan biaya jika ada',
                     hintStyle: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.normal,
-                      color: Color(0xFF9FB2A6),
+                      color: WarnaAplikasi.grayGreenMuted,
                     ),
                     border: InputBorder.none,
                     isDense: true,
@@ -1149,7 +1095,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EBE5)),
+            border: Border.all(color: WarnaAplikasi.borderField),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1159,12 +1105,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                 maxLines: 3,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF15261B),
+                  color: WarnaAplikasi.textDarkGreen,
                   height: 1.4,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'Tulis catatan kondisi cuaca, kendala, dll.',
-                  hintStyle: TextStyle(fontSize: 11, color: Color(0xFF9FB2A6)),
+                  hintStyle: TextStyle(fontSize: 11, color: WarnaAplikasi.grayGreenMuted),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
@@ -1173,7 +1119,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               const SizedBox(height: 4),
               const Text(
                 '78/250',
-                style: TextStyle(fontSize: 10, color: Color(0xFF9FB2A6)),
+                style: TextStyle(fontSize: 10, color: WarnaAplikasi.grayGreenMuted),
               ),
             ],
           ),
@@ -1194,12 +1140,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF3F0),
+                color: WarnaAplikasi.surfaceLight,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
                 'Opsional',
-                style: TextStyle(fontSize: 10, color: Color(0xFF708577)),
+                style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayGreen),
               ),
             ),
           ],
@@ -1207,7 +1153,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
         const SizedBox(height: 2),
         const Text(
           'Unggah foto tumpukan hasil panen atau slip timbangan.',
-          style: TextStyle(fontSize: 11, color: Color(0xFF708577)),
+          style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
         ),
         const SizedBox(height: 10),
         Row(
@@ -1222,7 +1168,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      color: const Color(0xFF8B7355),
+                      color: WarnaAplikasi.commodityGabah,
                       image: const DecorationImage(
                         image: NetworkImage(
                           'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=300&q=80',
@@ -1273,7 +1219,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFC7EBD2),
+                      color: WarnaAplikasi.successPaleGreen,
                       style: BorderStyle.solid,
                     ),
                   ),
@@ -1298,7 +1244,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                         'JPG/PNG maks. 5 MB',
                         style: TextStyle(
                           fontSize: 9.5,
-                          color: Color(0xFF9FB2A6),
+                          color: WarnaAplikasi.grayGreenMuted,
                         ),
                       ),
                     ],
@@ -1317,7 +1263,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDF7F1),
+        color: WarnaAplikasi.bgPaleGreen2,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: WarnaAplikasi.greenPill),
       ),
@@ -1338,7 +1284,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF15261B),
+                    color: WarnaAplikasi.textDarkGreen,
                   ),
                 ),
                 SizedBox(height: 1),
@@ -1355,9 +1301,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF5E6),
+              color: WarnaAplikasi.commodityJagungBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFFDEB5)),
+              border: Border.all(color: WarnaAplikasi.hppAmberBorder),
             ),
             child: const Text(
               'Menunggu Verifikasi',
@@ -1414,9 +1360,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           child: OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF15261B),
+              foregroundColor: WarnaAplikasi.textDarkGreen,
               backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE2EBE5)),
+              side: BorderSide(color: WarnaAplikasi.borderField),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),

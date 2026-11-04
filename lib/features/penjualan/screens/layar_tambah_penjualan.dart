@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_catat_penjualan.dart';
 
@@ -11,13 +12,13 @@ class AddSaleScreen extends StatefulWidget {
 
 class _AddSaleScreenState extends State<AddSaleScreen> {
   static const Color _primaryGreen = WarnaAplikasi.primary;
-  static const Color _textDark = Color(0xFF0F2018);
-  static const Color _textMedium = Color(0xFF3D5C49);
-  static const Color _textLight = Color(0xFF6B8572);
-  static const Color _bgPage = Color(0xFFF4F7F5);
+  static const Color _textDark = WarnaAplikasi.textDark;
+  static const Color _textMedium = WarnaAplikasi.textMedium;
+  static const Color _textLight = WarnaAplikasi.textLight;
+  static const Color _bgPage = WarnaAplikasi.primaryBackground;
   static const Color _cardBg = Colors.white;
-  static const Color _borderColor = Color(0xFFE2EDE5);
-  static const Color _lightGreenBg = Color(0xFFEDF7F0);
+  static const Color _borderColor = WarnaAplikasi.border;
+  static const Color _lightGreenBg = WarnaAplikasi.bgLightGreen;
 
   // Form fields
   String? _selectedCommodity;
@@ -76,7 +77,10 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            const PawonFormHeader(
+                    title: 'Tambah Penjualan',
+                    subtitle: 'Formulir pencatatan penjualan hasil panen',
+                  ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -110,52 +114,13 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(color: const Color(0xFFF2F7F4), borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: _textMedium),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('PAWON TANI', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: _primaryGreen, letterSpacing: 1.2)),
-              Text('Tambah Penjualan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textDark, letterSpacing: -0.2)),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: const Color(0xFFF2F7F4), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.notifications_outlined, size: 18, color: _textMedium),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: const Color(0xFFF2F7F4), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.person_outline_rounded, size: 18, color: _textMedium),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildInfoBanner() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [const Color(0xFFE8F5E9), const Color(0xFFEDF7F0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(colors: [WarnaAplikasi.statusLunasBg, WarnaAplikasi.bgLightGreen2], begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: WarnaAplikasi.greenPill),
       ),
@@ -184,7 +149,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFF9A825), size: 16),
+                Icon(Icons.lightbulb_outline_rounded, color: WarnaAplikasi.commodityJagung, size: 16),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -219,7 +184,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
               ],
             ),
           ),
-          const Divider(color: Color(0xFFEDF2EF), height: 1),
+          const Divider(color: WarnaAplikasi.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -236,7 +201,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isSelected ? _lightGreenBg : const Color(0xFFF7FAF8),
+                        color: isSelected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                             color: isSelected ? _primaryGreen : _borderColor,
@@ -270,7 +235,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 // Harvest reference info
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: const Color(0xFFF7FAF8), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: WarnaAplikasi.surfaceLight, borderRadius: BorderRadius.circular(10)),
                   child: const Row(
                     children: [
                       Icon(Icons.info_outline_rounded, size: 13, color: _textLight),
@@ -326,7 +291,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF7FAF8),
+                    color: WarnaAplikasi.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: _borderColor)),
                 child: Row(
@@ -369,7 +334,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                       margin: const EdgeInsets.only(right: 6),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: label == 'Borong Semua' ? _primaryGreen : const Color(0xFFF7FAF8),
+                        color: label == 'Borong Semua' ? _primaryGreen : WarnaAplikasi.surfaceLight,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: label == 'Borong Semua' ? _primaryGreen : _borderColor),
                       ),
@@ -395,13 +360,13 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             // HPP reference
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(color: const Color(0xFFFFF8E1), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFFFE082))),
+              decoration: BoxDecoration(color: WarnaAplikasi.hppAmberBg, borderRadius: BorderRadius.circular(8), border: Border.all(color: WarnaAplikasi.hppAmberBorder)),
               child: const Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, size: 13, color: Color(0xFFF9A825)),
+                  Icon(Icons.warning_amber_rounded, size: 13, color: WarnaAplikasi.commodityJagung),
                   SizedBox(width: 6),
                   Text('Harga mayoritas: Di atas patok HPP paling yg penting (+18% dari harga dasar) \u{1F44D}',
-                      style: TextStyle(fontSize: 10.5, color: Color(0xFF7B5800))),
+                      style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.hppAmberText)),
                 ],
               ),
             ),
@@ -416,7 +381,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
   Widget _buildInput(String hint, TextEditingController controller, {String? suffix, String? prefix, TextInputType? keyboardType}) {
     return Container(
       decoration: BoxDecoration(
-          color: const Color(0xFFF7FAF8),
+          color: WarnaAplikasi.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _borderColor)),
       child: Row(
@@ -460,7 +425,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1A3828), WarnaAplikasi.primary],
+          colors: [WarnaAplikasi.gradientStart, WarnaAplikasi.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -481,9 +446,9 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: const Color(0xFF81C784).withValues(alpha: 0.25), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: WarnaAplikasi.successGreenBright, borderRadius: BorderRadius.circular(8)),
                 child: const Text('Otomatis Dihitung',
-                    style: TextStyle(fontSize: 10, color: Color(0xFF81C784), fontWeight: FontWeight.w600)),
+                    style: TextStyle(fontSize: 10, color: WarnaAplikasi.successGreenBright, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -550,7 +515,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: selected ? _lightGreenBg : const Color(0xFFF7FAF8),
+                    color: selected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: selected ? _primaryGreen : _borderColor, width: selected ? 1.5 : 1),
                   ),
@@ -626,7 +591,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: const Color(0xFFF7FAF8),
+          color: WarnaAplikasi.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _borderColor)),
       child: Row(
@@ -652,13 +617,13 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             const SizedBox(height: 12),
             // Payment options
             _buildPaymentOption(0, Icons.account_balance_rounded, 'Transfer Bank BRI (Langsung Poktan)',
-                'Dana diterima langsung di Rekening Poktan BRI', const Color(0xFF0077B6)),
+                'Dana diterima langsung di Rekening Poktan BRI', WarnaAplikasi.paymentBRI),
             const SizedBox(height: 8),
             _buildPaymentOption(1, Icons.payments_rounded, 'Tunai / Uang Kontan di Tempat',
-                'Diterima langsung di area Lumbung', const Color(0xFF6D4C41)),
+                'Diterima langsung di area Lumbung', WarnaAplikasi.paymentCash),
             const SizedBox(height: 8),
             _buildPaymentOption(2, Icons.schedule_rounded, 'Tempo / Bayar DP (50% Pelunasan) 1 Minggu',
-                'Sisa dilunaskan setelah batas toleransi', const Color(0xFFE65100)),
+                'Sisa dilunaskan setelah batas toleransi', WarnaAplikasi.paymentTempo),
             const SizedBox(height: 12),
           ],
         ),
@@ -674,7 +639,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? _lightGreenBg : const Color(0xFFF7FAF8),
+          color: selected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: selected ? _primaryGreen : _borderColor, width: selected ? 1.5 : 1),
         ),
@@ -731,7 +696,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
                 width: double.infinity,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAF8),
+                  color: WarnaAplikasi.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _borderColor, style: BorderStyle.solid, width: 1.5),
                 ),
@@ -771,7 +736,7 @@ class _AddSaleScreenState extends State<AddSaleScreen> {
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAF8),
+                  color: WarnaAplikasi.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _borderColor)),
               child: const TextField(

@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_edit_lahan.dart';
@@ -14,49 +15,13 @@ class LandDetailScreen extends StatelessWidget {
     final tagText = isAktif ? 'Aktif Ditanami' : (item.status == StatusLahan.persiapan ? 'Dalam Proses' : 'Masa Olah Tanah');
     final tagColor = isAktif ? WarnaAplikasi.greenPill : WarnaAplikasi.warningOrangeBg;
     final tagTextColor = isAktif ? WarnaAplikasi.greenText : WarnaAplikasi.warningOrange;
-    final dotColor = isAktif ? const Color(0xFF22C55E) : const Color(0xFFF59E0B);
+    final dotColor = isAktif ? WarnaAplikasi.successGreen : WarnaAplikasi.hppAmberBg;
 
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
-      appBar: AppBar(
-        backgroundColor: WarnaAplikasi.primaryBackground,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: WarnaAplikasi.primaryDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Detail Lahan',
-          style: TextStyle(fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark, fontSize: 18),
-        ),
-        actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: WarnaAplikasi.primaryDark),
-                onPressed: () {},
-              ),
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                  constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                  child: const Text('2', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                ),
-              )
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16, left: 4),
-            child: CircleAvatar(
-              radius: 14,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=100&q=80'),
-            ),
-          ),
-        ],
+      appBar: const PawonFormHeader(
+        title: 'Detail Lahan',
+        subtitle: 'Informasi lengkap petak garapan',
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -200,7 +165,7 @@ class LandDetailScreen extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.water_drop_outlined, color: Color(0xFF3B82F6), size: 18),
+                        const Icon(Icons.water_drop_outlined, color: WarnaAplikasi.errorRedBright, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           flex: 2,
@@ -273,9 +238,9 @@ class LandDetailScreen extends StatelessWidget {
                     child: Container(
                       height: 100,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: WarnaAplikasi.bgInput,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFBFE0CD), width: 1.5), // Not exactly dashed here to simplify, using solid border
+                        border: Border.all(color: WarnaAplikasi.borderField, width: 1.5), // Not exactly dashed here to simplify, using solid border
                       ),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -303,7 +268,7 @@ class LandDetailScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _buildRiwayatCard(Icons.inventory_2_outlined, WarnaAplikasi.greenLight, 'Pemupukan', '12 Nov 2024 • 120 kg/Ha'),
               const SizedBox(height: 12),
-              _buildRiwayatCard(Icons.science_outlined, const Color(0xFFEFF6FF), 'Penyemprotan', '04 Nov 2024 • Pencegahan Hama'),
+              _buildRiwayatCard(Icons.science_outlined, WarnaAplikasi.successPaleGreen, 'Penyemprotan', '04 Nov 2024 • Pencegahan Hama'),
               const SizedBox(height: 32),
 
               // Buttons
@@ -331,8 +296,8 @@ class LandDetailScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => EditLandScreen(item: item)),
                     );
                   },
-                  icon: const Icon(Icons.edit_outlined, color: Color(0xFF475569), size: 18),
-                  label: const Text('Edit Informasi Lahan', style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.edit_outlined, color: WarnaAplikasi.textDarkGreen, size: 18),
+                  label: const Text('Edit Informasi Lahan', style: TextStyle(color: WarnaAplikasi.textDarkGreen, fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: WarnaAplikasi.backgroundLight,
                     side: const BorderSide(color: WarnaAplikasi.backgroundLight),
@@ -377,7 +342,7 @@ class LandDetailScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(color: Color(0xFFF8FAFC), shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: WarnaAplikasi.bgInput, shape: BoxShape.circle),
             child: Icon(icon, color: WarnaAplikasi.primary, size: 16),
           ),
           const SizedBox(width: 12),
