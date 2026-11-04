@@ -1,13 +1,67 @@
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:flutter/material.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
-import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_edit_lahan.dart';
+import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 
 class LandDetailScreen extends StatelessWidget {
   final ItemLahan item;
 
   const LandDetailScreen({super.key, required this.item});
+
+  static Future<void> _confirmDelete(BuildContext context, ItemLahan item) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            title: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('Hapus Lahan?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+              ],
+            ),
+            content: Text('Yakin ingin menghapus lahan "${item.nama}"? Data yang dihapus tidak bisa dikembalikan.', style: const TextStyle(fontSize: 13)),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (context.mounted && confirmed) {
+      try {
+        await LahanApiService().deleteLahan(item.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data lahan berhasil dihapus.')));
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menghapus: $e')));
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +251,56 @@ class LandDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
+              // Peta Lokasi
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Peta Lokasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark)),
+                  Text(
+                    'Lat: ${(item.latitude ?? -6.5621).toStringAsFixed(6)}, Long: ${(item.longitude ?? 107.7589).toStringAsFixed(6)}',
+                    style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 160,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: WarnaAplikasi.border),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(item.latitude ?? -6.5621, item.longitude ?? 107.7589),
+                      initialZoom: 15,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                      ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'id.pawontani.mobile',
+                        tileProvider: NetworkTileProvider(),
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            width: 40,
+                            height: 40,
+                            point: LatLng(item.latitude ?? -6.5621, item.longitude ?? 107.7589),
+                            child: Icon(Icons.location_on, color: WarnaAplikasi.primary, size: 40),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               // Dokumentasi Petak
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,44 +317,24 @@ class LandDetailScreen extends StatelessWidget {
                       height: 100,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=300&q=80'),
-                          fit: BoxFit.cover,
-                        ),
+                        color: WarnaAplikasi.greenLight,
+                        image: item.fotoLahan != null
+                            ? DecorationImage(
+                                image: NetworkImage(item.fotoLahan!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=300&q=80'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.bgInput,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: WarnaAplikasi.borderField, width: 1.5), // Not exactly dashed here to simplify, using solid border
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primary),
-                          SizedBox(height: 4),
-                          Text('Lihat Semua', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                          Text('(2 Foto)', style: TextStyle(fontSize: 9, color: WarnaAplikasi.textGrayLight)),
-                        ],
-                      ),
+                      child: item.fotoLahan == null
+                          ? const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.agriculture_outlined, color: WarnaAplikasi.primary, size: 28),
+                                SizedBox(height: 6),
+                                Text('Belum ada foto dokumentasi petak', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark), textAlign: TextAlign.center),
+                              ],
+                            )
+                          : null,
                     ),
                   ),
                 ],
@@ -310,7 +394,7 @@ class LandDetailScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => LandDetailScreen._confirmDelete(context, item),
                   icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
                   label: const Text('Hapus Lahan', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(

@@ -1,7 +1,15 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
-import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
+import 'package:pawon_mobile/features/lahan/widgets/layar_pilih_titik_peta.dart';
 
 class EditLandScreen extends StatefulWidget {
   final ItemLahan item;
@@ -16,17 +24,26 @@ class _EditLandScreenState extends State<EditLandScreen> {
   late TextEditingController _nameController;
   late TextEditingController _areaController;
   late TextEditingController _notesController;
+  late TextEditingController _latitudeController;
+  late TextEditingController _longitudeController;
+  late final MapController _mapController;
 
   String _selectedDesa = 'Desa Sukamaju, Dusun Krajan, RT 02/RW 01';
   String _selectedCrop = 'Padi Ciherang (Unggul Nasional)';
   String _selectedSeason = 'MT-1 (Musim Hujan: Okt - Mar)';
+  bool _isSubmitting = false;
+  XFile? _selectedImage;
+  Uint8List? _imageBytes;
 
   @override
   void initState() {
     super.initState();
+    _mapController = MapController();
     _nameController = TextEditingController(text: widget.item.nama);
     _areaController = TextEditingController(text: widget.item.luas.toStringAsFixed(1).replaceAll('.', ','));
     _notesController = TextEditingController(text: 'Kondisi tanah petak A sangat responsif terhadap pupuk organik kandang. Saluran irigasi sekunder lancar.');
+    _latitudeController = TextEditingController(text: (widget.item.latitude ?? -6.5621).toStringAsFixed(6));
+    _longitudeController = TextEditingController(text: (widget.item.longitude ?? 107.7589).toStringAsFixed(6));
   }
 
   @override
@@ -190,44 +207,83 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   children: [
                     Container(
                       height: 120,
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                        image: DecorationImage(
-                          image: NetworkImage('https://maps.googleapis.com/maps/api/staticmap?center=-6.5621,107.7589&zoom=16&size=400x150&maptype=roadmap'),
-                          fit: BoxFit.cover,
-                        ),
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        border: Border.all(color: WarnaAplikasi.borderField),
                       ),
-                      child: Stack(
-                        children: [
-                          Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(color: WarnaAplikasi.primaryLight, borderRadius: BorderRadius.circular(4)),
-                                  child: const Text('Petak A', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        child: Stack(
+                          children: [
+                            FlutterMap(
+                              mapController: _mapController,
+                              options: MapOptions(
+                                initialCenter: LatLng(
+                                  double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? -6.5621,
+                                  double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? 107.7589,
                                 ),
-                                const Icon(Icons.location_on, color: WarnaAplikasi.primaryLight, size: 36),
+                                initialZoom: 16,
+                                interactionOptions: const InteractionOptions(
+                                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                                ),
+                                onPositionChanged: (camera, hasGesture) {
+                                  if (hasGesture) {
+                                    final center = camera.center;
+                                    setState(() {
+                                      _latitudeController.text = center.latitude.toStringAsFixed(6);
+                                      _longitudeController.text = center.longitude.toStringAsFixed(6);
+                                    });
+                                  }
+                                },
+                              ),
+                              children: [
+                                TileLayer(
+                                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName: 'id.pawontani.mobile',
+                                  tileProvider: NetworkTileProvider(),
+                                ),
                               ],
                             ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.edit, size: 14, color: WarnaAplikasi.primary),
-                                  SizedBox(width: 4),
-                                  Text('Ubah Titik Lokasi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                                ],
+                            // Center floating pin
+                            IgnorePointer(
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: Transform.translate(
+                                  offset: const Offset(0, -24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: WarnaAplikasi.primaryLight,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          _nameController.text.isEmpty ? 'Petak' : _nameController.text,
+                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Icon(
+                                        Icons.location_on,
+                                        color: WarnaAplikasi.primary,
+                                        size: 40,
+                                        shadows: const [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          )
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     Padding(
@@ -235,9 +291,13 @@ class _EditLandScreenState extends State<EditLandScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Lat: -6.5621', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          const Text('Long: 107.7589', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          const Text('Akurasi ± 3m', style: TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
+                          Text('Lat: ${_latitudeController.text}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text('Long: ${_longitudeController.text}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          TextButton.icon(
+                            onPressed: _bukaPetaPicker,
+                            icon: const Icon(Icons.edit, size: 14, color: WarnaAplikasi.primary),
+                            label: const Text('Ubah Titik Lokasi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                          ),
                         ],
                       ),
                     ),
@@ -249,7 +309,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                 width: double.infinity,
                 height: 36,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: _useCurrentLocation,
                   icon: const Icon(Icons.location_searching, size: 14, color: WarnaAplikasi.primary),
                   label: const Text('Perbarui Titik dengan GPS Perangkat', style: TextStyle(color: WarnaAplikasi.primary, fontSize: 12, fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
@@ -359,102 +419,109 @@ class _EditLandScreenState extends State<EditLandScreen> {
 
               // Photos
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Dokumentasi Petak (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
+                  Text((_imageBytes != null || widget.item.fotoLahan != null) ? '1 Foto Terpilih' : 'Belum ada foto', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
-                      child: Column(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: CustomPaint(
+                          painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primaryLight),
+                              SizedBox(height: 4),
+                              Text('Ambil Foto / Galeri', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                              Text('JPG, PNG maks 5MB', style: TextStyle(fontSize: 9, color: WarnaAplikasi.textGrayLight)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_imageBytes != null) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Stack(
                         children: [
                           Container(
-                            height: 90,
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                              image: DecorationImage(image: NetworkImage('https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=300&q=80'), fit: BoxFit.cover),
-                            ),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(4)),
-                                child: const Text('Vegetatif 30 HST', style: TextStyle(color: Colors.white, fontSize: 9)),
+                            height: 100,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              image: DecorationImage(
+                                image: MemoryImage(_imageBytes!),
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Row(children: [Icon(Icons.upload, size: 12, color: WarnaAplikasi.primaryDark), SizedBox(width: 4), Text('Ganti', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold))]),
-                                const Icon(Icons.delete_outline, size: 14, color: Colors.red),
-                              ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () => setState(() {
+                                _selectedImage = null;
+                                _imageBytes = null;
+                              }),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 14),
+                              ),
                             ),
                           )
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
-                      child: Column(
+                  ] else if (widget.item.fotoLahan != null) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Stack(
                         children: [
                           Container(
-                            height: 90,
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                              image: DecorationImage(image: NetworkImage('https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=300&q=80'), fit: BoxFit.cover),
-                            ),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(4)),
-                                child: const Text('Cek Anakan 40 HST', style: TextStyle(color: Colors.white, fontSize: 9)),
+                            height: 100,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              image: DecorationImage(
+                                image: NetworkImage(widget.item.fotoLahan!),
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Row(children: [Icon(Icons.upload, size: 12, color: WarnaAplikasi.primaryDark), SizedBox(width: 4), Text('Ganti', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold))]),
-                                const Icon(Icons.delete_outline, size: 14, color: Colors.red),
-                              ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () => setState(() {
+                                _selectedImage = null;
+                                _imageBytes = null;
+                              }),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 14),
+                              ),
                             ),
                           )
                         ],
                       ),
                     ),
-                  ),
+                  ]
                 ],
               ),
               const SizedBox(height: 12),
-              Container(
-                height: 80,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: CustomPaint(
-                  painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add, color: WarnaAplikasi.primaryLight),
-                      SizedBox(height: 4),
-                      Text('+ Unggah Dokumentasi Baru', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                      Text('Format JPG/PNG, ukuran berkas maksimal 5MB', style: TextStyle(fontSize: 9, color: WarnaAplikasi.textGrayLight)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
 
               // Info Alert
               Container(
@@ -492,21 +559,15 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        final updatedLand = widget.item.copyWith(
-                          nama: _nameController.text,
-                          luas: double.tryParse(_areaController.text.replaceAll(',', '.')) ?? widget.item.luas,
-                        );
-                        Navigator.pop(context, updatedLand);
-                      },
+                      onPressed: _isSubmitting ? null : _submitUpdate,
                       icon: const Icon(Icons.check, color: Colors.white, size: 18),
-                      label: const Text('Simpan Perubahan Lahan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      label: Text(_isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan Lahan', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: WarnaAplikasi.primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         elevation: 0,
-                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -534,6 +595,196 @@ class _EditLandScreenState extends State<EditLandScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _bukaPetaPicker() async {
+    final initial = LatLng(
+      double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? -6.5621,
+      double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? 107.7589,
+    );
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LayarPilihTitikPeta(initialPosition: initial),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result is LatLng) {
+      setState(() {
+        _latitudeController.text = result.latitude.toStringAsFixed(6);
+        _longitudeController.text = result.longitude.toStringAsFixed(6);
+      });
+    }
+  }
+
+  Future<void> _useCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Layanan lokasi tidak aktif. Silakan aktifkan GPS.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Izin akses lokasi ditolak.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Izin lokasi ditolak permanen. Silakan ubah di pengaturan perangkat.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      final latLng = LatLng(position.latitude, position.longitude);
+
+      if (!mounted) return;
+
+      setState(() {
+        _latitudeController.text = position.latitude.toStringAsFixed(6);
+        _longitudeController.text = position.longitude.toStringAsFixed(6);
+      });
+
+      _mapController.move(latLng, 15);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal mengambil lokasi GPS saat ini.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    showModalBottomSheet<XFile>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 16),
+              Text('Ambil Foto dari...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark)),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primary),
+                title: const Text('Buka Kamera', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Ambil foto langsung dari kamera', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85, maxWidth: 1200);
+                  if (!mounted || picked == null) return;
+                  final bytes = await picked.readAsBytes();
+                  if (!mounted) return;
+                  setState(() {
+                    _selectedImage = picked;
+                    _imageBytes = bytes;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
+                title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Pilih foto dari galeri perangkat', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1200);
+                  if (!mounted || picked == null) return;
+                  final bytes = await picked.readAsBytes();
+                  if (!mounted) return;
+                  setState(() {
+                    _selectedImage = picked;
+                    _imageBytes = bytes;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<MultipartFile?> _toMultipartFile(XFile? file) async {
+    if (file == null) return null;
+    if (kIsWeb) {
+      final bytes = await file.readAsBytes();
+      return MultipartFile.fromBytes(bytes, filename: file.name);
+    }
+    return MultipartFile.fromFile(file.path, filename: file.name);
+  }
+
+  Future<void> _submitUpdate() async {
+    setState(() => _isSubmitting = true);
+
+    final payload = <String, dynamic>{
+      'nama_lahan': _nameController.text.trim(),
+      'luas': double.tryParse(_areaController.text.replaceAll(',', '.')) ?? widget.item.luas,
+      'alamat_lahan': _selectedDesa,
+      'latitude': double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? widget.item.latitude ?? -6.5621,
+      'longitude': double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? widget.item.longitude ?? 107.7589,
+      'musim_tanam': _selectedSeason,
+      'keterangan': _notesController.text.trim(),
+    };
+
+    final service = LahanApiService();
+    final fotoFile = await _toMultipartFile(_selectedImage);
+    final response = await service.updateLahanWithFoto(widget.item.id, payload, fotoFile);
+
+    if (!mounted) return;
+
+    setState(() => _isSubmitting = false);
+
+    if (response.success && response.data != null) {
+      Navigator.pop(context, response.data);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.message ?? 'Gagal memperbarui data lahan.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
 

@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.example.pawon_mobile"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "30.0.16248370" // Override: gunakan NDK yang sudah terinstall
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
