@@ -5,6 +5,7 @@ class ApiResponse<T> {
   final String message;
   final T? data;
   final Map<String, dynamic>? errors;
+  final Map<String, dynamic>? meta;
   final int? statusCode;
 
   const ApiResponse({
@@ -12,6 +13,7 @@ class ApiResponse<T> {
     required this.message,
     this.data,
     this.errors,
+    this.meta,
     this.statusCode,
   });
 
@@ -38,11 +40,17 @@ class ApiResponse<T> {
       parsedErrors = Map<String, dynamic>.from(json['errors']);
     }
 
+    Map<String, dynamic>? parsedMeta;
+    if (json['meta'] != null && json['meta'] is Map) {
+      parsedMeta = Map<String, dynamic>.from(json['meta']);
+    }
+
     return ApiResponse<T>(
       success: json['success'] as bool? ?? (statusCode != null && statusCode >= 200 && statusCode < 300),
       message: json['message'] as String? ?? '',
       data: parsedData,
       errors: parsedErrors,
+      meta: parsedMeta,
       statusCode: statusCode,
     );
   }
@@ -51,12 +59,14 @@ class ApiResponse<T> {
   factory ApiResponse.success({
     required T data,
     String message = 'Berhasil memproses data',
+    Map<String, dynamic>? meta,
     int? statusCode = 200,
   }) {
     return ApiResponse<T>(
       success: true,
       message: message,
       data: data,
+      meta: meta,
       statusCode: statusCode,
     );
   }
