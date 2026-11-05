@@ -11,10 +11,18 @@ class LahanApiService {
   LahanApiService({DioClient? client}) : _client = client ?? DioClient();
 
   /// Mengambil daftar lahan milik anggota yang login dari
-  /// `GET /api/v1/lahan`.
-  Future<ApiResponse<List<ItemLahan>>> getLahanList() async {
+  /// `GET /api/v1/lahan`. Mendukung parameter page dan per_page untuk pagination.
+  Future<ApiResponse<List<ItemLahan>>> getLahanList({
+    int? page,
+    int? perPage,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (page != null) queryParams['page'] = page;
+    if (perPage != null) queryParams['per_page'] = perPage;
+
     final response = await _client.get<List<ItemLahan>>(
       ApiConstants.lahanEndpoint,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
       fromJson: (data) {
         if (data is! List) {
           return <ItemLahan>[];
@@ -26,6 +34,14 @@ class LahanApiService {
     );
 
     return response;
+  }
+
+  /// Mengambil detail lahan dari `GET /api/v1/lahan/{id}`.
+  Future<ApiResponse<ItemLahan>> getLahanDetail(String id) async {
+    return await _client.get<ItemLahan>(
+      '${ApiConstants.lahanEndpoint}/$id',
+      fromJson: (data) => ItemLahan.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
   }
 
   /// Mendaftarkan lahan baru melalui `POST /api/v1/lahan`.
@@ -42,10 +58,13 @@ class LahanApiService {
     Map<String, dynamic> payload,
     MultipartFile? fotoLahan,
   ) async {
-    final formData = FormData.fromMap({
+    final mapData = <String, dynamic>{
       ...payload,
-      if (fotoLahan != null) 'foto_lahan': fotoLahan,
-    });
+    };
+    if (fotoLahan != null) {
+      mapData['foto_lahan'] = fotoLahan;
+    }
+    final formData = FormData.fromMap(mapData);
 
     return await _client.post<ItemLahan>(
       ApiConstants.lahanEndpoint,
@@ -54,7 +73,7 @@ class LahanApiService {
     );
   }
 
-  /// Memperbarui data lahan melalui `PUT /api/v1/lahan/{id}`.
+  /// Memperbarui data lahan melalui `PUT /api/v1/lahan/{id}` (JSON biasa tanpa file).
   Future<ApiResponse<ItemLahan>> updateLahan(String id, Map<String, dynamic> payload) async {
     return await _client.put<ItemLahan>(
       '${ApiConstants.lahanEndpoint}/$id',
@@ -63,18 +82,23 @@ class LahanApiService {
     );
   }
 
-  /// Memperbarui data lahan beserta foto melalui `PUT /api/v1/lahan/{id}`.
+  /// Memperbarui data lahan beserta foto melalui `POST /api/v1/lahan/{id}` dengan method spoofing `_method=PUT`.
+  /// Laravel memerlukan POST multipart/form-data dengan field _method=PUT karena PHP native tidak mem-parse body PUT multipart.
   Future<ApiResponse<ItemLahan>> updateLahanWithFoto(
     String id,
     Map<String, dynamic> payload,
     MultipartFile? fotoLahan,
   ) async {
-    final formData = FormData.fromMap({
+    final mapData = <String, dynamic>{
+      '_method': 'PUT',
       ...payload,
-      if (fotoLahan != null) 'foto_lahan': fotoLahan,
-    });
+    };
+    if (fotoLahan != null) {
+      mapData['foto_lahan'] = fotoLahan;
+    }
+    final formData = FormData.fromMap(mapData);
 
-    return await _client.put<ItemLahan>(
+    return await _client.post<ItemLahan>(
       '${ApiConstants.lahanEndpoint}/$id',
       data: formData,
       fromJson: (data) => ItemLahan.fromJson(Map<String, dynamic>.from(data as Map)),

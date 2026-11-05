@@ -15,6 +15,14 @@ class ItemLahan {
   final double? longitude;
   final String? fotoLahan;
 
+  // Atribut Verifikasi Tata Kelola
+  final String? statusVerifikasi;
+  final String? catatanVerifikasi;
+  final DateTime? tanggalVerifikasi;
+
+  // Atribut Komoditas ID
+  final String? idKomoditas;
+
   const ItemLahan({
     required this.id,
     required this.nama,
@@ -25,7 +33,15 @@ class ItemLahan {
     this.latitude,
     this.longitude,
     this.fotoLahan,
+    this.statusVerifikasi,
+    this.catatanVerifikasi,
+    this.tanggalVerifikasi,
+    this.idKomoditas,
   });
+
+  bool get isTerverifikasi => statusVerifikasi == 'terverifikasi';
+  bool get isMenungguVerifikasi => statusVerifikasi == 'menunggu_verifikasi';
+  bool get isPerluPerbaikan => statusVerifikasi == 'perlu_perbaikan';
 
   factory ItemLahan.fromJson(Map<String, dynamic> json) {
     final statusString = (json['status'] ?? 'aktif').toString().toLowerCase();
@@ -40,6 +56,18 @@ class ItemLahan {
         status = StatusLahan.aktif;
     }
 
+    DateTime? tanggalVerif;
+    if (json['tanggal_verifikasi'] != null) {
+      tanggalVerif = DateTime.tryParse(json['tanggal_verifikasi'].toString());
+    }
+
+    String? parsedIdKomoditas;
+    if (json['detail_komoditas'] is Map) {
+      parsedIdKomoditas = (json['detail_komoditas'] as Map)['id_komoditas']?.toString();
+    } else if (json['id_komoditas'] != null) {
+      parsedIdKomoditas = json['id_komoditas'].toString();
+    }
+
     return ItemLahan(
       id: json['id']?.toString() ?? '',
       nama: json['nama']?.toString() ?? '',
@@ -50,6 +78,10 @@ class ItemLahan {
       latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
       longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
       fotoLahan: json['foto_lahan']?.toString(),
+      statusVerifikasi: json['status_verifikasi']?.toString(),
+      catatanVerifikasi: json['catatan_verifikasi']?.toString(),
+      tanggalVerifikasi: tanggalVerif,
+      idKomoditas: parsedIdKomoditas,
     );
   }
 
@@ -63,6 +95,10 @@ class ItemLahan {
     double? latitude,
     double? longitude,
     String? fotoLahan,
+    String? statusVerifikasi,
+    String? catatanVerifikasi,
+    DateTime? tanggalVerifikasi,
+    String? idKomoditas,
   }) {
     return ItemLahan(
       id: id ?? this.id,
@@ -74,6 +110,10 @@ class ItemLahan {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       fotoLahan: fotoLahan ?? this.fotoLahan,
+      statusVerifikasi: statusVerifikasi ?? this.statusVerifikasi,
+      catatanVerifikasi: catatanVerifikasi ?? this.catatanVerifikasi,
+      tanggalVerifikasi: tanggalVerifikasi ?? this.tanggalVerifikasi,
+      idKomoditas: idKomoditas ?? this.idKomoditas,
     );
   }
 }
