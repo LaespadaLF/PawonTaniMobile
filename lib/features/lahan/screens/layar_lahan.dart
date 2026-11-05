@@ -20,25 +20,48 @@ class LandScreen extends StatefulWidget {
 
 class _LandScreenState extends State<LandScreen> {
   int _selectedFilterIndex = 0;
-  String _selectedSort = 'Terbaru';
   List<ItemLahan> _ItemLahans = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  bool _hasMore = true;
+  int? _totalPlots;
+  final ScrollController _scrollController = ScrollController();
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _loadLahanList();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        !_isLoading &&
+        _hasMore) {
+      _loadMoreLahan();
+    }
   }
 
   Future<void> _loadLahanList() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _currentPage = 1;
+      _hasMore = true;
     });
 
     final service = LahanApiService();
-    final response = await service.getLahanList();
+    final response = await service.getLahanList(page: 1);
 
     if (!mounted) return;
 
@@ -47,9 +70,47 @@ class _LandScreenState extends State<LandScreen> {
       if (response.success) {
         _ItemLahans = response.data ?? [];
         _errorMessage = null;
+        if (response.meta != null) {
+          final lastPage = response.meta!['last_page'] as int? ?? 1;
+          _hasMore = _currentPage < lastPage;
+          _totalPlots = response.meta!['total'] as int?;
+        } else {
+          _hasMore = (_ItemLahans.length >= 10);
+        }
       } else {
         _ItemLahans = [];
         _errorMessage = response.message.isNotEmpty ? response.message : 'Gagal memuat data lahan.';
+      }
+    });
+  }
+
+  Future<void> _loadMoreLahan() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    final nextPage = _currentPage + 1;
+    final service = LahanApiService();
+    final response = await service.getLahanList(page: nextPage);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingMore = false;
+      if (response.success && response.data != null && response.data!.isNotEmpty) {
+        _ItemLahans.addAll(response.data!);
+        _currentPage = nextPage;
+        if (response.meta != null) {
+          final lastPage = response.meta!['last_page'] as int? ?? nextPage;
+          _hasMore = _currentPage < lastPage;
+          _totalPlots = response.meta!['total'] as int?;
+        } else {
+          _hasMore = response.data!.length >= 10;
+        }
+      } else {
+        _hasMore = false;
       }
     });
   }
@@ -150,7 +211,7 @@ class _LandScreenState extends State<LandScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message ?? 'Gagal menghapus lahan.'),
+          content: Text(response.message.isNotEmpty ? response.message : 'Gagal menghapus lahan.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -286,7 +347,7 @@ class _LandScreenState extends State<LandScreen> {
     final filterChips = ['Semua', 'Aktif Ditanami', 'Masa Olah Tanah'];
 
     double totalArea = _ItemLahans.fold(0.0, (sum, item) => sum + item.luas);
-    int totalPlots = _ItemLahans.length;
+    int totalPlots = _totalPlots ?? _ItemLahans.length;
 
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
@@ -299,7 +360,8 @@ class _LandScreenState extends State<LandScreen> {
               child: RefreshIndicator(
                 onRefresh: _loadLahanList,
                 child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                   slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -658,6 +720,19 @@ class _LandScreenState extends State<LandScreen> {
                             );
                           },
                           childCount: _ItemLahans.length,
+                        ),
+                      ),
+                    ),
+                  if (_isLoadingMore)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                          ),
                         ),
                       ),
                     ),

@@ -780,7 +780,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message ?? 'Gagal memperbarui data lahan.'),
+          content: Text(response.message.isNotEmpty ? response.message : 'Gagal memperbarui data lahan.'),
           behavior: SnackBarBehavior.floating,
         ),
       );

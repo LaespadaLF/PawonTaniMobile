@@ -88,8 +88,10 @@ class LandDetailScreen extends StatelessWidget {
                 height: 220,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=600&q=80'),
+                  image: DecorationImage(
+                    image: (item.fotoLahan != null && item.fotoLahan!.isNotEmpty)
+                        ? NetworkImage(item.fotoLahan!)
+                        : const NetworkImage('https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=600&q=80') as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -101,7 +103,7 @@ class LandDetailScreen extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                         ),
                       ),
                     ),
@@ -150,6 +152,12 @@ class LandDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // Kartu Status Verifikasi Pengurus/Ketua
+
+              _buildVerificationStatusCard(),
+
+
 
               // Info Grid
               Row(
@@ -476,5 +484,175 @@ class LandDetailScreen extends StatelessWidget {
       ),
     );
   }
+
+
+  Widget _buildVerificationStatusCard() {
+
+    final status = item.statusVerifikasi;
+
+    if (status == null || status.isEmpty) {
+
+      return const SizedBox.shrink();
+
+    }
+
+
+
+    Color bgColor;
+
+    Color borderColor;
+
+    Color textColor;
+
+    IconData icon;
+
+    String title;
+
+    String subtitle;
+
+
+
+    switch (status) {
+
+      case 'terverifikasi':
+
+        bgColor = WarnaAplikasi.greenLight;
+
+        borderColor = WarnaAplikasi.greenPill;
+
+        textColor = WarnaAplikasi.greenText;
+
+        icon = Icons.verified_rounded;
+
+        title = 'Lahan Terverifikasi';
+
+        subtitle = 'Data petak lahan telah disetujui oleh Pengurus/Ketua Kelompok Tani.';
+
+        break;
+
+      case 'perlu_perbaikan':
+
+        bgColor = WarnaAplikasi.warningOrangeBg;
+
+        borderColor = const Color(0xFFFDE68A);
+
+        textColor = WarnaAplikasi.warningOrange;
+
+        icon = Icons.error_outline_rounded;
+
+        title = 'Perlu Perbaikan';
+
+        subtitle = item.catatanVerifikasi != null && item.catatanVerifikasi!.isNotEmpty
+
+            ? 'Catatan Pengurus: "${item.catatanVerifikasi}"'
+
+            : 'Ketua meminta perbaikan data lahan sebelum dapat diverifikasi.';
+
+        break;
+
+      case 'menunggu_verifikasi':
+
+      default:
+
+        bgColor = const Color(0xFFEFF6FF);
+
+        borderColor = const Color(0xFFBFDBFE);
+
+        textColor = const Color(0xFF1D4ED8);
+
+        icon = Icons.hourglass_top_rounded;
+
+        title = 'Menunggu Verifikasi';
+
+        subtitle = 'Data petak dalam antrean verifikasi oleh Pengurus/Ketua Kelompok Tani.';
+
+        break;
+
+    }
+
+
+
+    return Container(
+
+      margin: const EdgeInsets.only(bottom: 20),
+
+      padding: const EdgeInsets.all(16),
+
+      decoration: BoxDecoration(
+
+        color: bgColor,
+
+        borderRadius: BorderRadius.circular(16),
+
+        border: Border.all(color: borderColor),
+
+      ),
+
+      child: Row(
+
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+
+          Icon(icon, color: textColor, size: 24),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+
+            child: Column(
+
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: [
+
+                Text(
+
+                  title,
+
+                  style: TextStyle(
+
+                    fontSize: 13,
+
+                    fontWeight: FontWeight.bold,
+
+                    color: textColor,
+
+                  ),
+
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+
+                  subtitle,
+
+                  style: TextStyle(
+
+                    fontSize: 12,
+
+                    color: textColor.withValues(alpha: 0.9),
+
+                    height: 1.4,
+
+                  ),
+
+                ),
+
+              ],
+
+            ),
+
+          ),
+
+        ],
+
+      ),
+
+    );
+
+  }
+
 }
 

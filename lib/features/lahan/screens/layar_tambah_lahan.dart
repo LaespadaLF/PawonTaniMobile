@@ -133,7 +133,7 @@ class _AddLandScreenState extends State<AddLandScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message ?? 'Gagal menyimpan data lahan.'),
+          content: Text(response.message.isNotEmpty ? response.message : 'Gagal menyimpan data lahan.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -745,8 +745,6 @@ class _DashedRectPainter extends CustomPainter {
       path.lineTo(0, i - dashWidth < 0 ? 0 : i - dashWidth);
     }
 
-    final rrect = RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12));
-    final clipPath = Path()..addRRect(rrect);
     
     // Quick hack for dashed rounded rectangle: draw lines and clip it, wait clipping stroke is complex.
     // Simpler is to just draw rect, but since we want dashed, we use dashed path.
