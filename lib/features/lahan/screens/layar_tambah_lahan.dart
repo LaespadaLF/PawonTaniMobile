@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
+import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/features/lahan/widgets/layar_pilih_titik_peta.dart';
 
@@ -20,22 +21,67 @@ class AddLandScreen extends StatefulWidget {
 class _AddLandScreenState extends State<AddLandScreen> {
   final _nameController = TextEditingController();
   final _areaController = TextEditingController(text: '0,8');
+  final _addressController = TextEditingController();
   final _notesController = TextEditingController();
   final _latitudeController = TextEditingController(text: '-6.5621');
   final _longitudeController = TextEditingController(text: '107.7589');
   late final MapController _mapController;
 
-  String _selectedDesa = 'Desa Sukamaju, Dusun Krajan';
-  String _selectedCrop = 'Padi Ciherang';
+  String? _selectedCropId;
   String _selectedSeason = 'MT-1 (Musim Hujan)';
   bool _isSubmitting = false;
   XFile? _selectedImage;
   Uint8List? _imageBytes;
 
+  List<ItemKomoditas> _komoditasList = [];
+  bool _isLoadingKomoditas = true;
+  String? _komoditasError;
+
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
+    _loadKomoditas();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _areaController.dispose();
+    _addressController.dispose();
+    _notesController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadKomoditas() async {
+    setState(() {
+      _isLoadingKomoditas = true;
+      _komoditasError = null;
+    });
+
+    final service = LahanApiService();
+    final response = await service.getKomoditasList();
+
+    if (!mounted) return;
+
+    if (response.success && response.data != null) {
+      setState(() {
+        _komoditasList = response.data!;
+        _isLoadingKomoditas = false;
+        if (_komoditasList.isNotEmpty && _selectedCropId == null) {
+          _selectedCropId = _komoditasList.first.idKomoditas;
+        }
+      });
+    } else {
+      setState(() {
+        _isLoadingKomoditas = false;
+        _komoditasError = response.message.isNotEmpty
+            ? response.message
+            : 'Gagal memuat daftar komoditas.';
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -108,14 +154,36 @@ class _AddLandScreenState extends State<AddLandScreen> {
   }
 
   Future<void> _submitLand() async {
+    final address = _addressController.text.trim();
+    if (address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan masukkan alamat / lokasi petak lahan.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedCropId == null || _selectedCropId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih komoditas / tanaman terlebih dahulu.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     final payload = <String, dynamic>{
       'nama_lahan': _nameController.text.trim(),
       'luas': double.tryParse(_areaController.text.replaceAll(',', '.')) ?? 0.0,
-      'alamat_lahan': _selectedDesa,
+      'alamat_lahan': address,
       'latitude': double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? -6.5621,
       'longitude': double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? 107.7589,
+      'id_komoditas': _selectedCropId,
       'musim_tanam': _selectedSeason,
       'keterangan': _notesController.text.trim(),
     };
@@ -286,25 +354,23 @@ class _AddLandScreenState extends State<AddLandScreen> {
               const Text('≈ 8.000 m²', style: TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
 
-              // Location Dropdown
+              // Location / Address Field
               RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Alamat & Lokasi Desa ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
+                TextSpan(text: 'Alamat & Lokasi Lahan ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
                 TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: WarnaAplikasi.border),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedDesa,
-                    isExpanded: true,
-                    items: [_selectedDesa].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                    onChanged: (v) {},
-                  ),
+              TextField(
+                controller: _addressController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Contoh: Dusun Krajan RT 02 / RW 01, Desa Sukamaju',
+                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
+                  prefixIcon: const Icon(Icons.location_on_outlined, color: WarnaAplikasi.textGray, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
               const SizedBox(height: 16),
@@ -505,28 +571,104 @@ class _AddLandScreenState extends State<AddLandScreen> {
                 TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: WarnaAplikasi.border),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedCrop,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: [_selectedCrop].map((e) => DropdownMenuItem(value: e, child: Row(
-                      children: [
-                        const Icon(Icons.eco_outlined, color: WarnaAplikasi.primaryLight, size: 18),
-                        const SizedBox(width: 8),
-                        Text(e),
-                      ],
-                    ))).toList(),
-                    onChanged: (v) {},
+              if (_isLoadingKomoditas)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: WarnaAplikasi.border),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 12),
+                      Text('Memuat daftar komoditas...', style: TextStyle(fontSize: 13, color: WarnaAplikasi.textGrayLight)),
+                    ],
+                  ),
+                )
+              else if (_komoditasError != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.red.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.red.shade50,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _komoditasError!,
+                          style: const TextStyle(fontSize: 12, color: Colors.red),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadKomoditas,
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                        child: const Text('Coba Lagi', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                )
+              else if (_komoditasList.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.orange.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.orange.shade50,
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text('Data komoditas belum tersedia dari server.', style: TextStyle(fontSize: 12, color: Colors.orange)),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: WarnaAplikasi.border),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCropId,
+                      isExpanded: true,
+                      icon: const Icon(Icons.keyboard_arrow_down),
+                      hint: const Text('Pilih komoditas'),
+                      items: _komoditasList.map((item) {
+                        return DropdownMenuItem<String>(
+                          value: item.idKomoditas,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.eco_outlined, color: WarnaAplikasi.primaryLight, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${item.namaKomoditas} (${item.kategori})',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedCropId = val);
+                        }
+                      },
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 16),
 
               // Season Dropdown
@@ -546,14 +688,22 @@ class _AddLandScreenState extends State<AddLandScreen> {
                     value: _selectedSeason,
                     isExpanded: true,
                     icon: const Icon(Icons.keyboard_arrow_down),
-                    items: [_selectedSeason].map((e) => DropdownMenuItem(value: e, child: Row(
+                    items: [
+                      'MT-1 (Musim Hujan)',
+                      'MT-2 (Kemarau I)',
+                      'MT-3 (Kemarau II)',
+                    ].map((e) => DropdownMenuItem(value: e, child: Row(
                       children: [
                         const Icon(Icons.calendar_today_outlined, color: WarnaAplikasi.textGray, size: 18),
                         const SizedBox(width: 8),
                         Text(e),
                       ],
                     ))).toList(),
-                    onChanged: (v) {},
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => _selectedSeason = v);
+                      }
+                    },
                   ),
                 ),
               ),

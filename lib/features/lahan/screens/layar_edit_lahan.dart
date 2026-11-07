@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
+import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/features/lahan/widgets/layar_pilih_titik_peta.dart';
@@ -23,17 +24,23 @@ class EditLandScreen extends StatefulWidget {
 class _EditLandScreenState extends State<EditLandScreen> {
   late TextEditingController _nameController;
   late TextEditingController _areaController;
+  late TextEditingController _addressController;
   late TextEditingController _notesController;
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late final MapController _mapController;
 
-  String _selectedDesa = 'Desa Sukamaju, Dusun Krajan, RT 02/RW 01';
-  String _selectedCrop = 'Padi Ciherang (Unggul Nasional)';
+  String? _selectedCropId;
   String _selectedSeason = 'MT-1 (Musim Hujan: Okt - Mar)';
   bool _isSubmitting = false;
+  bool _isDeleting = false;
   XFile? _selectedImage;
   Uint8List? _imageBytes;
+
+  List<ItemKomoditas> _komoditasList = [];
+  bool _isLoadingKomoditas = true;
+  String? _komoditasError;
+  bool _commodityNotFoundInList = false;
 
   @override
   void initState() {
@@ -41,9 +48,77 @@ class _EditLandScreenState extends State<EditLandScreen> {
     _mapController = MapController();
     _nameController = TextEditingController(text: widget.item.nama);
     _areaController = TextEditingController(text: widget.item.luas.toStringAsFixed(1).replaceAll('.', ','));
-    _notesController = TextEditingController(text: 'Kondisi tanah petak A sangat responsif terhadap pupuk organik kandang. Saluran irigasi sekunder lancar.');
+    _addressController = TextEditingController(text: widget.item.lokasi);
+    _notesController = TextEditingController(text: widget.item.keterangan ?? '');
     _latitudeController = TextEditingController(text: (widget.item.latitude ?? -6.5621).toStringAsFixed(6));
     _longitudeController = TextEditingController(text: (widget.item.longitude ?? 107.7589).toStringAsFixed(6));
+    _selectedSeason = (widget.item.musimTanam != null && widget.item.musimTanam!.isNotEmpty)
+        ? widget.item.musimTanam!
+        : 'MT-1 (Musim Hujan)';
+    _selectedCropId = widget.item.idKomoditas;
+    _loadKomoditas();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _areaController.dispose();
+    _addressController.dispose();
+    _notesController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadKomoditas() async {
+    setState(() {
+      _isLoadingKomoditas = true;
+      _komoditasError = null;
+      _commodityNotFoundInList = false;
+    });
+
+    final service = LahanApiService();
+    final response = await service.getKomoditasList();
+
+    if (!mounted) return;
+
+    if (response.success && response.data != null) {
+      setState(() {
+        _komoditasList = response.data!;
+        _isLoadingKomoditas = false;
+
+        // Cek kecocokan komoditas lama
+        if (widget.item.idKomoditas != null && widget.item.idKomoditas!.isNotEmpty) {
+          final exists = _komoditasList.any((c) => c.idKomoditas == widget.item.idKomoditas);
+          if (exists) {
+            _selectedCropId = widget.item.idKomoditas;
+            _commodityNotFoundInList = false;
+          } else {
+            // ID lama tidak ditemukan di master komoditas aktif
+            _commodityNotFoundInList = true;
+            _selectedCropId = widget.item.idKomoditas;
+          }
+        } else if (widget.item.komoditas.isNotEmpty) {
+          // Fallback pencocokan berdasarkan nama jika idKomoditas null
+          final matchByName = _komoditasList.where(
+            (c) => c.namaKomoditas.toLowerCase() == widget.item.komoditas.toLowerCase(),
+          );
+          if (matchByName.isNotEmpty) {
+            _selectedCropId = matchByName.first.idKomoditas;
+            _commodityNotFoundInList = false;
+          } else {
+            _commodityNotFoundInList = true;
+          }
+        }
+      });
+    } else {
+      setState(() {
+        _isLoadingKomoditas = false;
+        _komoditasError = response.message.isNotEmpty
+            ? response.message
+            : 'Gagal memuat daftar komoditas.';
+      });
+    }
   }
 
   @override
@@ -76,7 +151,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('MODE PENYUNTINGAN LAHAN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.borderField)),
-                          Text('${widget.item.nama} | ID: LHN-SKM-04', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text('${widget.item.nama} | ID: ${widget.item.id}${widget.item.nomorRevisi > 0 ? " (Revisi #${widget.item.nomorRevisi})" : ""}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
                       ),
                     ),
@@ -159,22 +234,23 @@ class _EditLandScreenState extends State<EditLandScreen> {
               const Text('≈ 8.000 m² (Konversi baku otomatis)', style: TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
 
-              // Location Dropdown
+              // Location / Address Field
               RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Alamat & Lokasi Desa ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
+                TextSpan(text: 'Alamat & Lokasi Lahan ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
                 TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedDesa,
-                    isExpanded: true,
-                    items: [_selectedDesa].map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis))).toList(),
-                    onChanged: (v) {},
-                  ),
+              TextField(
+                controller: _addressController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Contoh: Dusun Krajan RT 02 / RW 01, Desa Sukamaju',
+                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
+                  prefixIcon: const Icon(Icons.location_on_outlined, color: WarnaAplikasi.textGray, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
               const SizedBox(height: 16),
@@ -327,25 +403,130 @@ class _EditLandScreenState extends State<EditLandScreen> {
                 TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedCrop,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: [_selectedCrop].map((e) => DropdownMenuItem(value: e, child: Row(
+              if (_isLoadingKomoditas)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: WarnaAplikasi.border),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 12),
+                      Text('Memuat daftar komoditas...', style: TextStyle(fontSize: 13, color: WarnaAplikasi.textGrayLight)),
+                    ],
+                  ),
+                )
+              else if (_komoditasError != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.red.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.red.shade50,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _komoditasError!,
+                          style: const TextStyle(fontSize: 12, color: Colors.red),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadKomoditas,
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                        child: const Text('Coba Lagi', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                if (_commodityNotFoundInList) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.eco_outlined, color: WarnaAplikasi.primaryLight, size: 18),
+                        const Icon(Icons.info_outline, color: Colors.amber, size: 18),
                         const SizedBox(width: 8),
-                        Text(e),
+                        Expanded(
+                          child: Text(
+                            'Komoditas saat ini "${widget.item.komoditas.isNotEmpty ? widget.item.komoditas : widget.item.idKomoditas}" tidak ada pada master komoditas aktif. Hubungi pengurus atau pilih komoditas baru dari daftar di bawah jika ingin menggantinya.',
+                            style: TextStyle(fontSize: 11, color: Colors.brown.shade800),
+                          ),
+                        ),
                       ],
-                    ))).toList(),
-                    onChanged: (v) {},
+                    ),
+                  ),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCropId,
+                      isExpanded: true,
+                      icon: const Icon(Icons.keyboard_arrow_down),
+                      hint: const Text('Pilih komoditas'),
+                      items: [
+                        if (_commodityNotFoundInList && _selectedCropId != null)
+                          DropdownMenuItem<String>(
+                            value: _selectedCropId,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.archive_outlined, color: Colors.amber, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${widget.item.komoditas.isNotEmpty ? widget.item.komoditas : _selectedCropId} (Arsip/Lama)',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.brown),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ..._komoditasList.map((e) => DropdownMenuItem(
+                          value: e.idKomoditas,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.eco_outlined, color: WarnaAplikasi.primaryLight, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${e.namaKomoditas} (${e.kategori})',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedCropId = val;
+                            if (_komoditasList.any((c) => c.idKomoditas == val)) {
+                              _commodityNotFoundInList = false;
+                            }
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 16),
 
               // Season Dropdown
@@ -362,14 +543,23 @@ class _EditLandScreenState extends State<EditLandScreen> {
                     value: _selectedSeason,
                     isExpanded: true,
                     icon: const Icon(Icons.keyboard_arrow_down),
-                    items: [_selectedSeason].map((e) => DropdownMenuItem(value: e, child: Row(
+                    items: {
+                      _selectedSeason,
+                      'MT-1 (Musim Hujan)',
+                      'MT-2 (Kemarau I)',
+                      'MT-3 (Kemarau II)',
+                    }.map((e) => DropdownMenuItem(value: e, child: Row(
                       children: [
                         const Icon(Icons.calendar_today_outlined, color: WarnaAplikasi.textGray, size: 18),
                         const SizedBox(width: 8),
                         Text(e),
                       ],
                     ))).toList(),
-                    onChanged: (v) {},
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => _selectedSeason = v);
+                      }
+                    },
                   ),
                 ),
               ),
@@ -545,7 +735,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   Expanded(
                     flex: 1,
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: (_isDeleting || _isSubmitting) ? null : () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -559,7 +749,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton.icon(
-                      onPressed: _isSubmitting ? null : _submitUpdate,
+                      onPressed: (_isSubmitting || _isDeleting) ? null : _submitUpdate,
                       icon: const Icon(Icons.check, color: Colors.white, size: 18),
                       label: Text(_isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan Lahan', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(
@@ -572,29 +762,118 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context, 'delete');
-                  },
-                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                  label: const Text('Hapus Petak Sawah Ini', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    side: const BorderSide(color: WarnaAplikasi.errorRedBorder),
-                    backgroundColor: WarnaAplikasi.errorRedBg,
+              if (widget.item.isCanDelete) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: (_isDeleting || _isSubmitting) ? null : _confirmAndDeleteLand,
+                    icon: _isDeleting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red),
+                          )
+                        : const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                    label: Text(
+                      _isDeleting ? 'Menghapus...' : 'Hapus Petak Sawah Ini',
+                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      side: const BorderSide(color: WarnaAplikasi.errorRedBorder),
+                      backgroundColor: WarnaAplikasi.errorRedBg,
+                    ),
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 20),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndDeleteLand() async {
+    if (_isDeleting || _isSubmitting) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        title: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Hapus Lahan?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+          ],
+        ),
+        content: Text(
+          'Yakin ingin menghapus lahan "${widget.item.nama}"? Data yang dihapus tidak bisa dikembalikan.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (!confirmed || !mounted) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final response = await LahanApiService().deleteLahan(widget.item.id);
+      if (!mounted) return;
+
+      if (response.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lahan berhasil dihapus.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, 'delete');
+      } else {
+        setState(() => _isDeleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message.isNotEmpty ? response.message : 'Gagal menghapus lahan.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isDeleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus lahan: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _bukaPetaPicker() async {
@@ -755,14 +1034,36 @@ class _EditLandScreenState extends State<EditLandScreen> {
   }
 
   Future<void> _submitUpdate() async {
+    final address = _addressController.text.trim();
+    if (address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan masukkan alamat / lokasi petak lahan.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedCropId == null || _selectedCropId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih komoditas / tanaman terlebih dahulu.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     final payload = <String, dynamic>{
       'nama_lahan': _nameController.text.trim(),
       'luas': double.tryParse(_areaController.text.replaceAll(',', '.')) ?? widget.item.luas,
-      'alamat_lahan': _selectedDesa,
+      'alamat_lahan': address,
       'latitude': double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? widget.item.latitude ?? -6.5621,
       'longitude': double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? widget.item.longitude ?? 107.7589,
+      'id_komoditas': _selectedCropId,
       'musim_tanam': _selectedSeason,
       'keterangan': _notesController.text.trim(),
     };

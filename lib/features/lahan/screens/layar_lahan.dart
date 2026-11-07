@@ -120,11 +120,7 @@ class _LandScreenState extends State<LandScreen> {
       context,
       MaterialPageRoute(builder: (context) => const AddLandScreen()),
     ).then((value) {
-      if (value != null && value is ItemLahan) {
-        setState(() {
-          _ItemLahans.insert(0, value);
-        });
-      } else if (value != null) {
+      if (value != null) {
         _loadLahanList();
       }
     });
@@ -137,9 +133,7 @@ class _LandScreenState extends State<LandScreen> {
     ).then((value) {
       if (value != null) {
         if (value == 'delete') {
-          setState(() {
-            _ItemLahans.removeWhere((element) => element.id == item.id);
-          });
+          _loadLahanList();
         } else if (value is ItemLahan) {
           setState(() {
             final index = _ItemLahans.indexWhere((element) => element.id == item.id);
@@ -147,6 +141,8 @@ class _LandScreenState extends State<LandScreen> {
               _ItemLahans[index] = value;
             }
           });
+        } else {
+          _loadLahanList();
         }
       }
     });
@@ -199,15 +195,13 @@ class _LandScreenState extends State<LandScreen> {
     if (!mounted) return;
 
     if (response.success) {
-      setState(() {
-        _ItemLahans.removeWhere((element) => element.id == item.id);
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${item.nama} berhasil dihapus'),
           behavior: SnackBarBehavior.floating,
         ),
       );
+      _loadLahanList();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

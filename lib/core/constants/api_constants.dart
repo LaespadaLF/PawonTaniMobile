@@ -27,8 +27,12 @@ class ApiConstants {
       return 'http://127.0.0.1:$port$apiPrefix';
     }
 
-    // 2. Android perangkat fisik — pakai IP custom jika diset
+    // 2. Android perangkat fisik — pakai IP custom jika diset atau lewat parameter --dart-define
     if (defaultTargetPlatform == TargetPlatform.android) {
+      const envIp = String.fromEnvironment('API_IP');
+      if (envIp.isNotEmpty) {
+        return 'http://$envIp:$port$apiPrefix';
+      }
       if (customDeviceIp != null && customDeviceIp!.isNotEmpty) {
         return 'http://$customDeviceIp:$port$apiPrefix';
       }
@@ -52,4 +56,7 @@ class ApiConstants {
 
   // --- Endpoint Rute Lahan ---
   static const String lahanEndpoint = '/lahan';
+
+  // --- Endpoint Rute Komoditas ---
+  static const String komoditasEndpoint = '/komoditas';
 }

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/network/dio_client.dart';
+import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 
 /// Service networking untuk memanggil endpoint lahan backend Laravel.
@@ -110,6 +111,21 @@ class LahanApiService {
     return await _client.delete<bool>(
       '${ApiConstants.lahanEndpoint}/$id',
       fromJson: (_) => true,
+    );
+  }
+
+  /// Mengambil daftar master komoditas dari `GET /api/v1/komoditas`.
+  Future<ApiResponse<List<ItemKomoditas>>> getKomoditasList() async {
+    return await _client.get<List<ItemKomoditas>>(
+      ApiConstants.komoditasEndpoint,
+      fromJson: (data) {
+        if (data is! List) {
+          return <ItemKomoditas>[];
+        }
+        return data
+            .map((item) => ItemKomoditas.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+      },
     );
   }
 }
