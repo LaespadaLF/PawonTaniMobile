@@ -30,6 +30,8 @@ class _EditLandScreenState extends State<EditLandScreen> {
   late TextEditingController _longitudeController;
   late final MapController _mapController;
 
+  String _selectedAreaUnit = 'Hektar (Ha)';
+  bool _isMapInteractive = false;
   String? _selectedCropId;
   String _selectedSeason = 'MT-1 (Musim Hujan: Okt - Mar)';
   bool _isSubmitting = false;
@@ -47,7 +49,12 @@ class _EditLandScreenState extends State<EditLandScreen> {
     super.initState();
     _mapController = MapController();
     _nameController = TextEditingController(text: widget.item.nama);
-    _areaController = TextEditingController(text: widget.item.luas.toStringAsFixed(1).replaceAll('.', ','));
+    final rawLuas = widget.item.luas;
+    final initialLuasText = (rawLuas % 1 == 0)
+        ? rawLuas.toInt().toString()
+        : rawLuas.toStringAsFixed(4).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    _areaController = TextEditingController(text: initialLuasText.replaceAll('.', ','));
+    _areaController.addListener(_onAreaInputChanged);
     _addressController = TextEditingController(text: widget.item.lokasi);
     _notesController = TextEditingController(text: widget.item.keterangan ?? '');
     _latitudeController = TextEditingController(text: (widget.item.latitude ?? -6.5621).toStringAsFixed(6));
@@ -61,6 +68,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
 
   @override
   void dispose() {
+    _areaController.removeListener(_onAreaInputChanged);
     _nameController.dispose();
     _areaController.dispose();
     _addressController.dispose();
@@ -68,6 +76,46 @@ class _EditLandScreenState extends State<EditLandScreen> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     super.dispose();
+  }
+
+  void _onAreaInputChanged() {
+    setState(() {});
+  }
+
+  String get _areaEquivalentText {
+    final raw = double.tryParse(_areaController.text.replaceAll(',', '.'));
+    if (raw == null || raw <= 0) return '';
+    if (_selectedAreaUnit == 'Hektar (Ha)') {
+      final m2 = raw * 10000;
+      final formatted = (m2 % 1 == 0) ? m2.toInt().toString() : m2.toStringAsFixed(2);
+      return '≈ $formatted m² (Konversi baku otomatis)';
+    } else {
+      final ha = raw / 10000;
+      final formatted = (ha % 1 == 0)
+          ? ha.toInt().toString()
+          : ha.toStringAsFixed(4).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+      return '≈ ${formatted.replaceAll('.', ',')} Ha (Konversi baku otomatis)';
+    }
+  }
+
+  void _onAreaUnitChanged(String? newUnit) {
+    if (newUnit == null || newUnit == _selectedAreaUnit) return;
+    final currentVal = double.tryParse(_areaController.text.replaceAll(',', '.'));
+    if (currentVal != null && currentVal > 0) {
+      if (newUnit == 'Meter Persegi (m²)') {
+        final newVal = currentVal * 10000;
+        _areaController.text = (newVal % 1 == 0) ? newVal.toInt().toString() : newVal.toStringAsFixed(2);
+      } else {
+        final newVal = currentVal / 10000;
+        final formatted = (newVal % 1 == 0)
+            ? newVal.toInt().toString()
+            : newVal.toStringAsFixed(4).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+        _areaController.text = formatted.replaceAll('.', ',');
+      }
+    }
+    setState(() {
+      _selectedAreaUnit = newUnit;
+    });
   }
 
   Future<void> _loadKomoditas() async {
@@ -220,18 +268,20 @@ class _EditLandScreenState extends State<EditLandScreen> {
                       decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: 'Hektar (Ha)',
+                          value: _selectedAreaUnit,
                           isExpanded: true,
-                          items: ['Hektar (Ha)'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                          onChanged: (v) {},
+                          items: ['Hektar (Ha)', 'Meter Persegi (m²)'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          onChanged: _onAreaUnitChanged,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              const Text('≈ 8.000 m² (Konversi baku otomatis)', style: TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
+              if (_areaEquivalentText.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(_areaEquivalentText, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
+              ],
               const SizedBox(height: 16),
 
               // Location / Address Field
@@ -299,9 +349,16 @@ class _EditLandScreenState extends State<EditLandScreen> {
                                   double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? 107.7589,
                                 ),
                                 initialZoom: 16,
-                                interactionOptions: const InteractionOptions(
-                                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                                interactionOptions: InteractionOptions(
+                                  flags: _isMapInteractive ? (InteractiveFlag.all & ~InteractiveFlag.rotate) : InteractiveFlag.none,
                                 ),
+                                onTap: (tapPosition, latLng) {
+                                  _mapController.move(latLng, _mapController.camera.zoom);
+                                  setState(() {
+                                    _latitudeController.text = latLng.latitude.toStringAsFixed(6);
+                                    _longitudeController.text = latLng.longitude.toStringAsFixed(6);
+                                  });
+                                },
                                 onPositionChanged: (camera, hasGesture) {
                                   if (hasGesture) {
                                     final center = camera.center;
@@ -352,6 +409,52 @@ class _EditLandScreenState extends State<EditLandScreen> {
                                             offset: Offset(0, 4),
                                           ),
                                         ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Map Interaction Toggle Badge
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _isMapInteractive = !_isMapInteractive;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: _isMapInteractive ? WarnaAplikasi.primary : Colors.white.withValues(alpha: 0.9),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _isMapInteractive ? Icons.lock_open_rounded : Icons.pan_tool_outlined,
+                                        size: 14,
+                                        color: _isMapInteractive ? Colors.white : WarnaAplikasi.primaryDark,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _isMapInteractive ? 'Mode geser aktif' : 'Ketuk untuk geser',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: _isMapInteractive ? Colors.white : WarnaAplikasi.primaryDark,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1057,9 +1160,12 @@ class _EditLandScreenState extends State<EditLandScreen> {
 
     setState(() => _isSubmitting = true);
 
+    final rawArea = double.tryParse(_areaController.text.replaceAll(',', '.')) ?? widget.item.luas;
+    final areaInHa = _selectedAreaUnit == 'Meter Persegi (m²)' ? (rawArea / 10000.0) : rawArea;
+
     final payload = <String, dynamic>{
       'nama_lahan': _nameController.text.trim(),
-      'luas': double.tryParse(_areaController.text.replaceAll(',', '.')) ?? widget.item.luas,
+      'luas': areaInHa,
       'alamat_lahan': address,
       'latitude': double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? widget.item.latitude ?? -6.5621,
       'longitude': double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? widget.item.longitude ?? 107.7589,
@@ -1079,9 +1185,11 @@ class _EditLandScreenState extends State<EditLandScreen> {
     if (response.success && response.data != null) {
       Navigator.pop(context, response.data);
     } else {
+      final errorMsg = response.firstErrorMessage ??
+          (response.message.isNotEmpty ? response.message : 'Gagal memperbarui data lahan.');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message.isNotEmpty ? response.message : 'Gagal memperbarui data lahan.'),
+          content: Text(errorMsg),
           behavior: SnackBarBehavior.floating,
         ),
       );

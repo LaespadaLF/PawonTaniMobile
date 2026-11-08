@@ -19,6 +19,7 @@ class LandDetailScreen extends StatefulWidget {
 class _LandDetailScreenState extends State<LandDetailScreen> {
   late ItemLahan _item;
   bool _isFetching = false;
+  bool _isMapInteractive = false;
 
   @override
   void initState() {
@@ -373,29 +374,79 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: LatLng(_item.latitude ?? -6.5621, _item.longitude ?? 107.7589),
-                        initialZoom: 15,
-                        interactionOptions: const InteractionOptions(
-                          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                        ),
-                      ),
+                    child: Stack(
                       children: [
-                        TileLayer(
-                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'id.pawontani.mobile',
-                          tileProvider: NetworkTileProvider(),
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              width: 40,
-                              height: 40,
-                              point: LatLng(_item.latitude ?? -6.5621, _item.longitude ?? 107.7589),
-                              child: Icon(Icons.location_on, color: WarnaAplikasi.primary, size: 40),
+                        FlutterMap(
+                          options: MapOptions(
+                            initialCenter: LatLng(_item.latitude ?? -6.5621, _item.longitude ?? 107.7589),
+                            initialZoom: 15,
+                            interactionOptions: InteractionOptions(
+                              flags: _isMapInteractive ? (InteractiveFlag.all & ~InteractiveFlag.rotate) : InteractiveFlag.none,
+                            ),
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'id.pawontani.mobile',
+                              tileProvider: NetworkTileProvider(),
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  width: 40,
+                                  height: 40,
+                                  point: LatLng(_item.latitude ?? -6.5621, _item.longitude ?? 107.7589),
+                                  child: const Icon(Icons.location_on, color: WarnaAplikasi.primary, size: 40),
+                                ),
+                              ],
                             ),
                           ],
+                        ),
+                        // Map Interaction Toggle Badge
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _isMapInteractive = !_isMapInteractive;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: _isMapInteractive ? WarnaAplikasi.primary : Colors.white.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _isMapInteractive ? Icons.lock_open_rounded : Icons.pan_tool_outlined,
+                                    size: 14,
+                                    color: _isMapInteractive ? Colors.white : WarnaAplikasi.primaryDark,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _isMapInteractive ? 'Mode geser aktif' : 'Ketuk untuk geser',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: _isMapInteractive ? Colors.white : WarnaAplikasi.primaryDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

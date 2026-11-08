@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_detail_lahan.dart';
@@ -171,6 +172,39 @@ void main() {
       expect(find.text('Belum Ada Riwayat Aktivitas'), findsOneWidget);
       // Keterangan card tidak boleh muncul bila null
       expect(find.text('Keterangan / Catatan Lahan'), findsNothing);
+    });
+
+    testWidgets('4. Peta Detail Lahan terkunci secara default dan interaksi dapat diaktifkan via toggle', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(createDetailWidget(baseItem));
+      await tester.pump();
+
+      final flutterMapFinder = find.byType(FlutterMap);
+      expect(flutterMapFinder, findsOneWidget);
+
+      FlutterMap mapWidget = tester.widget(flutterMapFinder);
+      expect(mapWidget.options.interactionOptions.flags, equals(InteractiveFlag.none));
+
+      // Toggle tombol "Ketuk untuk geser"
+      final toggleFinder = find.text('Ketuk untuk geser');
+      expect(toggleFinder, findsOneWidget);
+
+      await tester.tap(toggleFinder);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Mode geser aktif'), findsOneWidget);
+      mapWidget = tester.widget(flutterMapFinder);
+      expect(mapWidget.options.interactionOptions.flags, equals(InteractiveFlag.all & ~InteractiveFlag.rotate));
+
+      // Kunci kembali
+      await tester.tap(find.text('Mode geser aktif'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Ketuk untuk geser'), findsOneWidget);
+      mapWidget = tester.widget(flutterMapFinder);
+      expect(mapWidget.options.interactionOptions.flags, equals(InteractiveFlag.none));
     });
   });
 }
