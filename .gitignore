@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# AI Agent & Notes
+.skills/
+AGENTS.md
+*.md
+!README.md
+

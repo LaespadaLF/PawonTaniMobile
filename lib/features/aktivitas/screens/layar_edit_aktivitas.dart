@@ -1,19 +1,25 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
-import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart';
+import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
 import 'package:pawon_mobile/features/aktivitas/widgets/dialog_hapus_aktivitas.dart';
+import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 
 class EditActivityScreen extends StatefulWidget {
   final PlantActivityItem item;
-  final Function(PlantActivityItem) onUpdate;
-  final Function(String) onDelete;
+  final Function(PlantActivityItem)? onUpdate;
+  final Function(String)? onDelete;
 
   const EditActivityScreen({
     super.key,
     required this.item,
-    required this.onUpdate,
-    required this.onDelete,
+    this.onUpdate,
+    this.onDelete,
   });
 
   @override
@@ -21,48 +27,73 @@ class EditActivityScreen extends StatefulWidget {
 }
 
 class _EditActivityScreenState extends State<EditActivityScreen> {
-  late String _selectedLahan;
-  late String _selectedLahanDetail;
+  final LahanApiService _lahanService = LahanApiService();
+  final AktivitasApiService _aktivitasService = AktivitasApiService();
+
+  List<ItemLahan> _lahanList = [];
+  ItemLahan? _selectedItemLahan;
+  bool _isLoadingLahan = true;
+  bool _isSaving = false;
+  bool _isDeleting = false;
+
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
   late ActivityCategory _selectedCategory;
   late PlantCondition _selectedCondition;
   late TextEditingController _notesController;
-  String? _selectedPhotoUrl;
 
-  final List<Map<String, String>> _availableLahan = [
-    {
-      'name': 'Petak Sawah Barat (Blok A)',
-      'detail': '0,75 Ha • Padi Ciherang',
-    },
-    {
-      'name': 'Petak Sawah Timur (Blok C)',
-      'detail': '0,50 Ha • Jagung Manis',
-    },
-    {
-      'name': 'Petak Lereng Selatan (Blok B)',
-      'detail': '0,40 Ha • Cabai Merah',
-    },
-  ];
+  String? _existingPhotoUrl;
+  Uint8List? _newPhotoBytes;
+  String? _newPhotoName;
 
   @override
   void initState() {
     super.initState();
-    _selectedLahan = widget.item.location;
-    _selectedLahanDetail = widget.item.blockArea;
-    _selectedDate = DateTime(2024, 11, 15);
-    _selectedTime = const TimeOfDay(hour: 7, minute: 30);
     _selectedCategory = widget.item.category;
     _selectedCondition = widget.item.condition;
     _notesController = TextEditingController(text: widget.item.notes);
-    _selectedPhotoUrl = widget.item.imageUrl ??
-        'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&auto=format&fit=crop&q=80';
+    _existingPhotoUrl = widget.item.imageUrl;
+
+    // Parse existing date/time or default to now
+    _selectedDate = DateTime.now();
+    _selectedTime = TimeOfDay.now();
+
+    _fetchLahanList();
   }
 
   @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchLahanList() async {
+    setState(() => _isLoadingLahan = true);
+    final response = await _lahanService.getLahanList();
+    if (!mounted) return;
+
+    if (response.success && response.data != null && response.data!.isNotEmpty) {
+      final list = response.data!;
+      ItemLahan? matched;
+      if (widget.item.lahanId != null) {
+        matched = list.firstWhere((l) => l.id == widget.item.lahanId, orElse: () => list.first);
+      } else {
+        matched = list.firstWhere(
+          (l) => l.nama.toLowerCase() == widget.item.location.toLowerCase(),
+          orElse: () => list.first,
+        );
+      }
+
+      setState(() {
+        _lahanList = list;
+        _selectedItemLahan = matched;
+        _isLoadingLahan = false;
+      });
+    } else {
+      setState(() {
+        _isLoadingLahan = false;
+      });
+    }
   }
 
   String _formatDate(DateTime dt) {
@@ -73,53 +104,211 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} ${dt.year}';
   }
 
+  String _formatDateIso(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+
   String _formatTime(TimeOfDay t) {
     final h = t.hour.toString().padLeft(2, '0');
     final m = t.minute.toString().padLeft(2, '0');
     return '$h:$m WIB';
   }
 
-  void _handleSave() {
-    final updated = widget.item.copyWith(
-      title: _selectedCategory.label,
-      cropName: _selectedLahanDetail.split('•').last.trim(),
-      category: _selectedCategory,
-      condition: _selectedCondition,
-      date: _formatDate(_selectedDate),
-      time: _formatTime(_selectedTime),
-      location: _selectedLahan,
-      blockArea: _selectedLahanDetail,
-      notes: _notesController.text.trim(),
-      imageUrl: _selectedPhotoUrl,
-    );
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1200,
+      );
+      if (picked == null || !mounted) return;
 
-    widget.onUpdate(updated);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Perubahan aktivitas berhasil disimpan!'),
-        backgroundColor: WarnaAplikasi.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    Navigator.pop(context);
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _newPhotoBytes = bytes;
+        _newPhotoName = picked.name;
+        _existingPhotoUrl = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memilih foto: $e'),
+          backgroundColor: WarnaAplikasi.errorRedDark,
+        ),
+      );
+    }
   }
 
-  void _confirmDelete() {
-    DeleteActivityDialog.show(
-      context,
-      item: widget.item,
-      onConfirmDelete: () {
-        widget.onDelete(widget.item.id);
-        Navigator.pop(context); // close edit screen
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: WarnaAplikasi.outlineGray,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Ubah Foto Aktivitas',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: WarnaAplikasi.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primary),
+                  title: const Text('Ambil dari Kamera', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickPhoto(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
+                  title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickPhoto(ImageSource.gallery);
+                  },
+                ),
+                if (_newPhotoBytes != null || (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty))
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline, color: WarnaAplikasi.errorRedDark),
+                    title: const Text('Hapus Foto', style: TextStyle(color: WarnaAplikasi.errorRedDark, fontWeight: FontWeight.bold)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _newPhotoBytes = null;
+                        _newPhotoName = null;
+                        _existingPhotoUrl = null;
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleSave() async {
+    setState(() => _isSaving = true);
+
+    try {
+      final payload = <String, dynamic>{
+        'kategori': _selectedCategory.name,
+        'judul': _selectedCategory.label,
+        'kondisi_tanaman': _selectedCondition.name,
+        'tanggal': _formatDateIso(_selectedDate),
+        'waktu': _formatTime(_selectedTime),
+        'catatan': _notesController.text.trim(),
+      };
+
+      if (_selectedItemLahan != null) {
+        payload['id_lahan'] = _selectedItemLahan!.id;
+      }
+
+      MultipartFile? file;
+      if (_newPhotoBytes != null) {
+        file = MultipartFile.fromBytes(
+          _newPhotoBytes!,
+          filename: _newPhotoName ?? 'aktivitas.jpg',
+        );
+      }
+
+      final response = await _aktivitasService.updateAktivitas(
+        widget.item.id,
+        payload,
+        fotoAktivitas: file,
+      );
+
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+
+      if (response.success && response.data != null) {
+        final updated = response.data!;
+        widget.onUpdate?.call(updated);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Catatan aktivitas berhasil dihapus.'),
+            content: Text('Perubahan aktivitas berhasil disimpan!'),
+            backgroundColor: WarnaAplikasi.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, updated);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message.isNotEmpty
+                ? response.message
+                : 'Gagal memperbarui aktivitas.'),
             backgroundColor: WarnaAplikasi.errorRedDark,
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan: $e'),
+          backgroundColor: WarnaAplikasi.errorRedDark,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _handleDelete() {
+    DeleteActivityDialog.show(
+      context,
+      item: widget.item,
+      onConfirmDelete: () async {
+        setState(() => _isDeleting = true);
+        final response = await _aktivitasService.deleteAktivitas(widget.item.id);
+        if (!mounted) return;
+        setState(() => _isDeleting = false);
+
+        if (response.success) {
+          widget.onDelete?.call(widget.item.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Catatan aktivitas berhasil dihapus.'),
+              backgroundColor: WarnaAplikasi.errorRedDark,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.pop(context, 'deleted');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message.isNotEmpty ? response.message : 'Gagal menghapus aktivitas.'),
+              backgroundColor: WarnaAplikasi.errorRedDark,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
     );
   }
@@ -129,8 +318,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
       appBar: const PawonFormHeader(
-        title: 'Edit Aktivitas Tanaman',
-        subtitle: 'Perbarui informasi dan catatan aktivitas tanaman Anda',
+        title: 'Edit Aktivitas',
+        subtitle: 'Perbarui rincian aktivitas dan catatan lahan',
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -138,216 +327,181 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Badge Summary
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.greenLight,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.bannerIconBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.spa_rounded,
-                      color: WarnaAplikasi.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${widget.item.title} (${widget.item.cropName})',
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: WarnaAplikasi.primaryDark,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${widget.item.date} • ${widget.item.cropName}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: WarnaAplikasi.textDarkGrayGreen,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.greenLight2,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Hari Ke-${widget.item.dayNumber ?? 45}',
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
             // 1. Lahan
-            _buildFieldLabel('Lahan'),
+            _buildFieldLabel('Petak Lahan*'),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
+            if (_isLoadingLahan)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: WarnaAplikasi.borderField),
+                ),
+                child: const Row(
+                  children: [
+                    SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                    SizedBox(width: 12),
+                    Text('Memuat data lahan...', style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayGreen)),
+                  ],
+                ),
+              )
+            else
+              InkWell(
+                onTap: _showLahanPicker,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: WarnaAplikasi.borderField),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.greenLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.holiday_village_outlined,
-                      color: WarnaAplikasi.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedLahan,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: WarnaAplikasi.primaryDark,
-                          ),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          _selectedLahanDetail,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: WarnaAplikasi.textGrayGreen,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  InkWell(
-                    onTap: _showLahanPicker,
-                    borderRadius: BorderRadius.circular(8),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      child: Text(
-                        'Ubah >',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-
-            // 2. Tanggal & Waktu Pelaksanaan
-            _buildFieldLabel('Tanggal & Waktu Pelaksanaan'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: _pickDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: WarnaAplikasi.borderField),
+                    border: Border.all(color: WarnaAplikasi.borderField),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: WarnaAplikasi.greenLight,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.holiday_village_outlined,
+                          color: WarnaAplikasi.primary,
+                          size: 20,
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 16, color: WarnaAplikasi.primary),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _formatDate(_selectedDate),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedItemLahan?.nama ?? widget.item.location,
                               style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
                                 color: WarnaAplikasi.primaryDark,
                               ),
                             ),
-                          ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: WarnaAplikasi.textGrayGreen),
-                        ],
+                            const SizedBox(height: 1),
+                            Text(
+                              _selectedItemLahan != null
+                                  ? '${_selectedItemLahan!.luas.toStringAsFixed(2)} Ha • ${_selectedItemLahan!.komoditas.isNotEmpty ? _selectedItemLahan!.komoditas : 'Pertanian'}'
+                                  : widget.item.blockArea,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: WarnaAplikasi.textGrayGreen,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: WarnaAplikasi.textGrayGreen,
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
+
+            // 2. Tanggal & Waktu
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel('Tanggal*'),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                          );
+                          if (picked != null) setState(() => _selectedDate = picked);
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: WarnaAplikasi.borderField),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today_outlined, size: 16, color: WarnaAplikasi.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _formatDate(_selectedDate),
+                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: InkWell(
-                    onTap: _pickTime,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel('Waktu*'),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: _selectedTime,
+                          );
+                          if (picked != null) setState(() => _selectedTime = picked);
+                        },
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: WarnaAplikasi.borderField),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.access_time_rounded, size: 16, color: WarnaAplikasi.primary),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _formatTime(_selectedTime),
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: WarnaAplikasi.primaryDark,
-                              ),
-                            ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: WarnaAplikasi.borderField),
                           ),
-                          const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: WarnaAplikasi.textGrayGreen),
-                        ],
+                          child: Row(
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 16, color: WarnaAplikasi.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _formatTime(_selectedTime),
+                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
 
-            // 3. Kategori Aktivitas
-            _buildFieldLabel('Kategori Aktivitas'),
-            const SizedBox(height: 8),
+            // 3. Jenis Aktivitas
+            _buildFieldLabel('Jenis Aktivitas*'),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -356,76 +510,59 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 return ChoiceChip(
                   label: Text(cat.label),
                   selected: isSelected,
-                  onSelected: (val) {
-                    if (val) setState(() => _selectedCategory = cat);
-                  },
+                  onSelected: (_) => setState(() => _selectedCategory = cat),
                   selectedColor: WarnaAplikasi.primary,
                   backgroundColor: Colors.white,
-                  showCheckmark: false,
                   labelStyle: TextStyle(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : WarnaAplikasi.dialogText,
+                    color: isSelected ? Colors.white : WarnaAplikasi.primaryDark,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
+                      color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.outlineGray,
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  showCheckmark: false,
                 );
               }).toList(),
             ),
             const SizedBox(height: 20),
 
             // 4. Kondisi Tanaman
-            _buildFieldLabel('Kondisi Tanaman'),
-            const SizedBox(height: 10),
+            _buildFieldLabel('Kondisi Tanaman*'),
+            const SizedBox(height: 8),
             _buildConditionOption(
               condition: PlantCondition.sehat,
-              icon: Icons.spa_rounded,
-              iconColor: WarnaAplikasi.primary,
-              iconBg: WarnaAplikasi.bgSuccessLight,
-              title: 'Sehat',
-              subtitle: 'Pertumbuhan normal dan daun hijau segar.',
+              icon: Icons.check_circle_outline_rounded,
+              iconColor: const Color(0xFF16A34A),
+              iconBg: const Color(0xFFDCFCE7),
+              title: 'Sehat & Normal',
+              subtitle: 'Pertumbuhan optimal, daun hijau segar, bebas hama',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _buildConditionOption(
               condition: PlantCondition.perluPerhatian,
-              icon: Icons.warning_amber_rounded,
-              iconColor: WarnaAplikasi.warningOrange,
-              iconBg: WarnaAplikasi.statusTempoBg,
+              icon: Icons.change_history_rounded,
+              iconColor: const Color(0xFFD97706),
+              iconBg: const Color(0xFFFEF3C7),
               title: 'Perlu Perhatian',
-              subtitle: 'Ada gejala kekeringan atau daun mulai menguning.',
+              subtitle: 'Kekurangan air/pupuk, daun agak menguning atau kerdil',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _buildConditionOption(
               condition: PlantCondition.terserangHama,
-              icon: Icons.bug_report_outlined,
-              iconColor: WarnaAplikasi.errorRedDark,
-              iconBg: WarnaAplikasi.errorRedLight,
+              icon: Icons.warning_amber_rounded,
+              iconColor: const Color(0xFFDC2626),
+              iconBg: const Color(0xFFFEE2E2),
               title: 'Terserang Hama/Penyakit',
-              subtitle: 'Ditemukan gejala serangan hama wereng/ulat/jamur.',
+              subtitle: 'Gejala wereng, ulat, blast atau bercak coklat tampak jelas',
             ),
             const SizedBox(height: 20),
 
-            // 5. Catatan Aktivitas & Kondisi Lapangan
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildFieldLabel('Catatan Aktivitas & Kondisi Lapangan'),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _notesController,
-                  builder: (context, value, child) {
-                    return Text(
-                      '${value.text.length}/250',
-                      style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
-                    );
-                  },
-                ),
-              ],
-            ),
+            // 5. Catatan
+            _buildFieldLabel('Catatan Aktivitas'),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -435,13 +572,13 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
               ),
               child: TextField(
                 controller: _notesController,
-                maxLines: 4,
+                maxLines: 3,
                 maxLength: 250,
                 style: const TextStyle(fontSize: 13, color: WarnaAplikasi.primaryDark),
                 decoration: const InputDecoration(
                   counterText: '',
-                  hintText: 'Tuliskan catatan detail aktivitas dan kondisi...',
-                  hintStyle: TextStyle(fontSize: 12.5, color: WarnaAplikasi.textFieldHint),
+                  hintText: 'Tuliskan catatan detail aktivitas...',
+                  hintStyle: TextStyle(fontSize: 12.5, color: WarnaAplikasi.iconGray),
                   contentPadding: EdgeInsets.all(14),
                   border: InputBorder.none,
                 ),
@@ -449,210 +586,151 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 6. Foto Kondisi Tanaman
-            _buildFieldLabel('Foto Kondisi Tanaman'),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                // Current photo thumbnail
-                if (_selectedPhotoUrl != null)
-                  Expanded(
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Stack(
+            // 6. Foto Dokumentasi
+            _buildFieldLabel('Dokumentasi Foto'),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: _showPhotoOptions,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: WarnaAplikasi.photoUploadBorder,
+                    width: 1.2,
+                  ),
+                ),
+                child: _newPhotoBytes != null
+                    ? Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _newPhotoBytes!,
+                              height: 140,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.edit_outlined, size: 16, color: WarnaAplikasi.primary),
+                              SizedBox(width: 4),
+                              Text('Ganti Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
+                            ],
+                          ),
+                        ],
+                      )
+                    : (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty)
+                        ? Column(
                             children: [
-                              Image.network(
-                                _selectedPhotoUrl!,
-                                height: 96,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                              Positioned(
-                                top: 6,
-                                right: 6,
-                                child: InkWell(
-                                  onTap: () => setState(() => _selectedPhotoUrl = null),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: const BoxDecoration(
-                                      color: WarnaAplikasi.overlayScrim,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  _existingPhotoUrl!,
+                                  height: 140,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    height: 100,
+                                    color: Colors.grey.shade100,
+                                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.edit_outlined, size: 16, color: WarnaAplikasi.primary),
+                                  SizedBox(width: 4),
+                                  Text('Ganti Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: const BoxDecoration(
+                                  color: WarnaAplikasi.greenLight,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_outlined,
+                                  color: WarnaAplikasi.primary,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                '+ Tambah Foto',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: WarnaAplikasi.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Kamera atau Galeri (Maks 10MB)',
+                                style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
+                              ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Pilih foto pengganti'),
-                                    backgroundColor: WarnaAplikasi.primary,
-                                    duration: Duration(seconds: 1),
-                                  ),
-                                );
-                              },
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.edit_outlined, size: 12, color: WarnaAplikasi.primary),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Ubah Foto',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.primary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            InkWell(
-                              onTap: () => setState(() => _selectedPhotoUrl = null),
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.delete_outline_rounded, size: 12, color: WarnaAplikasi.errorRedDark),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Hapus',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.errorRedDark),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(width: 12),
-                // Add another photo box
-                Expanded(
-                  child: Container(
-                    height: 116,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: WarnaAplikasi.photoUploadBorder,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedPhotoUrl =
-                                'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&auto=format&fit=crop&q=80';
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(14),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: const BoxDecoration(
-                                color: WarnaAplikasi.greenLight,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.add_a_photo_outlined,
-                                color: WarnaAplikasi.primary,
-                                size: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Tambah Foto Lain',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: WarnaAplikasi.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              'JPG, PNG maks 10MB',
-                              style: TextStyle(fontSize: 9.5, color: WarnaAplikasi.textGrayGreen),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
-            // Primary: Simpan Perubahan
+            // Tombol Simpan Perubahan & Hapus
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: ElevatedButton(
-                onPressed: _handleSave,
+              child: ElevatedButton.icon(
+                onPressed: _isSaving ? null : _handleSave,
+                icon: _isSaving
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.check_circle_outline_rounded, size: 18),
+                label: Text(
+                  _isSaving ? 'Menyimpan...' : 'Simpan Perubahan',
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: WarnaAplikasi.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'Simpan Perubahan',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-
-            // Secondary: Batal
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
+              child: OutlinedButton.icon(
+                onPressed: (_isSaving || _isDeleting) ? null : _handleDelete,
+                icon: _isDeleting
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: WarnaAplikasi.errorRedDark, strokeWidth: 2))
+                    : const Icon(Icons.delete_outline, color: WarnaAplikasi.errorRedDark, size: 18),
+                label: Text(
+                  _isDeleting ? 'Menghapus...' : 'Hapus Aktivitas',
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.errorRedDark),
+                ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: WarnaAplikasi.dialogText,
-                  side: const BorderSide(color: WarnaAplikasi.outlineGray),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'Batal',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  side: const BorderSide(color: Color(0xFFFCA5A5)),
+                  backgroundColor: const Color(0xFFFEF2F2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-
-            // Destructive: Hapus Aktivitas
-            Center(
-              child: TextButton.icon(
-                onPressed: _confirmDelete,
-                icon: const Icon(Icons.delete_outline_rounded, size: 16, color: WarnaAplikasi.errorRedDark),
-                label: const Text(
-                  'Hapus Aktivitas',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.errorRedDark,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -689,16 +767,9 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
+            color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.iconGray,
             width: isSelected ? 1.5 : 1,
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x04000000),
-              blurRadius: 6,
-              offset: Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -766,6 +837,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   }
 
   void _showLahanPicker() {
+    if (_lahanList.isEmpty) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -795,8 +868,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark),
               ),
               const SizedBox(height: 12),
-              ..._availableLahan.map((lahan) {
-                final isCurrent = _selectedLahan == lahan['name'];
+              ..._lahanList.map((lahan) {
+                final isCurrent = _selectedItemLahan?.id == lahan.id;
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Container(
@@ -807,13 +880,12 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                     ),
                     child: const Icon(Icons.holiday_village_outlined, color: WarnaAplikasi.primary),
                   ),
-                  title: Text(lahan['name']!, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                  subtitle: Text(lahan['detail']!, style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayGreen)),
-                  trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: WarnaAplikasi.primary) : null,
+                  title: Text(lahan.nama, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                  subtitle: Text('${lahan.luas.toStringAsFixed(2)} Ha • ${lahan.komoditas.isNotEmpty ? lahan.komoditas : 'Pertanian'}', style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayGreen)),
+                  trailing: isCurrent ? const Icon(Icons.check_circle, color: WarnaAplikasi.primary) : null,
                   onTap: () {
                     setState(() {
-                      _selectedLahan = lahan['name']!;
-                      _selectedLahanDetail = lahan['detail']!;
+                      _selectedItemLahan = lahan;
                     });
                     Navigator.pop(context);
                   },
@@ -825,43 +897,4 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
       },
     );
   }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(primary: WarnaAplikasi.primary),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
-  }
-
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(primary: WarnaAplikasi.primary),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
-  }
 }
-

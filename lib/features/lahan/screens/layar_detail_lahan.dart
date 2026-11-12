@@ -3,6 +3,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
+import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart';
+import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
+import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_edit_lahan.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
@@ -21,10 +24,47 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
   bool _isFetching = false;
   bool _isMapInteractive = false;
 
+  final AktivitasApiService _aktivitasService = AktivitasApiService();
+  List<PlantActivityItem> _activities = [];
+  bool _isLoadingActivities = true;
+
   @override
   void initState() {
     super.initState();
     _item = widget.item;
+    _fetchFreshDetail();
+    _fetchLahanActivities();
+  }
+
+  Future<void> _fetchLahanActivities() async {
+    setState(() => _isLoadingActivities = true);
+    try {
+      final res = await _aktivitasService.getAktivitasList(lahanId: _item.id);
+      if (mounted) {
+        setState(() {
+          _activities = res.data ?? [];
+          _isLoadingActivities = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingActivities = false);
+    }
+  }
+
+  Future<void> _navigateToCatatAktivitas() async {
+    final res = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecordActivityScreen(
+          initialLahanId: _item.id,
+          initialLahanName: _item.nama,
+        ),
+      ),
+    );
+
+    if (res == true || res is PlantActivityItem) {
+      _fetchLahanActivities();
+    }
   }
 
   @override
@@ -152,20 +192,26 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 // Image Header Card
                 Container(
                   height: 220,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    image: DecorationImage(
-                      image: (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty)
-                          ? NetworkImage(_item.fotoLahan!)
-                          : const NetworkImage('https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=600&q=80') as ImageProvider,
-                      fit: BoxFit.cover,
-                    ),
+                    color: WarnaAplikasi.greenLight,
                   ),
                   child: Stack(
+                    fit: StackFit.expand,
                     children: [
+                      Image.network(
+                        (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty)
+                            ? _item.fotoLahan!
+                            : 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=600&q=80',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Image.network(
+                          'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=600&q=80',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
@@ -454,80 +500,12 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Dokumentasi Petak
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Dokumentasi Petak', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark)),
-                    const Text('+ Tambah Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: WarnaAplikasi.greenLight,
-                          image: _item.fotoLahan != null
-                              ? DecorationImage(
-                                  image: NetworkImage(_item.fotoLahan!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: _item.fotoLahan == null
-                            ? const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.agriculture_outlined, color: WarnaAplikasi.primary, size: 28),
-                                  SizedBox(height: 6),
-                                  Text('Belum ada foto dokumentasi petak', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark), textAlign: TextAlign.center),
-                                ],
-                              )
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
+                // Dokumentasi Petak (Galeri Perkembangan & Aktivitas)
+                _buildGaleriDokumentasiSection(),
                 const SizedBox(height: 24),
 
                 // Riwayat Terkini / Aktivitas
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Riwayat Aktivitas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: WarnaAplikasi.border),
-                  ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history_toggle_off_rounded, color: WarnaAplikasi.textGrayLight, size: 36),
-                      SizedBox(height: 8),
-                      Text(
-                        'Belum Ada Riwayat Aktivitas',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Riwayat pemupukan, penyemprotan, dan perawatan petak akan tercatat di sini saat modul aktivitas tersedia.',
-                        style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+                _buildRiwayatAktivitasSection(),
 
                 // Riwayat Verifikasi (Audit Trail Backend)
                 _buildRiwayatVerifikasiList(),
@@ -538,14 +516,7 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fitur pencatatan aktivitas lahan sedang dalam pengembangan.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
+                    onPressed: _navigateToCatatAktivitas,
                     icon: const Icon(Icons.add, color: Colors.white, size: 18),
                     label: const Text('Catat Aktivitas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
@@ -594,6 +565,476 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Dialog popup untuk melihat foto ukuran besar
+  void _showImagePreviewDialog(String imageUrl, String title, String subtitle) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    color: Colors.black,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 200,
+                        color: Colors.black,
+                        child: const Center(
+                          child: Icon(Icons.broken_image, color: Colors.white70, size: 40),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      if (subtitle.isNotEmpty)
+                        Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                onPressed: () => Navigator.pop(ctx),
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bagian Dokumentasi Petak: Galeri Foto Aktivitas & Foto Profil Lahan
+  Widget _buildGaleriDokumentasiSection() {
+    // Kumpulkan seluruh foto aktivitas yang memiliki foto
+    final List<Map<String, dynamic>> fotoList = [];
+
+    // 1. Foto Profil Utama Lahan (jika ada)
+    if (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty) {
+      fotoList.add({
+        'url': _item.fotoLahan!,
+        'title': 'Profil Petak',
+        'subtitle': 'Foto Utama Lahan',
+        'isMain': true,
+      });
+    }
+
+    // 2. Kumpulan foto dari setiap aktivitas tanam
+    for (final akt in _activities) {
+      if (akt.imageUrl != null && akt.imageUrl!.isNotEmpty) {
+        fotoList.add({
+          'url': akt.imageUrl!,
+          'title': akt.title,
+          'subtitle': akt.date,
+          'isMain': false,
+          'item': akt,
+        });
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Dokumentasi Petak',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark),
+                ),
+                if (fotoList.isNotEmpty) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: WarnaAplikasi.greenLight,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${fotoList.length} Foto',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            InkWell(
+              onTap: _navigateToCatatAktivitas,
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Text(
+                  '+ Tambah Foto',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        if (fotoList.isEmpty)
+          InkWell(
+            onTap: _navigateToCatatAktivitas,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: WarnaAplikasi.border),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: WarnaAplikasi.greenLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add_a_photo_outlined, color: WarnaAplikasi.primary, size: 22),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Belum Ada Foto Dokumentasi',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Ambil foto saat mencatat pemupukan, pengairan, atau kegiatan rawat petak.',
+                    style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: _navigateToCatatAktivitas,
+                    icon: const Icon(Icons.camera_alt_outlined, size: 14),
+                    label: const Text('Ambil Foto Kegiatan'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: WarnaAplikasi.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 155,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              itemCount: fotoList.length + 1, // +1 untuk kartu tambah cepat
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                // Kartu terakhir: tombol tambah cepat
+                if (index == fotoList.length) {
+                  return InkWell(
+                    onTap: _navigateToCatatAktivitas,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 110,
+                      decoration: BoxDecoration(
+                        color: WarnaAplikasi.greenLight.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.solid),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.add_circle_outline, color: WarnaAplikasi.primary, size: 26),
+                          SizedBox(height: 6),
+                          Text(
+                            'Tambah\nFoto',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final foto = fotoList[index];
+                final url = foto['url'] as String;
+                final title = foto['title'] as String;
+                final subtitle = foto['subtitle'] as String;
+                final isMain = foto['isMain'] == true;
+
+                return InkWell(
+                  onTap: () => _showImagePreviewDialog(url, title, subtitle),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: 140,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: WarnaAplikasi.border),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x08000000),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return const Center(
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: WarnaAplikasi.greenLight,
+                            child: const Center(
+                              child: Icon(Icons.broken_image, color: Colors.grey, size: 24),
+                            ),
+                          ),
+                        ),
+                        // Gradient Overlay & Info Bar
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.85),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  subtitle,
+                                  style: const TextStyle(color: Colors.white70, fontSize: 9.5),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Badge jika foto profil lahan
+                        if (isMain)
+                          Positioned(
+                            top: 6,
+                            left: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: WarnaAplikasi.buttonDark,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('Foto Utama', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRiwayatAktivitasSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Riwayat Aktivitas',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark),
+            ),
+            if (_activities.isNotEmpty)
+              Text(
+                '${_activities.length} Kegiatan',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_isLoadingActivities)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: WarnaAplikasi.border),
+            ),
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+              ),
+            ),
+          )
+        else if (_activities.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: WarnaAplikasi.border),
+            ),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.history_toggle_off_rounded, color: WarnaAplikasi.textGrayLight, size: 36),
+                SizedBox(height: 8),
+                Text(
+                  'Belum Ada Riwayat Aktivitas',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Riwayat pemupukan, penyemprotan, dan perawatan petak ini akan tercatat di sini setelah Anda mencatat aktivitas.',
+                  style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )
+        else
+          Column(
+            children: _activities.take(5).map((akt) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: WarnaAplikasi.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: WarnaAplikasi.greenLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.spa_rounded, color: WarnaAplikasi.primary, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                akt.title,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: WarnaAplikasi.primaryDark),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: akt.condition == PlantCondition.sehat ? WarnaAplikasi.bgSuccessLight : WarnaAplikasi.statusTempoBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  akt.condition.badgeText,
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: akt.condition == PlantCondition.sehat ? WarnaAplikasi.primary : WarnaAplikasi.warningOrange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${akt.date} ${akt.time.isNotEmpty ? "• ${akt.time}" : ""}',
+                            style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
+                          ),
+                          if (akt.notes.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              akt.notes,
+                              style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayDark),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+      ],
     );
   }
 

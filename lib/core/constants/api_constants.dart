@@ -57,6 +57,39 @@ class ApiConstants {
   // --- Endpoint Rute Lahan ---
   static const String lahanEndpoint = '/lahan';
 
+  // --- Endpoint Rute Aktivitas ---
+  static const String aktivitasEndpoint = '/aktivitas';
+
   // --- Endpoint Rute Komoditas ---
   static const String komoditasEndpoint = '/komoditas';
+
+  /// Normalisasi URL gambar dari storage backend agar selalu dapat dimuat
+  /// baik di Android Emulator, HP fisik, maupun Web/Desktop.
+  static String? resolveImageUrl(String? path) {
+    if (path == null || path.trim().isEmpty) return null;
+    final clean = path.trim();
+
+    // Biarkan URL CDN pihak ketiga (Cloudinary / Unsplash) apa adanya
+    if (clean.contains('res.cloudinary.com') || clean.contains('unsplash.com')) {
+      return clean;
+    }
+
+    final host = baseUrl.replaceAll(apiPrefix, '');
+
+    // Ekstrak path media internal
+    final match = RegExp(r'(?:storage|media)/(.*)$', caseSensitive: false).firstMatch(clean);
+    String relative;
+    if (match != null && match.groupCount >= 1) {
+      relative = match.group(1)!;
+    } else if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      final uri = Uri.tryParse(clean);
+      final p = uri?.path ?? '';
+      relative = p.replaceFirst(RegExp(r'^/(?:storage|media)/'), '');
+    } else {
+      relative = clean.startsWith('/') ? clean.substring(1) : clean;
+      relative = relative.replaceFirst(RegExp(r'^(?:storage|media)/'), '');
+    }
+
+    return '$host/media/$relative';
+  }
 }

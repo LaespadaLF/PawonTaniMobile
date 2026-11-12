@@ -1,3 +1,5 @@
+import 'package:pawon_mobile/core/constants/api_constants.dart';
+
 enum StatusLahan {
   aktif,
   istirahat,
@@ -178,7 +180,7 @@ class ItemLahan {
       status: status,
       latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
       longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
-      fotoLahan: json['foto_lahan']?.toString(),
+      fotoLahan: ApiConstants.resolveImageUrl(json['foto_lahan']?.toString()),
       statusVerifikasi: json['status_verifikasi']?.toString(),
       catatanVerifikasi: json['catatan_verifikasi']?.toString(),
       tanggalVerifikasi: tanggalVerif,
