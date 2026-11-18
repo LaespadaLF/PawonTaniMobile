@@ -1,5 +1,6 @@
-import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/features/beranda/models/beranda_ringkasan_model.dart';
 
 class HomeFarmSummarySection extends StatelessWidget {
   final VoidCallback? onDetailTap;
@@ -8,6 +9,7 @@ class HomeFarmSummarySection extends StatelessWidget {
   final VoidCallback? onPanenTap;
   final VoidCallback? onPenjualanTap;
   final VoidCallback? onKondisiTap;
+  final BerandaStatistikModel? statistik;
 
   const HomeFarmSummarySection({
     super.key,
@@ -17,10 +19,22 @@ class HomeFarmSummarySection extends StatelessWidget {
     this.onPanenTap,
     this.onPenjualanTap,
     this.onKondisiTap,
+    this.statistik,
   });
 
   @override
   Widget build(BuildContext context) {
+    final lahanAktifVal = statistik != null ? '${statistik!.lahanAktif}' : '0';
+    final totalLahanVal = statistik != null ? '${statistik!.totalLahan}' : '0';
+    final totalKomoditasVal = statistik != null ? '${statistik!.totalKomoditas}' : '0';
+    final komoditasSub = (statistik != null && statistik!.komoditasList.isNotEmpty)
+        ? statistik!.komoditasList.join(', ')
+        : 'Belum ada data';
+    final luasSub = statistik != null && statistik!.totalLuasHa > 0
+        ? 'Total ${statistik!.totalLuasHa.toStringAsFixed(1)} Ha'
+        : 'dari $totalLahanVal total lahan';
+    final aktivitasVal = statistik != null ? '${statistik!.totalAktivitas}' : '0';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -66,9 +80,9 @@ class HomeFarmSummarySection extends StatelessWidget {
                   color: WarnaAplikasi.primary,
                   size: 19,
                 ),
-                value: '3',
+                value: lahanAktifVal,
                 title: 'Lahan Aktif',
-                subtitle: 'dari 4 total lahan',
+                subtitle: luasSub,
                 onTap: onLahanTap,
               ),
             ),
@@ -81,9 +95,9 @@ class HomeFarmSummarySection extends StatelessWidget {
                   color: WarnaAplikasi.primary,
                   size: 19,
                 ),
-                value: '2',
+                value: totalKomoditasVal,
                 title: 'Komoditas',
-                subtitle: 'Cabai, Padi',
+                subtitle: komoditasSub,
                 onTap: onKomoditasTap,
               ),
             ),
@@ -92,32 +106,32 @@ class HomeFarmSummarySection extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            // Card 3: Total Panen
+            // Card 3: Total Lahan Terdaftar
             Expanded(
               child: _StatCard(
                 iconWidget: const Icon(
-                  Icons.agriculture_rounded,
+                  Icons.landscape_outlined,
                   color: WarnaAplikasi.primary,
                   size: 19,
                 ),
-                value: '4,2 Ton',
-                title: 'Total Panen',
-                subtitle: null,
-                onTap: onPanenTap,
+                value: totalLahanVal,
+                title: 'Total Petak Lahan',
+                subtitle: '${statistik?.lahanIstirahat ?? 0} Istirahat · ${statistik?.lahanPersiapan ?? 0} Olah',
+                onTap: onLahanTap,
               ),
             ),
             const SizedBox(width: 12),
-            // Card 4: Total Penjualan
+            // Card 4: Catatan Aktivitas
             Expanded(
               child: _StatCard(
                 iconWidget: const Icon(
-                  Icons.credit_card_outlined,
+                  Icons.assignment_outlined,
                   color: WarnaAplikasi.primary,
                   size: 19,
                 ),
-                value: 'Rp28,5 jt',
-                title: 'Total Penjualan',
-                subtitle: null,
+                value: aktivitasVal,
+                title: 'Aktivitas Tanam',
+                subtitle: 'Tercatat di sistem',
                 onTap: onPenjualanTap,
               ),
             ),
@@ -160,7 +174,7 @@ class _StatCard extends StatelessWidget {
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
+            color: Color(0x08000000),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -172,12 +186,11 @@ class _StatCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Top Row: Icon Container and Chevron
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -193,22 +206,21 @@ class _StatCard extends StatelessWidget {
                     const Icon(
                       Icons.chevron_right_rounded,
                       size: 18,
-                      color: WarnaAplikasi.iconGray,
+                      color: WarnaAplikasi.textGrayLight,
                     ),
                   ],
                 ),
-
-                // Content
+                const SizedBox(height: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       value,
                       style: const TextStyle(
-                        fontSize: 21,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: WarnaAplikasi.primaryDark,
-                        letterSpacing: -0.3,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -216,18 +228,20 @@ class _StatCard extends StatelessWidget {
                       title,
                       style: const TextStyle(
                         fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: WarnaAplikasi.primaryDark,
                       ),
                     ),
                     if (subtitle != null) ...[
-                      const SizedBox(height: 1),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
-                          color: WarnaAplikasi.textGrayGreen,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                          color: WarnaAplikasi.textGray,
                         ),
                       ),
                     ],
@@ -250,119 +264,61 @@ class _ConditionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: WarnaAplikasi.greenLight,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: WarnaAplikasi.borderPale,
+          color: WarnaAplikasi.primary.withValues(alpha: 0.15),
           width: 1,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: WarnaAplikasi.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.check_circle_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Green Icon circle
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.greenLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.spa_rounded,
-                      color: WarnaAplikasi.primary,
-                      size: 20,
-                    ),
+                Text(
+                  'Kondisi Pertanian Baik',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: WarnaAplikasi.primaryDark,
                   ),
                 ),
-                const SizedBox(width: 12),
-
-                // Text & Badge
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Kondisi Pertanian',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: WarnaAplikasi.primaryDark,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: WarnaAplikasi.bgSuccessLight,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'Aman',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: WarnaAplikasi.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.location_on_outlined,
-                            size: 12,
-                            color: WarnaAplikasi.textGrayGreen,
-                          ),
-                          SizedBox(width: 3),
-                          Flexible(
-                            child: Text(
-                              'Pemupukan terakhir 2 jam yang lalu',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: WarnaAplikasi.textGrayGreen,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                SizedBox(height: 1),
+                Text(
+                  'Semua lahan terpantau normal dan aktif.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: WarnaAplikasi.textGray,
                   ),
-                ),
-
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: WarnaAplikasi.iconGray,
                 ),
               ],
             ),
           ),
-        ),
+          if (onTap != null)
+            IconButton(
+              icon: const Icon(Icons.info_outline_rounded, size: 18, color: WarnaAplikasi.primary),
+              onPressed: onTap,
+            ),
+        ],
       ),
     );
   }

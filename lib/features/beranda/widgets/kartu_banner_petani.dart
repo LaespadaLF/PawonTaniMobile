@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/features/beranda/models/beranda_ringkasan_model.dart';
 
 class FarmerBannerCard extends StatelessWidget {
   final VoidCallback? onTap;
+  final BerandaCuacaModel? cuaca;
 
-  const FarmerBannerCard({super.key, this.onTap});
+  const FarmerBannerCard({
+    super.key,
+    this.onTap,
+    this.cuaca,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final suhuText = cuaca != null ? '${cuaca!.suhu}°C' : '28°C';
+    final kondisiText = cuaca?.kondisi ?? 'Cerah Berawan';
+    final lokasiText = cuaca?.lokasi ?? 'Jember';
+
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 155),
@@ -24,17 +34,25 @@ class FarmerBannerCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // 1. Background Image: Pemandangan Sawah dan Padi
+          // 1. Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/banner_sawah_padi.png',
               fit: BoxFit.cover,
               alignment: Alignment.centerRight,
+              errorBuilder: (context, error, stackTrace) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF1E3A2B), Color(0xFF2E5A1C), Color(0xFF4D9830)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
             ),
           ),
 
           // 2. Soft Gradient Overlays for optimal readability
-          // Gradient from left to right (subtle darkening over green mountain blur)
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -52,13 +70,12 @@ class FarmerBannerCard extends StatelessWidget {
             ),
           ),
 
-          // Subtle top-right vignette to guarantee crisp contrast on weather info
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0x52000000), // ~32% black
+                    Color(0x52000000),
                     Colors.transparent,
                   ],
                   stops: [0.0, 0.60],
@@ -75,14 +92,13 @@ class FarmerBannerCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Left Column: Leaf Icon, Headline, Subtitle
+                // Left Column: Headline & Subtitle
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Leaf Icon (clean white tilted leaf)
                       Transform.rotate(
                         angle: -0.35,
                         child: const Icon(
@@ -93,7 +109,6 @@ class FarmerBannerCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Headline
                       const Text(
                         'Semangat bertani,\nhasil terbaik menanti!',
                         style: TextStyle(
@@ -106,7 +121,6 @@ class FarmerBannerCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
 
-                      // Subtitle
                       const Text(
                         'Pantau pertanianmu dengan lebih mudah.',
                         style: TextStyle(
@@ -122,22 +136,22 @@ class FarmerBannerCard extends StatelessWidget {
 
                 const SizedBox(width: 10),
 
-                // Right Column: Weather Info & "Lihat detail >" Button
+                // Right Column: Live Weather Info & Button
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Weather header: Sun behind Cloud + 28°C
+                    // Weather header: Icon + Temp
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        _buildWeatherSunCloudIcon(),
+                        _buildWeatherIcon(cuaca?.kodeCuaca ?? 2),
                         const SizedBox(width: 8),
-                        const Text(
-                          '28°C',
-                          style: TextStyle(
+                        Text(
+                          suhuText,
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -149,9 +163,9 @@ class FarmerBannerCard extends StatelessWidget {
                     const SizedBox(height: 2),
 
                     // Weather condition
-                    const Text(
-                      'Cerah Berawan',
-                      style: TextStyle(
+                    Text(
+                      kondisiText,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Color(0xF2FFFFFF),
@@ -160,21 +174,26 @@ class FarmerBannerCard extends StatelessWidget {
                     const SizedBox(height: 3),
 
                     // Location pin & name
-                    const Row(
+                    Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.place_outlined,
                           size: 13,
                           color: Color(0xE6FFFFFF),
                         ),
-                        SizedBox(width: 2),
-                        Text(
-                          'Sukamaju',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xEBFFFFFF),
+                        const SizedBox(width: 2),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 110),
+                          child: Text(
+                            lokasiText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xEBFFFFFF),
+                            ),
                           ),
                         ),
                       ],
@@ -199,8 +218,8 @@ class FarmerBannerCard extends StatelessWidget {
                             color: const Color(0x22FFFFFF),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: const Color(0xA6FFFFFF),
-                              width: 1.1,
+                              color: const Color(0x40FFFFFF),
+                              width: 1,
                             ),
                           ),
                           child: const Row(
@@ -209,16 +228,15 @@ class FarmerBannerCard extends StatelessWidget {
                               Text(
                                 'Lihat detail',
                                 style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                   color: Colors.white,
-                                  letterSpacing: -0.1,
                                 ),
                               ),
-                              SizedBox(width: 4),
+                              SizedBox(width: 3),
                               Icon(
                                 Icons.chevron_right_rounded,
-                                size: 15,
+                                size: 14,
                                 color: Colors.white,
                               ),
                             ],
@@ -236,48 +254,27 @@ class FarmerBannerCard extends StatelessWidget {
     );
   }
 
-  /// Custom icon: Glowing Sun behind soft blue/white Cloud
-  Widget _buildWeatherSunCloudIcon() {
-    return SizedBox(
-      width: 32,
-      height: 28,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Sun in the background
-          Positioned(
-            left: 0,
-            top: 0,
-            child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x66FBBF24),
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.wb_sunny_rounded,
-                color: WarnaAplikasi.hppAmberBg,
-                size: 21,
-              ),
-            ),
-          ),
-          // Cloud in foreground
-          const Positioned(
-            right: 0,
-            bottom: 0,
-            child: Icon(
-              Icons.cloud_rounded,
-              color: WarnaAplikasi.bgPaleGreen,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
+  Widget _buildWeatherIcon(int code) {
+    IconData icon;
+    Color color = Colors.amber;
+
+    if (code == 0 || code == 1) {
+      icon = Icons.wb_sunny_rounded;
+      color = Colors.amber;
+    } else if (code == 2 || code == 3) {
+      icon = Icons.wb_cloudy_rounded;
+      color = Colors.white;
+    } else if (code >= 51 && code <= 82) {
+      icon = Icons.grain_rounded;
+      color = Colors.lightBlueAccent;
+    } else if (code >= 95) {
+      icon = Icons.thunderstorm_rounded;
+      color = Colors.purpleAccent;
+    } else {
+      icon = Icons.cloud_outlined;
+      color = Colors.white70;
+    }
+
+    return Icon(icon, color: color, size: 24);
   }
 }

@@ -1,15 +1,19 @@
-import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/artikel/models/item_artikel.dart';
-import 'package:pawon_mobile/features/beranda/widgets/kartu_banner_petani.dart';
-import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.dart';
+import 'package:pawon_mobile/features/auth/repositories/auth_repository.dart';
+import 'package:pawon_mobile/features/beranda/models/beranda_ringkasan_model.dart';
+import 'package:pawon_mobile/features/beranda/services/beranda_api_service.dart';
 import 'package:pawon_mobile/features/beranda/widgets/aksi_cepat_beranda.dart';
 import 'package:pawon_mobile/features/beranda/widgets/bagian_artikel_beranda.dart';
 import 'package:pawon_mobile/features/beranda/widgets/bagian_panen_terbaru_beranda.dart';
+import 'package:pawon_mobile/features/beranda/widgets/kartu_banner_petani.dart';
+import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.dart';
+import 'package:pawon_mobile/features/lahan/screens/layar_tambah_lahan.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_catat_panen.dart';
-import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
 
   const HomeScreen({
@@ -18,119 +22,187 @@ class HomeScreen extends StatelessWidget {
   });
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final BerandaApiService _apiService = BerandaApiService();
+  BerandaRingkasanModel? _data;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBerandaData();
+  }
+
+  Future<void> _loadBerandaData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final res = await _apiService.getRingkasan();
+
+    if (!mounted) return;
+
+    if (res.success && res.data != null) {
+      setState(() {
+        _data = res.data;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _errorMessage = res.message;
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 4 && hour < 11) return 'Selamat pagi,';
+    if (hour >= 11 && hour < 15) return 'Selamat siang,';
+    if (hour >= 15 && hour < 18) return 'Selamat sore,';
+    return 'Selamat malam,';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final currentUser = AuthRepository().currentUser;
+    final userName = _data?.user.nama ?? currentUser?.nama ?? 'Petani';
+
     return Scaffold(
       backgroundColor: WarnaAplikasi.primaryBackground,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Top Header: Greeting, Notification, Avatar
-              _buildTopHeader(context),
-              const SizedBox(height: 16),
+        child: RefreshIndicator(
+          onRefresh: _loadBerandaData,
+          color: WarnaAplikasi.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Top Header: Greeting, Notification, Avatar
+                _buildTopHeader(context, userName),
+                const SizedBox(height: 16),
 
-              // 2. Banner: Semangat Bertani
-              FarmerBannerCard(
-                onTap: () {
-                  _showWeatherDetailModal(context);
-                },
-              ),
-              const SizedBox(height: 20),
+                // 2. Banner: Semangat Bertani + Cuaca Realtime
+                FarmerBannerCard(
+                  cuaca: _data?.cuaca,
+                  onTap: () {
+                    _showWeatherDetailModal(context, _data?.cuaca);
+                  },
+                ),
+                const SizedBox(height: 20),
 
-              // 3. Ringkasan Pertanian (2x2 Grid + Kondisi Pertanian)
-              HomeFarmSummarySection(
-                onDetailTap: () => onNavigateTab?.call(1),
-                onLahanTap: () => onNavigateTab?.call(1),
-                onKomoditasTap: () => onNavigateTab?.call(1),
-                onPanenTap: () => onNavigateTab?.call(3),
-                onPenjualanTap: () => onNavigateTab?.call(4),
-                onKondisiTap: () => _showConditionDetailModal(context),
-              ),
-              const SizedBox(height: 20),
+                // 3. Ringkasan Pertanian (2x2 Grid Lahan, Komoditas, Aktivitas)
+                HomeFarmSummarySection(
+                  statistik: _data?.statistik,
+                  onDetailTap: () => widget.onNavigateTab?.call(1),
+                  onLahanTap: () => widget.onNavigateTab?.call(1),
+                  onKomoditasTap: () => widget.onNavigateTab?.call(1),
+                  onPanenTap: () => widget.onNavigateTab?.call(3),
+                  onPenjualanTap: () => widget.onNavigateTab?.call(2), // Buka Aktivitas
+                  onKondisiTap: () => _showConditionDetailModal(context),
+                ),
+                const SizedBox(height: 20),
 
-              // 4. Aksi Cepat
-              HomeQuickActionsSection(
-                onAllTap: () => _showQuickActionsModal(context),
-                onTambahLahan: () => _showQuickActionMessage(context, 'Tambah Lahan'),
-                onCatatAktivitas: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RecordActivityScreen(
-                        onSave: (newItem) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Aktivitas ${newItem.title} berhasil dicatat!'),
-                              backgroundColor: WarnaAplikasi.primary,
-                            ),
-                          );
-                        },
+                // 4. Aksi Cepat
+                HomeQuickActionsSection(
+                  onAllTap: () => _showQuickActionsModal(context),
+                  onTambahLahan: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AddLandScreen(),
                       ),
-                    ),
-                  );
-                },
-                onCatatPanen: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RecordHarvestScreen(
-                        onSave: (newItem) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Hasil panen ${newItem.title} berhasil dicatat!'),
-                              backgroundColor: WarnaAplikasi.primary,
-                            ),
-                          );
-                        },
+                    ).then((value) {
+                      if (value != null) _loadBerandaData();
+                    });
+                  },
+                  onCatatAktivitas: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => RecordActivityScreen(
+                          onSave: (newItem) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Aktivitas ${newItem.title} berhasil dicatat!'),
+                                backgroundColor: WarnaAplikasi.primary,
+                              ),
+                            );
+                            _loadBerandaData();
+                          },
+                        ),
                       ),
-                    ),
-                  );
-                },
-                onPenjualan: () => onNavigateTab?.call(4),
-              ),
-              const SizedBox(height: 20),
+                    );
+                  },
+                  onCatatPanen: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => RecordHarvestScreen(
+                          onSave: (newItem) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Hasil panen ${newItem.title} berhasil dicatat!'),
+                                backgroundColor: WarnaAplikasi.primary,
+                              ),
+                            );
+                            _loadBerandaData();
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  onPenjualan: () => widget.onNavigateTab?.call(4),
+                ),
+                const SizedBox(height: 20),
 
-              // 6. Informasi & Panduan Pertanian
-              HomeArticlesSection(
-                onAllTap: () => onNavigateTab?.call(5), // Edukasi
-                onArticleTap: (article) => _showArticleDetail(context, article),
-              ),
-              const SizedBox(height: 20),
+                // 5. Informasi & Panduan Pertanian
+                HomeArticlesSection(
+                  onAllTap: () => widget.onNavigateTab?.call(5),
+                  onArticleTap: (article) => _showArticleDetail(context, article),
+                ),
+                const SizedBox(height: 20),
 
-              // 7. Hasil Panen Terbaru
-              HomeLatestHarvestSection(
-                onAllTap: () => onNavigateTab?.call(1), // Data Panen
-                onItemTap: () => _showLatestHarvestDetail(context),
-              ),
-              const SizedBox(height: 24),
-            ],
+                // 6. Hasil Panen Terbaru
+                HomeLatestHarvestSection(
+                  onAllTap: () => widget.onNavigateTab?.call(3),
+                  onItemTap: () => _showLatestHarvestDetail(context),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTopHeader(BuildContext context) {
+  Widget _buildTopHeader(BuildContext context, String name) {
+    final firstName = name.trim().split(' ').first;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Greeting & Name
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
-              'Selamat pagi,',
-              style: TextStyle(
+              _getGreeting(),
+              style: const TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w500,
                 color: WarnaAplikasi.textGray,
               ),
             ),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
-              'Pak Joko 👋',
-              style: TextStyle(
+              'Pak $firstName 👋',
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: WarnaAplikasi.primaryDark,
@@ -140,10 +212,10 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
 
-        // Action Icons: Notification & Profile (Style Penjualan)
+        // Action Icons
         Row(
           children: [
-            // Notification Button with Badge '2'
+            // Notification Button with Badge
             InkWell(
               onTap: () => _showNotificationsModal(context),
               borderRadius: BorderRadius.circular(12),
@@ -163,13 +235,13 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    top: 6,
-                    right: 6,
+                    top: 8,
+                    right: 8,
                     child: Container(
                       width: 8,
                       height: 8,
                       decoration: const BoxDecoration(
-                        color: WarnaAplikasi.errorRedBright,
+                        color: WarnaAplikasi.errorRed,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -179,7 +251,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
 
-            // Profile Button
+            // Profile Avatar Button
             InkWell(
               onTap: () => _showProfileModal(context),
               borderRadius: BorderRadius.circular(12),
@@ -187,13 +259,18 @@ class HomeScreen extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.bgPaleGreen2,
+                  color: WarnaAplikasi.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.person_outline_rounded,
-                  size: 20,
-                  color: WarnaAplikasi.primaryDark,
+                child: Center(
+                  child: Text(
+                    firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -203,9 +280,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Interactive Modals & Details ---
-
-  void _showBannerInfoModal(BuildContext context) {
+  void _showWeatherDetailModal(BuildContext context, BerandaCuacaModel? cuaca) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -213,6 +288,13 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        final suhu = cuaca != null ? '${cuaca.suhu}°C' : '28°C';
+        final kondisi = cuaca?.kondisi ?? 'Cerah Berawan';
+        final lokasi = cuaca?.lokasi ?? 'Jember, Jawa Timur';
+        final kelembapan = cuaca?.kelembapan ?? 80;
+        final angin = cuaca?.kecepatanAngin ?? 4.0;
+        final hujan = cuaca?.peluangHujan ?? 20;
+
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
           child: Column(
@@ -227,105 +309,52 @@ class HomeScreen extends StatelessWidget {
                     color: WarnaAplikasi.borderPale,
                     borderRadius: BorderRadius.circular(2),
                   ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Semangat Bertani Bersama PawonTani',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: WarnaAplikasi.primaryDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'PawonTani mempermudah pengelolaan data pertanian, pencatatan jadwal pemupukan, pemantauan panen, dan koneksi langsung ke pasar penjualan secara terintegrasi.',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  color: WarnaAplikasi.textGray,
-                  height: 1.45,
                 ),
               ),
               const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Mengerti', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showConditionDetailModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgSuccessLight2,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.spa_rounded, color: WarnaAplikasi.primary, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Kondisi Lahan: Aman',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
+                  Text(
+                    'Cuaca di $lokasi',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                       color: WarnaAplikasi.primaryDark,
+                    ),
+                  ),
+                  Text(
+                    suhu,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: WarnaAplikasi.primary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              const Text(
-                '• Pemupukan terakhir: 2 jam yang lalu (NPK Phonska)\n'
-                '• Kelembaban tanah: 68% (Ideal)\n'
-                '• Status pengairan: Cukup terairi\n'
-                '• Pengecekan hama berikutnya: Besok pukul 08:00 WIB',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  color: WarnaAplikasi.grayGreenDark,
-                  height: 1.6,
+              const SizedBox(height: 6),
+              Text(
+                '$kondisi · Sangat baik untuk monitoring lahan dan pemupukan.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: WarnaAplikasi.textGray,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.greenLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildWeatherMiniParam('💧 Lembap', '$kelembapan%'),
+                    _buildWeatherMiniParam('💨 Angin', '$angin km/h'),
+                    _buildWeatherMiniParam('🌧 Hujan', '$hujan%'),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
@@ -336,12 +365,13 @@ class HomeScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: WarnaAplikasi.primary,
                     foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -351,7 +381,19 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _showWeatherDetailModal(BuildContext context) {
+  Widget _buildWeatherMiniParam(String label, String val) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
+        const SizedBox(height: 2),
+        Text(val, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+      ],
+    );
+  }
+
+  void _showConditionDetailModal(BuildContext context) {
+    final stat = _data?.statistik;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -375,46 +417,33 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               const Text(
-                'Prakiraan Cuaca Lahan Sukamaju',
+                'Status Lahan Pertanian',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: WarnaAplikasi.textNearBlack,
-                  letterSpacing: -0.3,
+                  color: WarnaAplikasi.primaryDark,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Suhu rata-rata 28°C dengan kondisi cerah berawan. Sangat baik untuk proses penjemuran gabah atau penyemprotan pupuk daun di pagi hari.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: WarnaAplikasi.textGrayMedium,
-                  height: 1.45,
-                ),
+              Text(
+                'Saat ini Anda memiliki ${stat?.lahanAktif ?? 0} petak lahan yang aktif ditanami dari total ${stat?.totalLahan ?? 0} lahan terdaftar.',
+                style: const TextStyle(fontSize: 13.5, color: WarnaAplikasi.textGray, height: 1.4),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primaryMedium,
+                    backgroundColor: WarnaAplikasi.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Tutup',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
+                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -449,83 +478,11 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
-                    'Notifikasi Pertanian',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: WarnaAplikasi.primaryDark,
-                    ),
-                  ),
-                  Text(
-                    '2 Baru',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.errorRedBright,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.greenLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.water_drop_outlined, color: WarnaAplikasi.primary),
-                ),
-                title: const Text(
-                  'Jadwal Pemupukan Lahan Barat',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
-                ),
-                subtitle: const Text(
-                  'Pemupukan tahap 2 telah tercatat 2 jam yang lalu.',
-                  style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.hppAmberBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.monetization_on_outlined, color: WarnaAplikasi.warningOrange),
-                ),
-                title: const Text(
-                  'Update Harga Cabai Merah',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
-                ),
-                subtitle: const Text(
-                  'Harga cabai merah naik 5% di Pasar Induk regional.',
-                  style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ),
+              const Text('Notifikasi Terkini', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+              const SizedBox(height: 14),
+              _buildNotifItem('Lahan Sawah Barat disetujui oleh Pengurus', '10 menit yang lalu'),
+              const SizedBox(height: 10),
+              _buildNotifItem('Peringatan cuaca hujan lebat esok hari', '1 jam yang lalu'),
             ],
           ),
         );
@@ -533,7 +490,34 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildNotifItem(String title, String time) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: WarnaAplikasi.greenLight,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, color: WarnaAplikasi.primary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark)),
+                const SizedBox(height: 2),
+                Text(time, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showProfileModal(BuildContext context) {
+    final user = AuthRepository().currentUser;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -556,39 +540,33 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
-              const CircleAvatar(
-                radius: 36,
-                backgroundImage: NetworkImage('https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80'),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Pak Joko Widodo',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: WarnaAplikasi.primaryDark,
+              const SizedBox(height: 16),
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: WarnaAplikasi.primary,
+                child: Text(
+                  (user?.nama.isNotEmpty == true) ? user!.nama[0].toUpperCase() : 'P',
+                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Petani Utama • Poktan Sukamaju',
-                style: TextStyle(fontSize: 13, color: WarnaAplikasi.textGray),
-              ),
+              const SizedBox(height: 10),
+              Text(user?.nama ?? 'Petani', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+              Text(user?.role ?? 'Anggota Kelompok Tani', style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await AuthRepository().logout();
+                  },
+                  icon: const Icon(Icons.logout_rounded, size: 18, color: WarnaAplikasi.errorRed),
+                  label: const Text('Keluar dari Akun', style: TextStyle(color: WarnaAplikasi.errorRed, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: WarnaAplikasi.errorRed),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Selesai', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -605,106 +583,32 @@ class HomeScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Semua Aksi Cepat',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: WarnaAplikasi.primaryDark,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                leading: const Icon(Icons.add_location_alt_outlined, color: WarnaAplikasi.primary),
-                title: const Text('Tambah Petak Lahan Baru'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showQuickActionMessage(context, 'Tambah Lahan');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit_calendar_outlined, color: WarnaAplikasi.primary),
-                title: const Text('Catat Jadwal Pemupukan & Penyiraman'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RecordActivityScreen(
-                        onSave: (newItem) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Aktivitas ${newItem.title} berhasil dicatat!'),
-                              backgroundColor: WarnaAplikasi.primary,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.agriculture_rounded, color: WarnaAplikasi.primary),
-                title: const Text('Catat Hasil Panen Baru'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RecordHarvestScreen(
-                        onSave: (newItem) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Hasil panen ${newItem.title} berhasil dicatat!'),
-                              backgroundColor: WarnaAplikasi.primary,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.storefront_outlined, color: WarnaAplikasi.primary),
-                title: const Text('Buka Menu Penjualan & Kemitraan'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onNavigateTab?.call(4);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showQuickActionMessage(BuildContext context, String actionName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Membuka formulir: $actionName'),
-        backgroundColor: WarnaAplikasi.primary,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Menu Aksi Cepat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.add_location_alt_outlined, color: WarnaAplikasi.primary),
+              title: const Text('Tambah Lahan Baru'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AddLandScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_calendar_outlined, color: WarnaAplikasi.primary),
+              title: const Text('Catat Aktivitas Tanam'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => RecordActivityScreen(onSave: (_) {})));
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -712,187 +616,26 @@ class HomeScreen extends StatelessWidget {
   void _showArticleDetail(BuildContext context, ArticleItem article) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(article.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+            const SizedBox(height: 8),
+            Text(article.category, style: const TextStyle(fontSize: 12, color: WarnaAplikasi.primary, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            Text(article.summary ?? 'Panduan pertanian praktis untuk petani.', style: const TextStyle(fontSize: 13, color: WarnaAplikasi.textGray)),
+          ],
+        ),
       ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.65,
-          maxChildSize: 0.9,
-          minChildSize: 0.4,
-          expand: false,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.borderPale,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.greenLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      article.category,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    article.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: WarnaAplikasi.primaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time_rounded, size: 13, color: WarnaAplikasi.iconGrayGreenDark),
-                      const SizedBox(width: 4),
-                      Text(
-                        article.readTime,
-                        style: const TextStyle(fontSize: 12, color: WarnaAplikasi.iconGrayGreenDark),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    article.summary ??
-                        'Informasi dan panduan teknis mendalam mengenai budidaya pertanian terbaik untuk memaksimalkan hasil panen secara optimal.',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: WarnaAplikasi.grayGreenDark,
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text('Tutup Artikel', style: TextStyle(fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
   void _showLatestHarvestDetail(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Cabai Merah',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: WarnaAplikasi.primaryDark,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgSuccessLight2,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Siap dijual',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '• Total Hasil: 500 kg\n'
-                '• Lokasi Panen: Petak Cabai Blok B\n'
-                '• Kualitas: Grade A Super Segar\n'
-                '• Estimasi Nilai Jual: Rp17.500.000',
-                style: TextStyle(fontSize: 13.5, color: WarnaAplikasi.grayGreenDark, height: 1.6),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    widget.onNavigateTab?.call(3);
   }
 }
-

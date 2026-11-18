@@ -57,6 +57,9 @@ class ApiConstants {
   // --- Endpoint Rute Lahan ---
   static const String lahanEndpoint = '/lahan';
 
+  // --- Endpoint Rute Beranda ---
+  static const String berandaRingkasanEndpoint = '/beranda/ringkasan';
+
   // --- Endpoint Rute Aktivitas ---
   static const String aktivitasEndpoint = '/aktivitas';
 
