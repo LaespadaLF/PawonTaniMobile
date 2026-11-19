@@ -6,9 +6,8 @@ class ApiConstants {
   ApiConstants._();
 
   /// IP manual untuk pengujian menggunakan HP/perangkat fisik dalam satu jaringan Wi-Fi/LAN.
-  /// Default null agar Android Emulator otomatis menggunakan host loopback 10.0.2.2.
-  /// Isi nilai ini secara lokal (misal: '192.168.1.X') hanya saat pengujian di perangkat fisik Android.
-  static String? customDeviceIp;
+  /// Set default ke IP Wi-Fi PC lokal (192.168.1.4) agar HP fisik langsung terhubung baik via Wi-Fi maupun kabel.
+  static String? customDeviceIp = '192.168.1.4';
 
   /// Port development server Laravel.
   static const int port = 8000;

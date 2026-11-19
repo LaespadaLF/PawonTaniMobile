@@ -1045,7 +1045,12 @@ class _EditLandScreenState extends State<EditLandScreen> {
     }
 
     try {
-      final position = await Geolocator.getCurrentPosition();
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
       final latLng = LatLng(position.latitude, position.longitude);
 
       if (!mounted) return;

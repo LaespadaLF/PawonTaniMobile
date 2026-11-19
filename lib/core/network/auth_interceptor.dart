@@ -6,6 +6,7 @@ import 'package:pawon_mobile/core/storage/secure_storage_service.dart';
 class AuthInterceptor extends Interceptor {
   final SecureStorageService _storageService;
   final void Function()? onUnauthorized;
+  static bool _isHandlingUnauthorized = false;
 
   AuthInterceptor({
     SecureStorageService? storageService,
@@ -32,7 +33,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     // Jika token kedaluwarsa atau tidak valid (HTTP 401 Unauthorized).
     // Jangan panggil callback global jika error berasal dari endpoint autentikasi (/auth/login atau /auth/me)
     // untuk mencegah siklus atau pengulangan request tak berujung.
@@ -40,9 +41,18 @@ class AuthInterceptor extends Interceptor {
     final isAuthEndpoint = path.contains('/auth/login') || path.contains('/auth/me');
 
     if (err.response?.statusCode == 401 && !isAuthEndpoint) {
-      // Hapus token lokal yang sudah mati pada request operasional
-      _storageService.deleteToken();
-      onUnauthorized?.call();
+      if (!_isHandlingUnauthorized) {
+        _isHandlingUnauthorized = true;
+        try {
+          await _storageService.clearAll();
+          onUnauthorized?.call();
+        } finally {
+          // Reset status setelah cooldown singkat agar tidak memicu transisi ganda
+          Future.delayed(const Duration(seconds: 3), () {
+            _isHandlingUnauthorized = false;
+          });
+        }
+      }
     }
 
     return handler.next(err);

@@ -47,7 +47,11 @@ class DioClient {
     SecureStorageService? storageService,
     void Function()? onUnauthorized,
   }) {
-    _instance ??= DioClient._internal(
+    if (_instance != null) {
+      _instance!._dio.options.baseUrl = baseUrl ?? ApiConstants.baseUrl;
+      return _instance!;
+    }
+    _instance = DioClient._internal(
       baseUrl: baseUrl,
       storageService: storageService,
       onUnauthorized: onUnauthorized,
