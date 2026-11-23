@@ -634,8 +634,17 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
     // Kumpulkan seluruh foto aktivitas yang memiliki foto
     final List<Map<String, dynamic>> fotoList = [];
 
-    // 1. Foto Profil Utama Lahan (jika ada)
-    if (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty) {
+    // 1. Kumpulan foto lahan (multi-photo) atau foto profil utama lahan
+    if (_item.photos.isNotEmpty) {
+      for (int i = 0; i < _item.photos.length; i++) {
+        fotoList.add({
+          'url': _item.photos[i],
+          'title': i == 0 ? 'Profil Petak' : 'Dokumentasi Petak #${i + 1}',
+          'subtitle': i == 0 ? 'Foto Utama Lahan' : 'Foto Petak Lahan',
+          'isMain': i == 0,
+        });
+      }
+    } else if (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty) {
       fotoList.add({
         'url': _item.fotoLahan!,
         'title': 'Profil Petak',
@@ -644,9 +653,19 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
       });
     }
 
-    // 2. Kumpulan foto dari setiap aktivitas tanam
+    // 2. Kumpulan foto dari setiap aktivitas tanam (multi-photo & single)
     for (final akt in _activities) {
-      if (akt.imageUrl != null && akt.imageUrl!.isNotEmpty) {
+      if (akt.photos.isNotEmpty) {
+        for (final p in akt.photos) {
+          fotoList.add({
+            'url': p,
+            'title': akt.title,
+            'subtitle': akt.date,
+            'isMain': false,
+            'item': akt,
+          });
+        }
+      } else if (akt.imageUrl != null && akt.imageUrl!.isNotEmpty) {
         fotoList.add({
           'url': akt.imageUrl!,
           'title': akt.title,

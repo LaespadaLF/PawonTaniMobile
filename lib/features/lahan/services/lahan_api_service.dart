@@ -57,15 +57,37 @@ class LahanApiService {
   /// Mendaftarkan lahan baru beserta foto melalui `POST /api/v1/lahan`.
   Future<ApiResponse<ItemLahan>> createLahanWithFoto(
     Map<String, dynamic> payload,
-    MultipartFile? fotoLahan,
-  ) async {
-    final mapData = <String, dynamic>{
-      ...payload,
-    };
-    if (fotoLahan != null) {
-      mapData['foto_lahan'] = fotoLahan;
+    MultipartFile? fotoLahan, {
+    List<MultipartFile>? fotoLahanList,
+  }) async {
+    final formData = FormData();
+
+    payload.forEach((key, value) {
+      if (value == null) return;
+      if (value is Iterable) {
+        final items = value.map((e) => e.toString()).toList();
+        if (items.isEmpty) {
+          formData.fields.add(MapEntry('$key[]', ''));
+        } else {
+          for (final item in items) {
+            formData.fields.add(MapEntry('$key[]', item));
+          }
+        }
+        return;
+      }
+      formData.fields.add(
+        MapEntry(key, value is bool ? (value ? '1' : '0') : value.toString()),
+      );
+    });
+
+    final list = fotoLahanList ?? const <MultipartFile>[];
+    if (list.isNotEmpty) {
+      for (final f in list) {
+        formData.files.add(MapEntry('foto_lahan_list[]', f));
+      }
+    } else if (fotoLahan != null) {
+      formData.files.add(MapEntry('foto_lahan', fotoLahan));
     }
-    final formData = FormData.fromMap(mapData);
 
     return await _client.post<ItemLahan>(
       ApiConstants.lahanEndpoint,
@@ -88,16 +110,38 @@ class LahanApiService {
   Future<ApiResponse<ItemLahan>> updateLahanWithFoto(
     String id,
     Map<String, dynamic> payload,
-    MultipartFile? fotoLahan,
-  ) async {
-    final mapData = <String, dynamic>{
-      '_method': 'PUT',
-      ...payload,
-    };
-    if (fotoLahan != null) {
-      mapData['foto_lahan'] = fotoLahan;
+    MultipartFile? fotoLahan, {
+    List<MultipartFile>? fotoLahanList,
+  }) async {
+    final formData = FormData();
+    formData.fields.add(const MapEntry('_method', 'PUT'));
+
+    payload.forEach((key, value) {
+      if (value == null) return;
+      if (value is Iterable) {
+        final items = value.map((e) => e.toString()).toList();
+        if (items.isEmpty) {
+          formData.fields.add(MapEntry('$key[]', ''));
+        } else {
+          for (final item in items) {
+            formData.fields.add(MapEntry('$key[]', item));
+          }
+        }
+        return;
+      }
+      formData.fields.add(
+        MapEntry(key, value is bool ? (value ? '1' : '0') : value.toString()),
+      );
+    });
+
+    final list = fotoLahanList ?? const <MultipartFile>[];
+    if (list.isNotEmpty) {
+      for (final f in list) {
+        formData.files.add(MapEntry('foto_lahan_list[]', f));
+      }
+    } else if (fotoLahan != null) {
+      formData.files.add(MapEntry('foto_lahan', fotoLahan));
     }
-    final formData = FormData.fromMap(mapData);
 
     return await _client.post<ItemLahan>(
       '${ApiConstants.lahanEndpoint}/$id',

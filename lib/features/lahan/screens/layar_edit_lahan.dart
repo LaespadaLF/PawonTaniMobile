@@ -36,8 +36,9 @@ class _EditLandScreenState extends State<EditLandScreen> {
   String _selectedSeason = 'MT-1 (Musim Hujan: Okt - Mar)';
   bool _isSubmitting = false;
   bool _isDeleting = false;
-  XFile? _selectedImage;
-  Uint8List? _imageBytes;
+  final List<XFile> _selectedImages = [];
+  final List<Uint8List> _selectedImageBytesList = [];
+  final List<String> _keptOldPhotos = [];
 
   List<ItemKomoditas> _komoditasList = [];
   bool _isLoadingKomoditas = true;
@@ -63,6 +64,12 @@ class _EditLandScreenState extends State<EditLandScreen> {
         ? widget.item.musimTanam!
         : 'MT-1 (Musim Hujan)';
     _selectedCropId = widget.item.idKomoditas;
+    _keptOldPhotos
+      ..clear()
+      ..addAll(widget.item.photos.where((p) => p.trim().isNotEmpty));
+    if (_keptOldPhotos.isEmpty && widget.item.fotoLahan != null && widget.item.fotoLahan!.trim().isNotEmpty) {
+      _keptOldPhotos.add(widget.item.fotoLahan!);
+    }
     _loadKomoditas();
   }
 
@@ -715,104 +722,125 @@ class _EditLandScreenState extends State<EditLandScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Dokumentasi Petak (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                  Text((_imageBytes != null || widget.item.fotoLahan != null) ? '1 Foto Terpilih' : 'Belum ada foto', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
+                  Text('${_keptOldPhotos.length + _selectedImageBytesList.length} Foto Terpilih', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
                 ],
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        height: 100,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: CustomPaint(
-                          painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primaryLight),
-                              SizedBox(height: 4),
-                              Text('Ambil Foto / Galeri', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                              Text('JPG, PNG maks 5MB', style: TextStyle(fontSize: 9, color: WarnaAplikasi.textGrayLight)),
-                            ],
+              if (_keptOldPhotos.isNotEmpty) ...[
+                const Text('Foto Tersimpan:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textGrayGreen)),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 90,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _keptOldPhotos.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (ctx, index) {
+                      final url = _keptOldPhotos[index];
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              url,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 90,
+                                height: 90,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _keptOldPhotos.removeAt(index)),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (_selectedImageBytesList.isNotEmpty) ...[
+                const Text('Foto Baru yang Akan Ditambahkan:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textGrayGreen)),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 90,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _selectedImageBytesList.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (ctx, index) {
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _selectedImageBytesList[index],
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => setState(() {
+                                _selectedImageBytesList.removeAt(index);
+                                if (index < _selectedImages.length) {
+                                  _selectedImages.removeAt(index);
+                                }
+                              }),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 65,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CustomPaint(
+                    painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo_outlined, color: WarnaAplikasi.primaryLight, size: 20),
+                        SizedBox(width: 8),
+                        Text('Tambah Foto Lahan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                      ],
                     ),
                   ),
-                  if (_imageBytes != null) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Container(
-                            height: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: MemoryImage(_imageBytes!),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: GestureDetector(
-                              onTap: () => setState(() {
-                                _selectedImage = null;
-                                _imageBytes = null;
-                              }),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
-                                child: const Icon(Icons.close, color: Colors.white, size: 14),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ] else if (widget.item.fotoLahan != null) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Container(
-                            height: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: NetworkImage(widget.item.fotoLahan!),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: GestureDetector(
-                              onTap: () => setState(() {
-                                _selectedImage = null;
-                                _imageBytes = null;
-                              }),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
-                                child: const Icon(Icons.close, color: Colors.white, size: 14),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ]
-                ],
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -1073,7 +1101,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
   }
 
   Future<void> _pickImage() async {
-    showModalBottomSheet<XFile>(
+    showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => SafeArea(
@@ -1102,26 +1130,28 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   final bytes = await picked.readAsBytes();
                   if (!mounted) return;
                   setState(() {
-                    _selectedImage = picked;
-                    _imageBytes = bytes;
+                    _selectedImages.add(picked);
+                    _selectedImageBytesList.add(bytes);
                   });
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
                 title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Pilih foto dari galeri perangkat', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                subtitle: const Text('Pilih beberapa foto dari galeri', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
                 onTap: () async {
                   Navigator.pop(context);
                   final picker = ImagePicker();
-                  final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1200);
-                  if (!mounted || picked == null) return;
-                  final bytes = await picked.readAsBytes();
-                  if (!mounted) return;
-                  setState(() {
-                    _selectedImage = picked;
-                    _imageBytes = bytes;
-                  });
+                  final pickedList = await picker.pickMultiImage(imageQuality: 85, maxWidth: 1200);
+                  if (!mounted || pickedList.isEmpty) return;
+                  for (final p in pickedList) {
+                    final bytes = await p.readAsBytes();
+                    if (!mounted) return;
+                    setState(() {
+                      _selectedImages.add(p);
+                      _selectedImageBytesList.add(bytes);
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -1130,15 +1160,6 @@ class _EditLandScreenState extends State<EditLandScreen> {
         ),
       ),
     );
-  }
-
-  Future<MultipartFile?> _toMultipartFile(XFile? file) async {
-    if (file == null) return null;
-    if (kIsWeb) {
-      final bytes = await file.readAsBytes();
-      return MultipartFile.fromBytes(bytes, filename: file.name);
-    }
-    return MultipartFile.fromFile(file.path, filename: file.name);
   }
 
   Future<void> _submitUpdate() async {
@@ -1177,11 +1198,22 @@ class _EditLandScreenState extends State<EditLandScreen> {
       'id_komoditas': _selectedCropId,
       'musim_tanam': _selectedSeason,
       'keterangan': _notesController.text.trim(),
+      'existing_photos': List<String>.from(_keptOldPhotos),
     };
 
+    final List<MultipartFile> photoFiles = [];
+    for (int i = 0; i < _selectedImageBytesList.length; i++) {
+      final name = i < _selectedImages.length ? _selectedImages[i].name : 'lahan_$i.jpg';
+      photoFiles.add(MultipartFile.fromBytes(_selectedImageBytesList[i], filename: name));
+    }
+
     final service = LahanApiService();
-    final fotoFile = await _toMultipartFile(_selectedImage);
-    final response = await service.updateLahanWithFoto(widget.item.id, payload, fotoFile);
+    final response = await service.updateLahanWithFoto(
+      widget.item.id,
+      payload,
+      null,
+      fotoLahanList: photoFiles.isEmpty ? null : photoFiles,
+    );
 
     if (!mounted) return;
 

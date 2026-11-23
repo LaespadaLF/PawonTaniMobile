@@ -90,6 +90,7 @@ class ItemLahan {
   final double? latitude;
   final double? longitude;
   final String? fotoLahan;
+  final List<String> photos;
 
   // Atribut Verifikasi Tata Kelola
   final String? statusVerifikasi;
@@ -121,6 +122,7 @@ class ItemLahan {
     this.latitude,
     this.longitude,
     this.fotoLahan,
+    this.photos = const [],
     this.statusVerifikasi,
     this.catatanVerifikasi,
     this.tanggalVerifikasi,
@@ -171,6 +173,22 @@ class ItemLahan {
       }
     }
 
+    final List<String> parsedPhotos = [];
+    final rawList = json['photos'] ?? json['foto_lahan_list'];
+    if (rawList is List) {
+      for (final p in rawList) {
+        if (p != null && p.toString().trim().isNotEmpty) {
+          final res = ApiConstants.resolveImageUrl(p.toString());
+          parsedPhotos.add(res ?? p.toString());
+        }
+      }
+    }
+    final rawSingle = json['foto_lahan']?.toString();
+    final resolvedSingle = ApiConstants.resolveImageUrl(rawSingle);
+    if (parsedPhotos.isEmpty && resolvedSingle != null && resolvedSingle.trim().isNotEmpty) {
+      parsedPhotos.add(resolvedSingle);
+    }
+
     return ItemLahan(
       id: json['id']?.toString() ?? '',
       nama: json['nama']?.toString() ?? '',
@@ -180,7 +198,8 @@ class ItemLahan {
       status: status,
       latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
       longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
-      fotoLahan: ApiConstants.resolveImageUrl(json['foto_lahan']?.toString()),
+      fotoLahan: resolvedSingle ?? (parsedPhotos.isNotEmpty ? parsedPhotos.first : null),
+      photos: parsedPhotos,
       statusVerifikasi: json['status_verifikasi']?.toString(),
       catatanVerifikasi: json['catatan_verifikasi']?.toString(),
       tanggalVerifikasi: tanggalVerif,
@@ -206,6 +225,7 @@ class ItemLahan {
       'latitude': latitude,
       'longitude': longitude,
       'foto_lahan': fotoLahan,
+      'photos': photos,
       'status_verifikasi': statusVerifikasi,
       'catatan_verifikasi': catatanVerifikasi,
       'tanggal_verifikasi': tanggalVerifikasi?.toIso8601String(),
@@ -229,6 +249,7 @@ class ItemLahan {
     double? latitude,
     double? longitude,
     String? fotoLahan,
+    List<String>? photos,
     String? statusVerifikasi,
     String? catatanVerifikasi,
     DateTime? tanggalVerifikasi,
@@ -250,6 +271,7 @@ class ItemLahan {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       fotoLahan: fotoLahan ?? this.fotoLahan,
+      photos: photos ?? this.photos,
       statusVerifikasi: statusVerifikasi ?? this.statusVerifikasi,
       catatanVerifikasi: catatanVerifikasi ?? this.catatanVerifikasi,
       tanggalVerifikasi: tanggalVerifikasi ?? this.tanggalVerifikasi,

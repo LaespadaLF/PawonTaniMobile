@@ -89,6 +89,7 @@ class PlantActivityItem {
   final String blockArea;
   final String notes;
   final String? imageUrl;
+  final List<String> photos;
   final int? dayNumber;
   final String? lahanId;
   final double? biaya;
@@ -105,6 +106,7 @@ class PlantActivityItem {
     required this.blockArea,
     required this.notes,
     this.imageUrl,
+    this.photos = const [],
     this.dayNumber,
     this.lahanId,
     this.biaya,
@@ -127,6 +129,20 @@ class PlantActivityItem {
     final notes = (json['notes'] ?? json['catatan'] ?? '').toString();
     final rawImg = (json['image_url'] ?? json['imageUrl'] ?? json['foto_aktivitas'])?.toString();
     final imageUrl = rawImg != null && rawImg.isNotEmpty ? ApiConstants.resolveImageUrl(rawImg) : null;
+    final List<String> parsedPhotos = [];
+    final rawList = json['photos'] ?? json['foto_aktivitas_list'];
+    if (rawList is List) {
+      for (final p in rawList) {
+        if (p != null && p.toString().trim().isNotEmpty) {
+          final res = ApiConstants.resolveImageUrl(p.toString());
+          parsedPhotos.add(res ?? p.toString());
+        }
+      }
+    }
+    if (parsedPhotos.isEmpty && imageUrl != null && imageUrl.trim().isNotEmpty) {
+      parsedPhotos.add(imageUrl);
+    }
+
     final dayNumber = int.tryParse((json['day_number'] ?? json['dayNumber'] ?? json['hari_setelah_tanam'])?.toString() ?? '');
     final lahanId = (json['id_lahan'] ?? json['lahan_id'])?.toString();
     final biaya = double.tryParse((json['biaya'])?.toString() ?? '');
@@ -142,7 +158,8 @@ class PlantActivityItem {
       location: location,
       blockArea: blockArea,
       notes: notes,
-      imageUrl: imageUrl,
+      imageUrl: imageUrl ?? (parsedPhotos.isNotEmpty ? parsedPhotos.first : null),
+      photos: parsedPhotos,
       dayNumber: dayNumber,
       lahanId: lahanId,
       biaya: biaya,
@@ -161,6 +178,7 @@ class PlantActivityItem {
       'hari_setelah_tanam': dayNumber,
       'catatan': notes,
       'foto_aktivitas': imageUrl,
+      'photos': photos,
       'biaya': biaya,
     };
   }
@@ -177,6 +195,7 @@ class PlantActivityItem {
     String? blockArea,
     String? notes,
     String? imageUrl,
+    List<String>? photos,
     int? dayNumber,
     String? lahanId,
     double? biaya,
@@ -193,6 +212,7 @@ class PlantActivityItem {
       blockArea: blockArea ?? this.blockArea,
       notes: notes ?? this.notes,
       imageUrl: imageUrl ?? this.imageUrl,
+      photos: photos ?? this.photos,
       dayNumber: dayNumber ?? this.dayNumber,
       lahanId: lahanId ?? this.lahanId,
       biaya: biaya ?? this.biaya,

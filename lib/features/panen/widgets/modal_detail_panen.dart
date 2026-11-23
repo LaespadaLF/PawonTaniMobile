@@ -72,7 +72,7 @@ class HarvestDetailModal extends StatelessWidget {
           _buildInfoRow('Lokasi & Lahan', '${item.location} (${item.blockArea})'),
           _buildInfoRow('Waktu Panen', '${item.date} • ${item.season}'),
           _buildInfoRow('Total Bobot', '${item.weightKg.toStringAsFixed(0)} Kg (${item.weightTon.toStringAsFixed(2)} Ton)'),
-          _buildInfoRow('Kualitas & Mutu', '${item.qualityGrade} • ${item.moistureOrNotes}'),
+          _buildInfoRow('Metode Pemanenan', item.harvestMethod),
           _buildInfoRow('Mitra Penyerapan', 'Bulog & Pupuk Indonesia'),
           const SizedBox(height: 24),
           Row(

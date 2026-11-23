@@ -42,9 +42,9 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   late PlantCondition _selectedCondition;
   late TextEditingController _notesController;
 
-  String? _existingPhotoUrl;
-  Uint8List? _newPhotoBytes;
-  String? _newPhotoName;
+  final List<String> _keptOldPhotos = [];
+  final List<Uint8List> _selectedPhotoBytesList = [];
+  final List<String> _selectedPhotoNamesList = [];
 
   @override
   void initState() {
@@ -52,7 +52,12 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     _selectedCategory = widget.item.category;
     _selectedCondition = widget.item.condition;
     _notesController = TextEditingController(text: widget.item.notes);
-    _existingPhotoUrl = widget.item.imageUrl;
+    _keptOldPhotos
+      ..clear()
+      ..addAll(widget.item.photos.where((p) => p.trim().isNotEmpty));
+    if (_keptOldPhotos.isEmpty && widget.item.imageUrl != null && widget.item.imageUrl!.trim().isNotEmpty) {
+      _keptOldPhotos.add(widget.item.imageUrl!);
+    }
 
     // Parse existing date/time or default to now
     _selectedDate = DateTime.now();
@@ -117,6 +122,23 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   Future<void> _pickPhoto(ImageSource source) async {
     try {
       final picker = ImagePicker();
+      if (source == ImageSource.gallery) {
+        final pickedList = await picker.pickMultiImage(
+          imageQuality: 80,
+          maxWidth: 1200,
+        );
+        if (pickedList.isEmpty) return;
+        for (final p in pickedList) {
+          final bytes = await p.readAsBytes();
+          if (!mounted) return;
+          setState(() {
+            _selectedPhotoBytesList.add(bytes);
+            _selectedPhotoNamesList.add(p.name);
+          });
+        }
+        return;
+      }
+
       final picked = await picker.pickImage(
         source: source,
         imageQuality: 80,
@@ -126,9 +148,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
 
       final bytes = await picked.readAsBytes();
       setState(() {
-        _newPhotoBytes = bytes;
-        _newPhotoName = picked.name;
-        _existingPhotoUrl = null;
+        _selectedPhotoBytesList.add(bytes);
+        _selectedPhotoNamesList.add(picked.name);
       });
     } catch (e) {
       if (!mounted) return;
@@ -165,7 +186,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Ubah Foto Aktivitas',
+                  'Tambah Foto Aktivitas',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -184,24 +205,12 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
                   title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Bisa pilih beberapa foto sekaligus', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickPhoto(ImageSource.gallery);
                   },
                 ),
-                if (_newPhotoBytes != null || (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty))
-                  ListTile(
-                    leading: const Icon(Icons.delete_outline, color: WarnaAplikasi.errorRedDark),
-                    title: const Text('Hapus Foto', style: TextStyle(color: WarnaAplikasi.errorRedDark, fontWeight: FontWeight.bold)),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      setState(() {
-                        _newPhotoBytes = null;
-                        _newPhotoName = null;
-                        _existingPhotoUrl = null;
-                      });
-                    },
-                  ),
               ],
             ),
           ),
@@ -221,24 +230,26 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
         'tanggal': _formatDateIso(_selectedDate),
         'waktu': _formatTime(_selectedTime),
         'catatan': _notesController.text.trim(),
+        'existing_photos': List<String>.from(_keptOldPhotos),
       };
 
       if (_selectedItemLahan != null) {
         payload['id_lahan'] = _selectedItemLahan!.id;
       }
 
-      MultipartFile? file;
-      if (_newPhotoBytes != null) {
-        file = MultipartFile.fromBytes(
-          _newPhotoBytes!,
-          filename: _newPhotoName ?? 'aktivitas.jpg',
-        );
+      final List<MultipartFile> photoFiles = [];
+      for (int i = 0; i < _selectedPhotoBytesList.length; i++) {
+        final name = i < _selectedPhotoNamesList.length
+            ? _selectedPhotoNamesList[i]
+            : 'aktivitas_$i.jpg';
+        photoFiles.add(MultipartFile.fromBytes(_selectedPhotoBytesList[i], filename: name));
       }
 
       final response = await _aktivitasService.updateAktivitas(
         widget.item.id,
         payload,
-        fotoAktivitas: file,
+        fotoAktivitas: null,
+        fotoAktivitasList: photoFiles.isEmpty ? null : photoFiles,
       );
 
       if (!mounted) return;
@@ -589,102 +600,122 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
             // 6. Foto Dokumentasi
             _buildFieldLabel('Dokumentasi Foto'),
             const SizedBox(height: 8),
-            InkWell(
-              onTap: _showPhotoOptions,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: WarnaAplikasi.photoUploadBorder,
-                    width: 1.2,
-                  ),
-                ),
-                child: _newPhotoBytes != null
-                    ? Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(
-                              _newPhotoBytes!,
-                              height: 140,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+            if (_keptOldPhotos.isNotEmpty) ...[
+              const Text('Foto Tersimpan:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textGrayGreen)),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _keptOldPhotos.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (ctx, index) {
+                    final url = _keptOldPhotos[index];
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            url,
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 90,
+                              height: 90,
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.broken_image, color: Colors.grey),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.edit_outlined, size: 16, color: WarnaAplikasi.primary),
-                              SizedBox(width: 4),
-                              Text('Ganti Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
-                            ],
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _keptOldPhotos.removeAt(index)),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                              child: const Icon(Icons.close, color: Colors.white, size: 12),
+                            ),
                           ),
-                        ],
-                      )
-                    : (_existingPhotoUrl != null && _existingPhotoUrl!.isNotEmpty)
-                        ? Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  _existingPhotoUrl!,
-                                  height: 140,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    height: 100,
-                                    color: Colors.grey.shade100,
-                                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.edit_outlined, size: 16, color: WarnaAplikasi.primary),
-                                  SizedBox(width: 4),
-                                  Text('Ganti Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
-                                ],
-                              ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: const BoxDecoration(
-                                  color: WarnaAplikasi.greenLight,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt_outlined,
-                                  color: WarnaAplikasi.primary,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                '+ Tambah Foto',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: WarnaAplikasi.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                'Kamera atau Galeri (Maks 10MB)',
-                                style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
-                              ),
-                            ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (_selectedPhotoBytesList.isNotEmpty) ...[
+              const Text('Foto Baru yang Akan Ditambahkan:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textGrayGreen)),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _selectedPhotoBytesList.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (ctx, index) {
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            _selectedPhotoBytesList[index],
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
                           ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedPhotoBytesList.removeAt(index);
+                              if (index < _selectedPhotoNamesList.length) {
+                                _selectedPhotoNamesList.removeAt(index);
+                              }
+                            }),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                              child: const Icon(Icons.close, color: Colors.white, size: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            InkWell(
+              onTap: _showPhotoOptions,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.bgPaleGreen3,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: WarnaAplikasi.borderPale2),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add_a_photo_outlined, size: 18, color: WarnaAplikasi.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Tambah Foto Aktivitas (${_keptOldPhotos.length + _selectedPhotoBytesList.length} Foto)',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

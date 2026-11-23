@@ -51,13 +51,37 @@ class AktivitasApiService {
   Future<ApiResponse<PlantActivityItem>> createAktivitas(
     Map<String, dynamic> payload, {
     MultipartFile? fotoAktivitas,
+    List<MultipartFile>? fotoAktivitasList,
   }) async {
-    if (fotoAktivitas != null) {
-      final mapData = <String, dynamic>{
-        ...payload,
-        'foto_aktivitas': fotoAktivitas,
-      };
-      final formData = FormData.fromMap(mapData);
+    final list = fotoAktivitasList ?? const <MultipartFile>[];
+    if (list.isNotEmpty || fotoAktivitas != null) {
+      final formData = FormData();
+      payload.forEach((key, value) {
+        if (value == null) return;
+        if (value is Iterable) {
+          final items = value.map((e) => e.toString()).toList();
+          if (items.isEmpty) {
+            formData.fields.add(MapEntry('$key[]', ''));
+          } else {
+            for (final item in items) {
+              formData.fields.add(MapEntry('$key[]', item));
+            }
+          }
+          return;
+        }
+        formData.fields.add(
+          MapEntry(key, value is bool ? (value ? '1' : '0') : value.toString()),
+        );
+      });
+
+      if (list.isNotEmpty) {
+        for (final f in list) {
+          formData.files.add(MapEntry('foto_aktivitas_list[]', f));
+        }
+      } else if (fotoAktivitas != null) {
+        formData.files.add(MapEntry('foto_aktivitas', fotoAktivitas));
+      }
+
       return await _client.post<PlantActivityItem>(
         ApiConstants.aktivitasEndpoint,
         data: formData,
@@ -77,14 +101,40 @@ class AktivitasApiService {
     String id,
     Map<String, dynamic> payload, {
     MultipartFile? fotoAktivitas,
+    List<MultipartFile>? fotoAktivitasList,
   }) async {
-    if (fotoAktivitas != null) {
-      final mapData = <String, dynamic>{
-        '_method': 'PUT',
-        ...payload,
-        'foto_aktivitas': fotoAktivitas,
-      };
-      final formData = FormData.fromMap(mapData);
+    final list = fotoAktivitasList ?? const <MultipartFile>[];
+    final hasExistingPhotos = payload.containsKey('existing_photos');
+    if (list.isNotEmpty || fotoAktivitas != null || hasExistingPhotos) {
+      final formData = FormData();
+      formData.fields.add(const MapEntry('_method', 'PUT'));
+
+      payload.forEach((key, value) {
+        if (value == null) return;
+        if (value is Iterable) {
+          final items = value.map((e) => e.toString()).toList();
+          if (items.isEmpty) {
+            formData.fields.add(MapEntry('$key[]', ''));
+          } else {
+            for (final item in items) {
+              formData.fields.add(MapEntry('$key[]', item));
+            }
+          }
+          return;
+        }
+        formData.fields.add(
+          MapEntry(key, value is bool ? (value ? '1' : '0') : value.toString()),
+        );
+      });
+
+      if (list.isNotEmpty) {
+        for (final f in list) {
+          formData.files.add(MapEntry('foto_aktivitas_list[]', f));
+        }
+      } else if (fotoAktivitas != null) {
+        formData.files.add(MapEntry('foto_aktivitas', fotoAktivitas));
+      }
+
       return await _client.post<PlantActivityItem>(
         '${ApiConstants.aktivitasEndpoint}/$id',
         data: formData,

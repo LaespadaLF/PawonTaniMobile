@@ -1,3 +1,4 @@
+import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
@@ -347,9 +348,9 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   color: const Color(0x33FFFFFF),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text(
-                  'GKP (Gabah Kering)',
-                  style: TextStyle(
+                child: Text(
+                  _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
+                  style: const TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -479,7 +480,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   const Text(
-                    'Harga per Kg (GKP)*',
+                    'Harga Jual / Kg',
                     style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGray),
                   ),
                   Text(
@@ -494,98 +495,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Divider(color: WarnaAplikasi.dividerGray, height: 1),
-          const SizedBox(height: 12),
-
-          // Row 2: Kualitas / Mutu Hasil
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.verified_outlined, size: 14, color: WarnaAplikasi.primary),
-                  SizedBox(width: 4),
-                  Text(
-                    'Kualitas / Mutu Hasil',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: WarnaAplikasi.greenPill,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  _currentItem.qualityGrade,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.greenText,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // 3 Metric Boxes: Kadar Air, Butir Utuh, Kotoran/Hampa
-          Row(
-            children: [
-              _buildMetricBox('Kadar Air', '< 14%', 'Standar Bulog'),
-              const SizedBox(width: 8),
-              _buildMetricBox('Butir Utuh', '≥ 95%', 'Baik Sekali'),
-              const SizedBox(width: 8),
-              _buildMetricBox('Kotoran/Hampa', '≤ 2%', 'Sangat Bersih'),
-            ],
-          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMetricBox(String label, String value, String status) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-        decoration: BoxDecoration(
-          color: WarnaAplikasi.bgPaleGreen3,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 10, color: WarnaAplikasi.textGray),
-              maxLines: 1,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: WarnaAplikasi.textDarkGreen,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              status,
-              style: const TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w600,
-                color: WarnaAplikasi.primary,
-              ),
-              maxLines: 1,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -813,7 +723,10 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildDokumentasiCard() {
+    final photoList = _currentItem.photos.where((p) => p.trim().isNotEmpty).toList();
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -823,10 +736,10 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.photo_library_outlined, size: 16, color: WarnaAplikasi.primary),
                   SizedBox(width: 8),
@@ -841,143 +754,183 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 ],
               ),
               Text(
-                '2 Berkas',
-                style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
+                '${photoList.length} Berkas',
+                style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // 2 Photos Side by Side
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 110,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: WarnaAplikasi.dividerGray,
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=400&q=80',
-                      ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.transparent, Color(0xCC000000)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
-                    ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Karung Hasil Panen',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+          // Daftar Foto atau Empty State
+          if (photoList.isNotEmpty)
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: photoList.length,
+                separatorBuilder: (sepCtx, sepIdx) => const SizedBox(width: 10),
+                itemBuilder: (ctx, index) {
+                  final rawPath = photoList[index];
+                  final fullUrl = ApiConstants.resolveImageUrl(rawPath) ?? rawPath;
+
+                  return InkWell(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (dCtx) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          insetPadding: const EdgeInsets.all(16),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(
+                                  fullUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (errCtx, errObj, errTrace) => Container(
+                                    color: Colors.black87,
+                                    padding: const EdgeInsets.all(24),
+                                    child: const Text('Gagal memuat gambar', style: TextStyle(color: Colors.white)),
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                                onPressed: () => Navigator.pop(dCtx),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          'Padi 97 Karung (siap angkut)',
-                          style: TextStyle(fontSize: 8.5, color: WarnaAplikasi.greenPill),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  height: 110,
-                  decoration: BoxDecoration(
+                      );
+                    },
                     borderRadius: BorderRadius.circular(12),
-                    color: WarnaAplikasi.dividerGray,
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=400&q=80',
+                    child: Container(
+                      width: 140,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: WarnaAplikasi.dividerGray,
                       ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.transparent, Color(0xCC000000)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.network(
+                        fullUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (ctx, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                            ),
+                          );
+                        },
+                        errorBuilder: (errCtx, errObj, errTrace) => Container(
+                          color: WarnaAplikasi.bgPaleGreen3,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.broken_image_rounded, color: WarnaAplikasi.primary, size: 28),
+                        ),
                       ),
-                      borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
                     ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tanda Bukti Fisik',
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'Resi timbangan digital',
-                          style: TextStyle(fontSize: 8.5, color: WarnaAplikasi.greenPill),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
-          ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: WarnaAplikasi.bgPaleGreen3,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: WarnaAplikasi.borderField),
+              ),
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.photo_camera_outlined, color: WarnaAplikasi.grayGreenMuted, size: 28),
+                  SizedBox(height: 6),
+                  Text(
+                    'Belum ada foto bukti fisik yang dilampirkan.',
+                    style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 12),
 
-          // Legal lock notice
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen2,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.lock_outline_rounded, size: 14, color: WarnaAplikasi.primary),
-                    SizedBox(width: 6),
-                    Text(
-                      'Data telah terkunci & sah secara hukum kemitraan.',
-                      style: TextStyle(fontSize: 10, color: WarnaAplikasi.primary),
-                    ),
-                  ],
-                ),
-                Text(
-                  'Lihat SK >',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.primary,
+          // Banner Status Verifikasi
+          Builder(
+            builder: (ctx) {
+              if (_currentItem.status == HarvestStatus.disetujui) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: WarnaAplikasi.bgPaleGreen2,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: WarnaAplikasi.greenPill),
                   ),
-                ),
-              ],
-            ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, size: 15, color: WarnaAplikasi.primary),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Hasil panen telah terverifikasi oleh kelompok tani.',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDarkGreen),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else if (_currentItem.status == HarvestStatus.ditolak) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.cancel_outlined, size: 15, color: Colors.red.shade700),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _currentItem.validatedNotes?.isNotEmpty == true
+                              ? 'Catatan Penolakan: ${_currentItem.validatedNotes}'
+                              : 'Catatan hasil panen ini ditolak saat verifikasi lapangan.',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.red.shade800),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.hourglass_top_rounded, size: 15, color: Colors.amber.shade800),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Menunggu verifikasi lapangan oleh pengurus kelompok tani.',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.amber.shade900),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),

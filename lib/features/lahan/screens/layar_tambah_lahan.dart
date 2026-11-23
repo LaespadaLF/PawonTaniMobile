@@ -20,7 +20,7 @@ class AddLandScreen extends StatefulWidget {
 
 class _AddLandScreenState extends State<AddLandScreen> {
   final _nameController = TextEditingController();
-  final _areaController = TextEditingController(text: '0,8');
+  final _areaController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
   final _latitudeController = TextEditingController(text: '-6.5621');
@@ -32,8 +32,8 @@ class _AddLandScreenState extends State<AddLandScreen> {
   String? _selectedCropId;
   String _selectedSeason = 'MT-1 (Musim Hujan)';
   bool _isSubmitting = false;
-  XFile? _selectedImage;
-  Uint8List? _imageBytes;
+  final List<XFile> _selectedImages = [];
+  final List<Uint8List> _selectedImageBytesList = [];
 
   List<ItemKomoditas> _komoditasList = [];
   bool _isLoadingKomoditas = true;
@@ -129,7 +129,7 @@ class _AddLandScreenState extends State<AddLandScreen> {
   }
 
   Future<void> _pickImage() async {
-    showModalBottomSheet<XFile>(
+    showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => SafeArea(
@@ -158,26 +158,28 @@ class _AddLandScreenState extends State<AddLandScreen> {
                   final bytes = await picked.readAsBytes();
                   if (!mounted) return;
                   setState(() {
-                    _selectedImage = picked;
-                    _imageBytes = bytes;
+                    _selectedImages.add(picked);
+                    _selectedImageBytesList.add(bytes);
                   });
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
                 title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Pilih foto dari galeri perangkat', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                subtitle: const Text('Pilih beberapa foto dari galeri', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
                 onTap: () async {
                   Navigator.pop(context);
                   final picker = ImagePicker();
-                  final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1200);
-                  if (!mounted || picked == null) return;
-                  final bytes = await picked.readAsBytes();
-                  if (!mounted) return;
-                  setState(() {
-                    _selectedImage = picked;
-                    _imageBytes = bytes;
-                  });
+                  final pickedList = await picker.pickMultiImage(imageQuality: 85, maxWidth: 1200);
+                  if (!mounted || pickedList.isEmpty) return;
+                  for (final p in pickedList) {
+                    final bytes = await p.readAsBytes();
+                    if (!mounted) return;
+                    setState(() {
+                      _selectedImages.add(p);
+                      _selectedImageBytesList.add(bytes);
+                    });
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -186,15 +188,6 @@ class _AddLandScreenState extends State<AddLandScreen> {
         ),
       ),
     );
-  }
-
-  Future<MultipartFile?> _toMultipartFile(XFile? file) async {
-    if (file == null) return null;
-    if (kIsWeb) {
-      final bytes = await file.readAsBytes();
-      return MultipartFile.fromBytes(bytes, filename: file.name);
-    }
-    return MultipartFile.fromFile(file.path, filename: file.name);
   }
 
   Future<void> _submitLand() async {
@@ -235,9 +228,18 @@ class _AddLandScreenState extends State<AddLandScreen> {
       'keterangan': _notesController.text.trim(),
     };
 
+    final List<MultipartFile> photoFiles = [];
+    for (int i = 0; i < _selectedImageBytesList.length; i++) {
+      final name = i < _selectedImages.length ? _selectedImages[i].name : 'lahan_$i.jpg';
+      photoFiles.add(MultipartFile.fromBytes(_selectedImageBytesList[i], filename: name));
+    }
+
     final service = LahanApiService();
-    final fotoFile = await _toMultipartFile(_selectedImage);
-    final response = await service.createLahanWithFoto(payload, fotoFile);
+    final response = await service.createLahanWithFoto(
+      payload,
+      null,
+      fotoLahanList: photoFiles.isEmpty ? null : photoFiles,
+    );
 
     if (!mounted) return;
 
@@ -354,7 +356,8 @@ class _AddLandScreenState extends State<AddLandScreen> {
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  hintText: 'Petak Sawah Barat',
+                  hintText: 'Contoh: Petak Sawah Barat',
+                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -376,7 +379,10 @@ class _AddLandScreenState extends State<AddLandScreen> {
                     flex: 1,
                     child: TextField(
                       controller: _areaController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
+                        hintText: 'Contoh: 0.8',
+                        hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -822,68 +828,75 @@ class _AddLandScreenState extends State<AddLandScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Dokumentasi Petak (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                  Text(_selectedImage == null ? 'Belum ada foto' : '1 Foto Terpilih', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
+                  Text('${_selectedImageBytesList.length} Foto Terpilih', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
                 ],
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        height: 100,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: CustomPaint(
-                          painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primaryLight),
-                              SizedBox(height: 4),
-                              Text('Ambil Foto / Galeri', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                              Text('JPG, PNG maks 5MB', style: TextStyle(fontSize: 9, color: WarnaAplikasi.textGrayLight)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_selectedImage != null) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Stack(
+              if (_selectedImageBytesList.isNotEmpty) ...[
+                SizedBox(
+                  height: 90,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _selectedImageBytesList.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (ctx, index) {
+                      return Stack(
                         children: [
-                          Container(
-                            height: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: MemoryImage(_imageBytes!),
-                                fit: BoxFit.cover,
-                              ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _selectedImageBytesList[index],
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
                             ),
                           ),
                           Positioned(
-                            top: 8,
-                            right: 8,
+                            top: 4,
+                            right: 4,
                             child: GestureDetector(
-                              onTap: () => setState(() => _selectedImage = null),
+                              onTap: () => setState(() {
+                                _selectedImageBytesList.removeAt(index);
+                                if (index < _selectedImages.length) {
+                                  _selectedImages.removeAt(index);
+                                }
+                              }),
                               child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
-                                child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 12),
                               ),
                             ),
-                          )
+                          ),
                         ],
-                      ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 65,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CustomPaint(
+                    painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo_outlined, color: WarnaAplikasi.primaryLight, size: 20),
+                        SizedBox(width: 8),
+                        Text('Ambil Foto / Pilih dari Galeri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                      ],
                     ),
-                  ]
-                ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 

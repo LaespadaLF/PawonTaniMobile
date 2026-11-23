@@ -113,7 +113,7 @@ class HarvestCard extends StatelessWidget {
                         icon: Icons.location_on_outlined,
                         iconColor: WarnaAplikasi.iconGrayGreenMid,
                         title: item.location,
-                        subtitle: item.blockArea,
+                        subtitle: item.blockArea.replaceAll(RegExp(r'\.0000|\.00'), ''),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -132,7 +132,7 @@ class HarvestCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Col 1 Row 2: Weight
+                    // Col 1 Row 2: Total Berat Panen
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.scale_outlined,
@@ -140,18 +140,18 @@ class HarvestCard extends StatelessWidget {
                             ? WarnaAplikasi.padiGreen
                             : WarnaAplikasi.jagungAmber,
                         title: '${_formatNumber(item.weightKg)} Kg',
-                        subtitle: '(${item.weightTon.toStringAsFixed(2)} Ton)',
+                        subtitle: '${item.weightTon.toStringAsFixed(item.weightTon.truncateToDouble() == item.weightTon ? 0 : 2).replaceAll('.', ',')} Ton',
                         isBoldTitle: true,
                       ),
                     ),
                     const SizedBox(width: 10),
-                    // Col 2 Row 2: Quality & Notes
+                    // Col 2 Row 2: Metode Pemanenan & Waktu Panen
                     Expanded(
                       child: _buildDetailCell(
-                        icon: Icons.verified_outlined,
+                        icon: Icons.agriculture_outlined,
                         iconColor: WarnaAplikasi.iconGrayGreenMid,
-                        title: item.qualityGrade,
-                        subtitle: item.moistureOrNotes,
+                        title: item.harvestMethod,
+                        subtitle: item.harvestTime,
                       ),
                     ),
                   ],

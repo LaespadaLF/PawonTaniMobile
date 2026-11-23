@@ -4,20 +4,35 @@ import 'package:pawon_mobile/core/widgets/ikon_tanaman_kustom.dart';
 
 class HarvestSummaryCard extends StatelessWidget {
   final double totalTon;
-  final double padiTon;
-  final double jagungTon;
   final String seasonName;
+  final Map<String, double> commodityBreakdown;
 
   const HarvestSummaryCard({
     super.key,
     required this.totalTon,
-    required this.padiTon,
-    required this.jagungTon,
-    this.seasonName = 'Musim Tanam 2024',
+    required this.seasonName,
+    this.commodityBreakdown = const {},
   });
+
+  /// Format angka ton gaya Indonesia (koma desimal) tanpa nol di belakang koma.
+  /// Nilai 0 / kosong ditampilkan sebagai "0" agar tidak muncul "0,00".
+  static String formatTon(double value, {int decimals = 2}) {
+    if (!value.isFinite || value <= 0) return '0';
+    final teks = value.toStringAsFixed(decimals).replaceAll('.', ',');
+    final tanpaNol = teks.replaceFirst(RegExp(r',?0+$'), '');
+    return tanpaNol.isEmpty ? '0' : tanpaNol;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final totalText = formatTon(totalTon, decimals: 1);
+    final badgeText =
+        seasonName.trim().isEmpty ? 'Musim Tanam Berjalan' : seasonName.trim();
+
+    final nonZeroBreakdown = commodityBreakdown.entries
+        .where((e) => e.value > 0)
+        .toList();
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -50,48 +65,58 @@ class HarvestSummaryCard extends StatelessWidget {
               children: [
                 // Top row: Title and Season Badge
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Total Hasil Panen',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: WarnaAplikasi.textGrayGreenMedium,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.seasonBadgeBg,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: WarnaAplikasi.seasonBadgeBorder,
-                          width: 0.8,
+                    const Flexible(
+                      child: Text(
+                        'Total Hasil Panen',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: WarnaAplikasi.textGrayGreenMedium,
+                          letterSpacing: -0.2,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.calendar_month_outlined,
-                            size: 13,
-                            color: WarnaAplikasi.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: WarnaAplikasi.seasonBadgeBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: WarnaAplikasi.seasonBadgeBorder,
+                            width: 0.8,
                           ),
-                          const SizedBox(width: 5),
-                          Text(
-                            seasonName,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.calendar_month_outlined,
+                              size: 13,
                               color: WarnaAplikasi.primary,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                badgeText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: WarnaAplikasi.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -103,7 +128,7 @@ class HarvestSummaryCard extends StatelessWidget {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: totalTon.toStringAsFixed(1).replaceAll('.', ','),
+                        text: totalText,
                         style: const TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.w800,
@@ -125,77 +150,71 @@ class HarvestSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Sub-breakdown: Padi & Jagung
-                Row(
-                  children: [
-                    // Padi
-                    const Icon(
-                      Icons.grass_rounded,
-                      size: 15,
-                      color: WarnaAplikasi.padiGreenIcon,
-                    ),
-                    const SizedBox(width: 5),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          const TextSpan(
-                            text: 'Padi: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: WarnaAplikasi.textGray,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          TextSpan(
-                            text: '${padiTon.toStringAsFixed(2).replaceAll('.', ',')} Ton',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: WarnaAplikasi.textDarkGreenMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Container(
-                      width: 1,
-                      height: 12,
-                      color: WarnaAplikasi.dividerGreenMuted,
-                    ),
-                    const SizedBox(width: 14),
+                // Sub-breakdown: Dinamis berdasarkan komoditas aktual di hasil panen
+                if (nonZeroBreakdown.isNotEmpty)
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 14,
+                    runSpacing: 6,
+                    children: nonZeroBreakdown.map((entry) {
+                      final cName = entry.key;
+                      final cTon = formatTon(entry.value);
+                      final isJagung = cName.toLowerCase().contains('jagung');
+                      final isPadi = cName.toLowerCase().contains('padi');
 
-                    // Jagung
-                    const Icon(
-                      Icons.bolt_rounded,
-                      size: 15,
-                      color: WarnaAplikasi.jagungAmber,
-                    ),
-                    const SizedBox(width: 5),
-                    RichText(
-                      text: TextSpan(
+                      IconData icon = Icons.eco_rounded;
+                      Color iconColor = WarnaAplikasi.primaryDark;
+
+                      if (isJagung) {
+                        icon = Icons.bolt_rounded;
+                        iconColor = WarnaAplikasi.jagungAmber;
+                      } else if (isPadi) {
+                        icon = Icons.grass_rounded;
+                        iconColor = WarnaAplikasi.padiGreenIcon;
+                      }
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const TextSpan(
-                            text: 'Jagung: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: WarnaAplikasi.textGray,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          TextSpan(
-                            text: '${jagungTon.toStringAsFixed(2).replaceAll('.', ',')} Ton',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: WarnaAplikasi.textDarkGreenMuted,
+                          Icon(icon, size: 15, color: iconColor),
+                          const SizedBox(width: 5),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '$cName: ',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: WarnaAplikasi.textGray,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: '$cTon Ton',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: WarnaAplikasi.textDarkGreenMuted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
+                      );
+                    }).toList(),
+                  )
+                else
+                  const Row(
+                    children: [
+                      Icon(Icons.eco_rounded, size: 14, color: WarnaAplikasi.grayGreenMuted),
+                      SizedBox(width: 5),
+                      Text(
+                        'Belum ada rincian komoditas',
+                        style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),

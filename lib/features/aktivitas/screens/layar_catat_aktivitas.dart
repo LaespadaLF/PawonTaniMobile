@@ -49,9 +49,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   // Notes
   final TextEditingController _notesController = TextEditingController();
 
-  // Photo
-  Uint8List? _selectedPhotoBytes;
-  String? _selectedPhotoName;
+  // Photo (Multiple Support)
+  final List<Uint8List> _selectedPhotoBytesList = [];
+  final List<String> _selectedPhotoNamesList = [];
 
   @override
   void initState() {
@@ -131,6 +131,23 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   Future<void> _pickPhoto(ImageSource source) async {
     try {
       final picker = ImagePicker();
+      if (source == ImageSource.gallery) {
+        final pickedList = await picker.pickMultiImage(
+          imageQuality: 80,
+          maxWidth: 1200,
+        );
+        if (pickedList.isEmpty) return;
+        for (final p in pickedList) {
+          final bytes = await p.readAsBytes();
+          if (!mounted) return;
+          setState(() {
+            _selectedPhotoBytesList.add(bytes);
+            _selectedPhotoNamesList.add(p.name);
+          });
+        }
+        return;
+      }
+
       final picked = await picker.pickImage(
         source: source,
         imageQuality: 80,
@@ -140,8 +157,8 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
 
       final bytes = await picked.readAsBytes();
       setState(() {
-        _selectedPhotoBytes = bytes;
-        _selectedPhotoName = picked.name;
+        _selectedPhotoBytesList.add(bytes);
+        _selectedPhotoNamesList.add(picked.name);
       });
     } catch (e) {
       if (!mounted) return;
@@ -197,23 +214,12 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
                   title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Bisa pilih beberapa foto sekaligus', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickPhoto(ImageSource.gallery);
                   },
                 ),
-                if (_selectedPhotoBytes != null)
-                  ListTile(
-                    leading: const Icon(Icons.delete_outline, color: WarnaAplikasi.errorRedDark),
-                    title: const Text('Hapus Foto', style: TextStyle(color: WarnaAplikasi.errorRedDark, fontWeight: FontWeight.bold)),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      setState(() {
-                        _selectedPhotoBytes = null;
-                        _selectedPhotoName = null;
-                      });
-                    },
-                  ),
               ],
             ),
           ),
@@ -250,15 +256,19 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
         'hari_setelah_tanam': 30,
       };
 
-      MultipartFile? file;
-      if (_selectedPhotoBytes != null) {
-        file = MultipartFile.fromBytes(
-          _selectedPhotoBytes!,
-          filename: _selectedPhotoName ?? 'aktivitas.jpg',
-        );
+      final List<MultipartFile> photoFiles = [];
+      for (int i = 0; i < _selectedPhotoBytesList.length; i++) {
+        final name = i < _selectedPhotoNamesList.length
+            ? _selectedPhotoNamesList[i]
+            : 'aktivitas_$i.jpg';
+        photoFiles.add(MultipartFile.fromBytes(_selectedPhotoBytesList[i], filename: name));
       }
 
-      final response = await _aktivitasService.createAktivitas(payload, fotoAktivitas: file);
+      final response = await _aktivitasService.createAktivitas(
+        payload,
+        fotoAktivitas: null,
+        fotoAktivitasList: photoFiles.isEmpty ? null : photoFiles,
+      );
 
       if (!mounted) return;
       setState(() => _isSaving = false);
@@ -638,74 +648,72 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
             // 6. Foto Dokumentasi
             _buildFieldLabel('Dokumentasi Foto (Opsional)'),
             const SizedBox(height: 8),
+            if (_selectedPhotoBytesList.isNotEmpty) ...[
+              SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _selectedPhotoBytesList.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (ctx, index) {
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            _selectedPhotoBytesList[index],
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedPhotoBytesList.removeAt(index);
+                              if (index < _selectedPhotoNamesList.length) {
+                                _selectedPhotoNamesList.removeAt(index);
+                              }
+                            }),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                              child: const Icon(Icons.close, color: Colors.white, size: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             InkWell(
               onTap: _showPhotoOptions,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: WarnaAplikasi.photoUploadBorder,
-                    width: 1.2,
-                  ),
+                  color: WarnaAplikasi.bgPaleGreen3,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: WarnaAplikasi.borderPale2),
                 ),
-                child: _selectedPhotoBytes != null
-                    ? Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(
-                              _selectedPhotoBytes!,
-                              height: 140,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.edit_outlined, size: 16, color: WarnaAplikasi.primary),
-                              SizedBox(width: 4),
-                              Text('Ganti Foto', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: const BoxDecoration(
-                              color: WarnaAplikasi.greenLight,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_outlined,
-                              color: WarnaAplikasi.primary,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '+ Tambah Foto',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: WarnaAplikasi.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Kamera atau Galeri (Maks 10MB)',
-                            style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
-                          ),
-                        ],
-                      ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add_a_photo_outlined, size: 18, color: WarnaAplikasi.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      _selectedPhotoBytesList.isEmpty ? 'Tambah Foto Dokumentasi' : 'Tambah Foto Lainnya (${_selectedPhotoBytesList.length} terpilih)',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 32),

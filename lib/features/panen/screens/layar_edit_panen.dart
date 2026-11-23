@@ -1,7 +1,15 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
-import 'package:flutter/material.dart';
+import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
+import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
+import 'package:pawon_mobile/features/panen/services/panen_multipart.dart';
 import 'package:pawon_mobile/features/panen/widgets/dialog_hapus_panen.dart';
 
 class EditHarvestScreen extends StatefulWidget {
@@ -21,43 +29,116 @@ class EditHarvestScreen extends StatefulWidget {
 }
 
 class _EditHarvestScreenState extends State<EditHarvestScreen> {
-  late String _lahan;
-  late String _lahanDetail;
+  final LahanApiService _lahanService = LahanApiService();
+  final PanenApiService _panenService = PanenApiService();
+
+  List<ItemLahan> _lahanList = [];
+  ItemLahan? _selectedItemLahan;
+  bool _isLoadingLahan = true;
+  bool _isSaving = false;
+
+  late CropType _cropType;
   late String _commodity;
+  late TextEditingController _varietasController;
   late DateTime _harvestDate;
   late String _harvestTime;
+
   late TextEditingController _weightController;
   int _selectedUnitIndex = 0; // 0: Kg, 1: Ton, 2: Kuintal
-  int _selectedGradeIndex = 0; // 0: Grade A, 1: Grade B, 2: Grade C
-  String _harvestMethod = 'Mesin Combine Harvester';
+
+  final TextEditingController _moistureController = TextEditingController();
+  final TextEditingController _wholeGrainController = TextEditingController();
+  final TextEditingController _wasteController = TextEditingController();
+
+  int _selectedHarvestMethod = 0;
   late TextEditingController _costController;
+  late TextEditingController _workersController;
+  late TextEditingController _priceController;
   late TextEditingController _notesController;
+
+  final List<Uint8List> _selectedPhotoBytesList = [];
+  final List<String> _selectedPhotoNamesList = [];
+
+  /// Foto lama (path/URL dari server) yang masih dipertahankan saat disimpan.
+  final List<String> _keptOldPhotos = [];
 
   @override
   void initState() {
     super.initState();
-    _lahan = widget.item.location;
-    _lahanDetail = 'Varietas: ${widget.item.title} • Luas: ${widget.item.blockArea}';
+    _keptOldPhotos
+      ..clear()
+      ..addAll(widget.item.photos.where((p) => p.trim().isNotEmpty));
+    _cropType = widget.item.cropType;
     _commodity = widget.item.subtitle;
-    _harvestDate = DateTime(2024, 10, 28);
+    _varietasController = TextEditingController(text: widget.item.title);
+    _harvestDate = DateTime.tryParse(widget.item.date) ?? DateTime.now();
     _harvestTime = widget.item.harvestTime;
-    _weightController =
-        TextEditingController(text: widget.item.weightKg.toInt().toString());
-    _costController = TextEditingController(
-        text: 'Rp 1.200.000 (${widget.item.costWorkers})');
+
+    _weightController = TextEditingController(text: widget.item.weightKg.toInt().toString());
+    _costController = TextEditingController(text: widget.item.harvestCost.toInt().toString());
+    _workersController = TextEditingController(text: widget.item.costWorkers);
+    _priceController = TextEditingController(text: widget.item.pricePerKg.toInt().toString());
     _notesController = TextEditingController(text: widget.item.fieldNotes);
+
+    _moistureController.text = widget.item.moisturePercent.toString();
+    _wholeGrainController.text = widget.item.wholeGrainPercent.toString();
+    _wasteController.text = widget.item.wastePercent.toString();
+
+    if (widget.item.harvestMethod.toLowerCase().contains('manual') ||
+        widget.item.harvestMethod.toLowerCase().contains('sabit')) {
+      _selectedHarvestMethod = 1;
+    } else {
+      _selectedHarvestMethod = 0;
+    }
+
+    _fetchLahanList();
   }
 
   @override
   void dispose() {
+    _varietasController.dispose();
     _weightController.dispose();
     _costController.dispose();
+    _workersController.dispose();
+    _priceController.dispose();
     _notesController.dispose();
+    _moistureController.dispose();
+    _wholeGrainController.dispose();
+    _wasteController.dispose();
     super.dispose();
   }
 
+  Future<void> _fetchLahanList() async {
+    setState(() => _isLoadingLahan = true);
+    final response = await _lahanService.getLahanList();
+    if (!mounted) return;
+
+    if (response.success && response.data != null && response.data!.isNotEmpty) {
+      final list = response.data!;
+      ItemLahan? matched;
+      if (widget.item.idLahan.isNotEmpty) {
+        matched = list.cast<ItemLahan?>().firstWhere(
+              (l) => l != null && l.id == widget.item.idLahan,
+              orElse: () => null,
+            );
+      }
+      matched ??= list.cast<ItemLahan?>().firstWhere(
+            (l) => l != null && l.nama.toLowerCase() == widget.item.location.toLowerCase(),
+            orElse: () => list.first,
+          );
+
+      setState(() {
+        _lahanList = list;
+        _selectedItemLahan = matched;
+        _isLoadingLahan = false;
+      });
+    } else {
+      setState(() => _isLoadingLahan = false);
+    }
+  }
+
   double get _currentWeightKg {
-    final rawText = _weightController.text.replaceAll('.', '').replaceAll(',', '.');
+    final rawText = _weightController.text.replaceAll('.', '').replaceAll(',', '.').trim();
     final val = double.tryParse(rawText) ?? widget.item.weightKg;
     if (_selectedUnitIndex == 0) return val;
     if (_selectedUnitIndex == 1) return val * 1000.0;
@@ -67,40 +148,165 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
   double get _currentTon => _currentWeightKg / 1000.0;
   double get _currentKuintal => _currentWeightKg / 100.0;
 
-  void _saveChanges() {
-    String qualityGrade;
-    String qualityNotes;
-    if (_selectedGradeIndex == 0) {
-      qualityGrade = 'Grade A / Super';
-      qualityNotes = 'Kadar Air <14%';
-    } else if (_selectedGradeIndex == 1) {
-      qualityGrade = 'Grade B / Standar Pasar';
-      qualityNotes = 'Kadar Air 14%-17%';
-    } else {
-      qualityGrade = 'Grade C / Lokal';
-      qualityNotes = 'Kadar Air >18%';
-    }
-
-    final updated = widget.item.copyWith(
-      location: _lahan,
-      weightKg: _currentWeightKg,
-      qualityGrade: qualityGrade,
-      moistureOrNotes: qualityNotes,
-      fieldNotes: _notesController.text,
-      harvestMethod: _harvestMethod,
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: WarnaAplikasi.primary),
+              title: const Text('Kamera Langsung'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: WarnaAplikasi.primary),
+              title: const Text('Pilih dari Galeri (Bisa Banyak)'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
 
-    widget.onSave(updated);
-    Navigator.pop(context, updated);
+    if (source == null) return;
+
+    try {
+      if (source == ImageSource.gallery) {
+        final images = await picker.pickMultiImage(imageQuality: 85, maxWidth: 1280);
+        if (images.isNotEmpty) {
+          for (final img in images) {
+            final bytes = await img.readAsBytes();
+            setState(() {
+              _selectedPhotoBytesList.add(bytes);
+              _selectedPhotoNamesList.add(img.name);
+            });
+          }
+        }
+      } else {
+        final image = await picker.pickImage(source: ImageSource.camera, imageQuality: 85, maxWidth: 1280);
+        if (image != null) {
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _selectedPhotoBytesList.add(bytes);
+            _selectedPhotoNamesList.add(image.name);
+          });
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memilih foto: $e'), backgroundColor: WarnaAplikasi.errorRedDark),
+      );
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (_currentWeightKg <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Berat hasil panen harus lebih dari 0.'), backgroundColor: WarnaAplikasi.errorRedDark),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    final qualityGrade = widget.item.qualityGrade.isNotEmpty ? widget.item.qualityGrade : 'Grade A / Super';
+
+    final harvestMethod = _selectedHarvestMethod == 0
+        ? 'Mesin Combine Harvester'
+        : 'Manual / Sabit & Thresher';
+
+    final dateIso = '${_harvestDate.year}-${_harvestDate.month.toString().padLeft(2, '0')}-${_harvestDate.day.toString().padLeft(2, '0')}';
+    final rawCost = _costController.text.replaceAll('.', '').replaceAll(',', '.').trim();
+    final rawPrice = _priceController.text.replaceAll('.', '').replaceAll(',', '.').trim();
+
+    final payload = <String, dynamic>{
+      if (_selectedItemLahan != null) 'id_lahan': _selectedItemLahan!.id,
+      'komoditas_nama': _cropType.displayName,
+      'varietas': _varietasController.text.trim().isNotEmpty ? _varietasController.text.trim() : widget.item.title,
+      'jenis_panen': _commodity,
+      'tanggal_panen': dateIso,
+      'waktu_panen': _harvestTime,
+      'musim_tanam': widget.item.season,
+      'berat_kg': _currentWeightKg,
+      'kualitas_grade': qualityGrade,
+      'kadar_air': double.tryParse(_moistureController.text) ?? widget.item.moisturePercent,
+      'persen_butir_utuh': double.tryParse(_wholeGrainController.text) ?? widget.item.wholeGrainPercent,
+      'persen_hampa_kotoran': double.tryParse(_wasteController.text) ?? widget.item.wastePercent,
+      'metode_panen': harvestMethod,
+      'biaya_panen': double.tryParse(rawCost) ?? widget.item.harvestCost,
+      'keterangan_tenaga_kerja': _workersController.text.trim(),
+      'harga_per_kg': double.tryParse(rawPrice) ?? widget.item.pricePerKg,
+      'catatan': _notesController.text.trim(),
+      // Foto lama yang masih dipertahankan; backend menghapus berkas yang
+      // tidak lagi ada di daftar ini lalu menggabungkannya dengan foto baru.
+      'existing_photos': List<String>.from(_keptOldPhotos),
+    };
+
+    // Bila pengguna tidak memilih foto baru, keduanya dikirim null supaya
+    // backend tidak menjalankan validasi unggah berkas sama sekali.
+    final List<MultipartFile> photoFiles = _selectedPhotoBytesList.isEmpty
+        ? const <MultipartFile>[]
+        : List<MultipartFile>.generate(_selectedPhotoBytesList.length, (i) {
+            final name = i < _selectedPhotoNamesList.length
+                ? _selectedPhotoNamesList[i]
+                : 'panen_edit_$i.jpg';
+            return buatFotoPanen(_selectedPhotoBytesList[i], name);
+          });
+
+    try {
+      final res = await _panenService.updatePanen(
+        widget.item.id,
+        payload,
+        fotoPanen: null,
+        fotoPanenList: photoFiles.isEmpty ? null : photoFiles,
+      );
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+
+      if (res.success && res.data != null) {
+        final updated = res.data!;
+        widget.onSave(updated);
+        Navigator.pop(context, updated);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.message.isNotEmpty ? res.message : 'Gagal memperbarui catatan panen.'),
+            backgroundColor: WarnaAplikasi.errorRedDark,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan: $e'), backgroundColor: WarnaAplikasi.errorRedDark),
+      );
+    }
   }
 
   void _confirmDelete() {
     DeleteHarvestDialog.show(
       context,
       item: widget.item,
-      onConfirmDelete: () {
-        widget.onDelete();
-        Navigator.pop(context); // pop edit screen
+      onConfirmDelete: () async {
+        final res = await _panenService.deletePanen(widget.item.id);
+        if (!mounted) return;
+        if (res.success) {
+          widget.onDelete();
+          Navigator.pop(context, true); // pop edit screen
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res.message.isNotEmpty ? res.message : 'Gagal menghapus panen.'),
+              backgroundColor: WarnaAplikasi.errorRedDark,
+            ),
+          );
+        }
       },
     );
   }
@@ -112,13 +318,10 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top App Bar
             const PawonFormHeader(
               title: 'Edit Data Panen',
-              subtitle: 'Perbarui rincian data panen',
+              subtitle: 'Perbarui rincian data hasil panen',
             ),
-
-            // Body
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -126,47 +329,22 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Mode Edit Banner
                     _buildModeEditBanner(),
                     const SizedBox(height: 16),
-
-                    // 2. Lahan Garapan Terpilih
                     _buildLahanGarapanCard(),
                     const SizedBox(height: 16),
-
-                    // 3. Komoditas / Bentuk Panen
-                    _buildKomoditasCard(),
-                    const SizedBox(height: 16),
-
-                    // 4. Tanggal & Waktu Panen
                     _buildTanggalWaktuCard(),
                     const SizedBox(height: 16),
-
-                    // 5. Jumlah Hasil Panen
                     _buildJumlahPanenCard(),
                     const SizedBox(height: 16),
-
-                    // 6. Kualitas / Mutu Gabah
-                    _buildKualitasMutuCard(),
-                    const SizedBox(height: 16),
-
-                    // 7. Metode Pemanenan
                     _buildMetodePemanenanCard(),
                     const SizedBox(height: 16),
-
-                    // 8. Biaya Petik / Tebas
                     _buildBiayaPetikCard(),
                     const SizedBox(height: 16),
-
-                    // 9. Catatan Lapangan (Mandor)
                     _buildCatatanMandorCard(),
                     const SizedBox(height: 16),
-
-                    // 10. Dokumentasi Panen & Timbangan
                     _buildDokumentasiCard(),
                     const SizedBox(height: 20),
-
-                    // 11. Action Buttons
                     _buildActionButtons(),
                     const SizedBox(height: 24),
                   ],
@@ -178,7 +356,6 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       ),
     );
   }
-
 
   Widget _buildModeEditBanner() {
     return Container(
@@ -197,7 +374,7 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'MODE EDIT',
+                  'MODE EDIT HASIL PANEN',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -207,7 +384,7 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
                 ),
                 SizedBox(height: 1),
                 Text(
-                  'Data panen ini membawa data fisik nyata. Atur catatan sebelum verifikasi resmi.',
+                  'Perbarui rincian timbangan, varietas, atau catatan sebelum diverifikasi poktan.',
                   style: TextStyle(
                     fontSize: 10.5,
                     color: WarnaAplikasi.grayGreenDark,
@@ -250,24 +427,55 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
                   ),
                 ],
               ),
-              InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pilihan ganti petak lahan terbuka.'),
-                      behavior: SnackBarBehavior.floating,
+              if (_lahanList.isNotEmpty)
+                InkWell(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                      builder: (ctx) => Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Ganti Petak Lahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.textDarkGreen)),
+                            const SizedBox(height: 12),
+                            ..._lahanList.map((lhn) => ListTile(
+                                  leading: const Icon(Icons.eco_rounded, color: WarnaAplikasi.primary),
+                                  title: Text(lhn.nama),
+                                  subtitle: Text('${lhn.luas.toStringAsFixed(2)} Ha • ${lhn.komoditas}'),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedItemLahan = lhn;
+                                      final kom = lhn.komoditas.toLowerCase();
+                                      if (kom.contains('jagung')) {
+                                        _cropType = CropType.jagung;
+                                        _commodity = 'Jagung Pipil Kering (JPK)';
+                                      } else {
+                                        _cropType = CropType.padi;
+                                        _commodity = 'Gabah Kering Panen (GKP)';
+                                      }
+                                      _varietasController.text = lhn.komoditas.isNotEmpty ? lhn.komoditas : (_cropType == CropType.padi ? 'Padi Ciherang' : 'Jagung Hibrida');
+                                    });
+                                    Navigator.pop(ctx);
+                                  },
+                                )),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Ganti Lahan',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: WarnaAplikasi.primary,
                     ),
-                  );
-                },
-                child: const Text(
-                  'Ganti Lahan',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.primary,
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -277,123 +485,48 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
               color: WarnaAplikasi.bgPaleGreen3,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '$_lahan (Blok A)',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.textDarkGreen,
+            child: _isLoadingLahan
+                ? const Row(
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: WarnaAplikasi.primary,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _lahanDetail,
-                  style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.greenPill,
-                        borderRadius: BorderRadius.circular(8),
+                      SizedBox(width: 8),
+                      Text('Memuat daftar lahan...', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _selectedItemLahan?.nama ?? widget.item.location,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: WarnaAplikasi.textDarkGreen,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: WarnaAplikasi.primary,
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'Musim Tanam MT-1 2023/2024',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w600,
-                          color: WarnaAplikasi.greenText,
-                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _selectedItemLahan != null
+                            ? '${_selectedItemLahan!.luas.toStringAsFixed(2)} Ha • ${_selectedItemLahan!.komoditas}'
+                            : widget.item.blockArea,
+                        style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.bgSuccessLight2,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        widget.item.poktan,
-                        style: const TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w600,
-                          color: WarnaAplikasi.greenText,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKomoditasCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderField),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Komoditas / Bentuk Panen',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: WarnaAplikasi.textDarkGreen,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: WarnaAplikasi.borderField),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _commodity,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
+                    ],
                   ),
-                ),
-                const Icon(Icons.unfold_more_rounded, size: 20, color: WarnaAplikasi.textGrayGreen),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Standar kadar air: 13,5% - 14,0%',
-            style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
           ),
         ],
       ),
@@ -401,6 +534,12 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
   }
 
   Widget _buildTanggalWaktuCard() {
+    final months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    final dateStr = '${_harvestDate.day} ${months[_harvestDate.month - 1]} ${_harvestDate.year}';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -420,37 +559,45 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: WarnaAplikasi.borderField),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${_harvestDate.day} Oktober ${_harvestDate.year} • $_harvestTime',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: WarnaAplikasi.textDarkGreen,
+          InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _harvestDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+              );
+              if (picked != null) {
+                setState(() => _harvestDate = picked);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: WarnaAplikasi.bgPaleGreen3,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: WarnaAplikasi.borderField),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$dateStr • $_harvestTime',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: WarnaAplikasi.textDarkGreen,
+                      ),
                     ),
                   ),
-                ),
-                const Icon(
-                  Icons.calendar_month_outlined,
-                  size: 20,
-                  color: WarnaAplikasi.primary,
-                ),
-              ],
+                  const Icon(
+                    Icons.calendar_month_outlined,
+                    size: 20,
+                    color: WarnaAplikasi.primary,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Waktu penimbangan awal panen',
-            style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
           ),
         ],
       ),
@@ -470,256 +617,65 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Jumlah Hasil Panen',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: WarnaAplikasi.textDarkGreen,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _weightController,
+            keyboardType: TextInputType.number,
+            onChanged: (val) => setState(() {}),
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: WarnaAplikasi.primaryDark,
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.hourglass_bottom_rounded, size: 16, color: WarnaAplikasi.primary),
-                  SizedBox(width: 6),
-                  Text(
-                    'Jumlah Hasil Panen',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: WarnaAplikasi.surfaceLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text('Berat', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayGreen)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Big input box
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: WarnaAplikasi.borderField),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _weightController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    onChanged: (v) => setState(() {}),
-                  ),
-                ),
-                const Text(
-                  'Kg',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.grayGreenDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Segmented unit buttons
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.borderField,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: List.generate(unitLabels.length, (index) {
-                final isSelected = _selectedUnitIndex == index;
-                return Expanded(
+            children: List.generate(unitLabels.length, (index) {
+              final isSelected = _selectedUnitIndex == index;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index < 2 ? 6 : 0),
                   child: InkWell(
                     onTap: () => setState(() => _selectedUnitIndex = index),
-                    borderRadius: BorderRadius.circular(10),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isSelected ? WarnaAplikasi.primary : Colors.transparent,
+                        color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         unitLabels[index],
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected ? Colors.white : WarnaAplikasi.grayGreenDark,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? Colors.white : WarnaAplikasi.textDarkGreen,
                         ),
                       ),
                     ),
                   ),
-                );
-              }),
-            ),
+                ),
+              );
+            }),
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen2,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.sync_alt_rounded, size: 14, color: WarnaAplikasi.primary),
-                const SizedBox(width: 6),
-                Text(
-                  'Setara dengan ${_currentTon.toStringAsFixed(2).replaceAll('.', ',')} Ton (${_currentKuintal.toStringAsFixed(1).replaceAll('.', ',')} Kuintal)',
-                  style: const TextStyle(fontSize: 10.5, color: WarnaAplikasi.primary),
-                ),
-              ],
-            ),
+          const SizedBox(height: 8),
+          Text(
+            'Setara dengan ${_currentTon.toStringAsFixed(2)} Ton (${_currentKuintal.toStringAsFixed(1)} Kuintal)',
+            style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKualitasMutuCard() {
-    final gradeItems = [
-      {
-        'badge': 'REKOMENDASI',
-        'badgeColor': WarnaAplikasi.primary,
-        'title': 'Grade A',
-        'desc': 'Kualitas Super, butir hampa <3%, bebas kotoran/batu.',
-      },
-      {
-        'badge': 'STANDAR',
-        'badgeColor': WarnaAplikasi.grayGreenDark,
-        'title': 'Grade B',
-        'desc': 'Kadar air pecah normal, butir hijau <10%.',
-      },
-      {
-        'badge': 'LOKAL',
-        'badgeColor': WarnaAplikasi.iconGrayGreenDark,
-        'title': 'Grade C',
-        'desc': 'Perlu penjemuran ulang ke pengepul atau sertifikasi.',
-      },
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderField),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Kualitas / Mutu Gabah',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: WarnaAplikasi.textDarkGreen,
-                ),
-              ),
-              Text(
-                'Kadar Air: 13,8%',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: WarnaAplikasi.textGrayGreen,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...List.generate(gradeItems.length, (index) {
-            final isSelected = _selectedGradeIndex == index;
-            final item = gradeItems[index];
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () => setState(() => _selectedGradeIndex = index),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? WarnaAplikasi.bgPaleGreen2 : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
-                      width: isSelected ? 1.5 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: item['badgeColor'] as Color,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              item['badge'] as String,
-                              style: const TextStyle(
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            isSelected
-                                ? Icons.radio_button_checked_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            size: 18,
-                            color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.grayGreenMuted,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item['title'] as String,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.textDarkGreen,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item['desc'] as String,
-                        style: const TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGray),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
         ],
       ),
     );
@@ -736,54 +692,46 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Metode Pemanenan',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: WarnaAplikasi.textDarkGreen,
-            ),
-          ),
+          const Text('Metode Pemanenan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen)),
           const SizedBox(height: 10),
-          InkWell(
-            onTap: () {
-              setState(() {
-                _harvestMethod = _harvestMethod == 'Mesin Combine Harvester'
-                    ? 'Manual / Sabit & Thresher'
-                    : 'Mesin Combine Harvester';
-              });
-            },
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.bgPaleGreen3,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: WarnaAplikasi.borderField),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _selectedHarvestMethod = 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _selectedHarvestMethod == 0 ? WarnaAplikasi.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _selectedHarvestMethod == 0 ? WarnaAplikasi.primary : WarnaAplikasi.borderField),
+                    ),
                     child: Text(
-                      _harvestMethod,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: WarnaAplikasi.textDarkGreen,
-                      ),
+                      'Mesin Combine\nHarvester',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _selectedHarvestMethod == 0 ? Colors.white : WarnaAplikasi.textDarkGreen),
                     ),
                   ),
-                  const Icon(Icons.unfold_more_rounded, size: 20, color: WarnaAplikasi.textGrayGreen),
-                ],
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _harvestMethod == 'Mesin Combine Harvester'
-                ? 'Efisiensi susut panen tercepat <1,5%'
-                : 'Tradisi gotong royong warga desa',
-            style: const TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
+              const SizedBox(width: 10),
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _selectedHarvestMethod = 1),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _selectedHarvestMethod == 1 ? WarnaAplikasi.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _selectedHarvestMethod == 1 ? WarnaAplikasi.primary : WarnaAplikasi.borderField),
+                    ),
+                    child: Text(
+                      'Manual / Sabit &\nThresher',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _selectedHarvestMethod == 1 ? Colors.white : WarnaAplikasi.textDarkGreen),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -801,47 +749,26 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Biaya Petik / Tebas',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: WarnaAplikasi.textDarkGreen,
-            ),
-          ),
+          const Text('Harga Jual & Biaya Panen', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen)),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: WarnaAplikasi.borderField),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _costController,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Harga / Kg (Rp)', border: OutlineInputBorder()),
                 ),
-                const Icon(Icons.receipt_long_outlined, size: 18, color: WarnaAplikasi.textGrayGreen),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Termasuk upah angkut karung ke tepi jalan',
-            style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _costController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Biaya Panen (Rp)', border: OutlineInputBorder()),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -859,51 +786,12 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.notes_rounded, size: 16, color: WarnaAplikasi.primary),
-                  SizedBox(width: 6),
-                  Text(
-                    'Catatan Lapangan (Mandor)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'Terverifikasi otomatis',
-                style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayGreen),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: WarnaAplikasi.borderField),
-            ),
-            child: TextField(
-              controller: _notesController,
-              maxLines: 4,
-              style: const TextStyle(
-                fontSize: 11.5,
-                color: WarnaAplikasi.textDarkGreen,
-                height: 1.4,
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
+          const Text('Catatan Lapangan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _notesController,
+            maxLines: 3,
+            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Kondisi timbangan, cuaca, dll.'),
           ),
         ],
       ),
@@ -911,6 +799,8 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
   }
 
   Widget _buildDokumentasiCard() {
+    final totalFoto = _keptOldPhotos.length + _selectedPhotoBytesList.length;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -921,63 +811,115 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.photo_library_outlined, size: 16, color: WarnaAplikasi.primary),
-                  SizedBox(width: 6),
-                  Text(
-                    'Dokumentasi Panen & Timbangan',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
-                    ),
-                  ),
-                ],
+              const Text(
+                'Dokumentasi Panen & Timbangan',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen),
               ),
               Text(
-                '2 Foto Terunggah',
-                style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
+                '$totalFoto Foto',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.primary),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            height: 140,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              image: const DecorationImage(
-                image: NetworkImage(
-                  'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=600&q=80',
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xCC000000),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                '1/2 Karung Panen',
-                style: TextStyle(fontSize: 9.5, color: Colors.white),
-              ),
-            ),
+          const SizedBox(height: 4),
+          const Text(
+            'Foto lama tetap tersimpan. Ketuk tanda silang pada foto yang ingin dihapus.',
+            style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen, height: 1.3),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+
+          if (totalFoto == 0)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: WarnaAplikasi.bgPaleGreen3,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: WarnaAplikasi.borderField),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.image_not_supported_outlined, size: 22, color: WarnaAplikasi.textGray),
+                  SizedBox(height: 6),
+                  Text('Belum ada foto bukti panen', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
+                ],
+              ),
+            ),
+
+          // Foto Lama yang Tersimpan di Server
+          if (_keptOldPhotos.isNotEmpty) ...[
+            const Text(
+              'Foto Tersimpan:',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textGrayGreen),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 90,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: _keptOldPhotos.length,
+                separatorBuilder: (sepCtx, sepIdx) => const SizedBox(width: 8),
+                itemBuilder: (ctx, index) {
+                  final path = _keptOldPhotos[index];
+                  final fullUrl = ApiConstants.resolveImageUrl(path) ?? path;
+                  return _fotoThumbnail(
+                    image: Image.network(
+                      fullUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (eCtx, eObj, eTrace) => const Icon(
+                        Icons.broken_image_rounded,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    onHapus: () => setState(() => _keptOldPhotos.removeAt(index)),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Foto Baru yang Baru Dipilih (belum diunggah)
+          if (_selectedPhotoBytesList.isNotEmpty) ...[
+            const Text(
+              'Foto Baru yang Akan Ditambahkan:',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textGrayGreen),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 90,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: _selectedPhotoBytesList.length,
+                separatorBuilder: (sepCtx, sepIdx) => const SizedBox(width: 8),
+                itemBuilder: (ctx, index) {
+                  return _fotoThumbnail(
+                    image: Image.memory(_selectedPhotoBytesList[index], fit: BoxFit.cover),
+                    onHapus: () => setState(() {
+                      _selectedPhotoBytesList.removeAt(index);
+                      if (index < _selectedPhotoNamesList.length) {
+                        _selectedPhotoNamesList.removeAt(index);
+                      }
+                    }),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Tombol Pilih Foto: selalu menambah, tidak mereset foto lama
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.photo_camera_outlined, size: 16),
-              label: const Text('Ganti Foto Bukti', style: TextStyle(fontSize: 12)),
+              onPressed: _pickPhoto,
+              icon: const Icon(Icons.add_a_photo_outlined, size: 16),
+              label: const Text('Tambah Foto', style: TextStyle(fontSize: 12)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: WarnaAplikasi.greenLight,
                 foregroundColor: WarnaAplikasi.primary,
@@ -986,62 +928,64 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add_a_photo_outlined, size: 16),
-              label: const Text('Ambil Foto Tambahan', style: TextStyle(fontSize: 12)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: WarnaAplikasi.textDarkGreen,
-                side: const BorderSide(color: WarnaAplikasi.borderField),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Center(
-            child: Text(
-              'Format JPG/PNG/HEIC, 10MB per berkas foto.',
-              style: TextStyle(fontSize: 9.5, color: WarnaAplikasi.grayGreenMuted),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _fotoThumbnail({
+    required Widget image,
+    required VoidCallback onHapus,
+  }) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 100,
+            height: 90,
+            color: WarnaAplikasi.bgPaleGreen3,
+            child: image,
+          ),
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: InkWell(
+            onTap: onHapus,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                color: Color(0xCC000000),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildActionButtons() {
     return Column(
       children: [
-        // Primary: Simpan Perubahan
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton.icon(
-            onPressed: _saveChanges,
-            icon: const Icon(Icons.check_circle_outline_rounded, size: 18, color: Colors.white),
-            label: const Text(
-              'Simpan Perubahan',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
+            onPressed: _isSaving ? null : _saveChanges,
+            icon: _isSaving
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Icon(Icons.check_circle_outline_rounded, size: 18, color: Colors.white),
+            label: Text(_isSaving ? 'Menyimpan...' : 'Simpan Perubahan', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: WarnaAplikasi.primary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             ),
           ),
         ),
         const SizedBox(height: 10),
-
-        // Row: Hapus Data Ini & Batal
         Row(
           children: [
             Expanded(
@@ -1050,14 +994,7 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _confirmDelete,
                   icon: const Icon(Icons.delete_outline_rounded, size: 16, color: WarnaAplikasi.errorRedDark),
-                  label: const Text(
-                    'Hapus Data Ini',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: WarnaAplikasi.errorRedDark,
-                    ),
-                  ),
+                  label: const Text('Hapus Data Ini', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.errorRedDark)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.white,
                     side: const BorderSide(color: WarnaAplikasi.rejectedRedBorder),
@@ -1078,13 +1015,7 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
-                  child: const Text(
-                    'Batal',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: const Text('Batal', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                 ),
               ),
             ),
@@ -1094,4 +1025,3 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
     );
   }
 }
-
