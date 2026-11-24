@@ -48,6 +48,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   // Tanggal Panen
   DateTime _harvestDate = DateTime.now();
 
+  // Luas Lahan yang Dipanen
+  final TextEditingController _harvestedAreaController = TextEditingController();
+
   // Jumlah Hasil Panen
   final TextEditingController _weightController = TextEditingController();
   int _selectedUnitIndex = 0; // 0: Kg, 1: Ton, 2: Kuintal
@@ -90,6 +93,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
 
   @override
   void dispose() {
+    _harvestedAreaController.dispose();
     _weightController.dispose();
     _moistureController.dispose();
     _wholeGrainController.dispose();
@@ -138,6 +142,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
 
   void _syncCommodityFromLahan(ItemLahan? lhn) {
     if (lhn == null) return;
+    if (lhn.luas > 0) {
+      _harvestedAreaController.text = lhn.luas.toStringAsFixed(2);
+    }
     final kom = lhn.komoditas.toLowerCase().trim();
     if (kom.contains('jagung')) {
       _cropType = CropType.jagung;
@@ -424,8 +431,46 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: WarnaAplikasi.errorRedDark,
-            ),
           ),
+        ),
+        const SizedBox(height: 14),
+        _buildFieldLabel('Luas Lahan yang Dipanen (Hektar)', isRequired: true),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: WarnaAplikasi.borderField),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.square_foot_rounded, color: WarnaAplikasi.primary, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _harvestedAreaController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen),
+                  decoration: const InputDecoration(
+                    hintText: 'Contoh: 0.85',
+                    hintStyle: TextStyle(fontSize: 13, color: WarnaAplikasi.textGray),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.greenLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('Ha', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primary)),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

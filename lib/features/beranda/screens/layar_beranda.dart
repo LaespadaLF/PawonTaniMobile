@@ -12,6 +12,7 @@ import 'package:pawon_mobile/features/beranda/widgets/kartu_banner_petani.dart';
 import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_tambah_lahan.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_catat_panen.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class HomeScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -217,7 +218,13 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Notification Button with Badge
             InkWell(
-              onTap: () => _showNotificationsModal(context),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const LayarNotifikasi(),
+                  ),
+                );
+              },
               borderRadius: BorderRadius.circular(12),
               child: Stack(
                 children: [
