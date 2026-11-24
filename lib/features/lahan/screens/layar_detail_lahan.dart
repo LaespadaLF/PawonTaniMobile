@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
+import 'package:pawon_mobile/features/lahan/models/item_dokumen_sppt.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_edit_lahan.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
@@ -28,12 +30,17 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
   List<PlantActivityItem> _activities = [];
   bool _isLoadingActivities = true;
 
+  List<ItemDokumenSppt> _spptDocuments = [];
+  bool _isLoadingSpptDocuments = true;
+  bool _isUploadingSppt = false;
+
   @override
   void initState() {
     super.initState();
     _item = widget.item;
     _fetchFreshDetail();
     _fetchLahanActivities();
+    _fetchSpptDocuments();
   }
 
   Future<void> _fetchLahanActivities() async {
@@ -49,6 +56,343 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
     } catch (_) {
       if (mounted) setState(() => _isLoadingActivities = false);
     }
+  }
+
+  Future<void> _fetchSpptDocuments({bool showLoading = true}) async {
+    if (showLoading && mounted) setState(() => _isLoadingSpptDocuments = true);
+    try {
+      final response = await LahanApiService().getSpptDocuments(_item.id);
+      if (!mounted) return;
+      setState(() {
+        _spptDocuments = response.success ? (response.data ?? []) : [];
+        _isLoadingSpptDocuments = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSpptDocuments = false);
+    }
+  }
+
+  Future<void> _pickAndUploadSppt() async {
+    if (_isUploadingSppt) return;
+
+    try {
+      final pickedFiles = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pdf', 'jpg', 'jpeg'],
+      );
+
+      if (!mounted || pickedFiles.isEmpty) return;
+
+      if (pickedFiles.length > 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Maksimal 10 dokumen SPPT dapat diunggah sekaligus.'),
+          ),
+        );
+        return;
+      }
+
+      for (final file in pickedFiles) {
+        final extension = (file.extension ?? file.name.split('.').last)
+            .toLowerCase();
+
+        if (!['pdf', 'jpg', 'jpeg'].contains(extension)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Format ${file.name} tidak didukung.')),
+          );
+          return;
+        }
+
+        final fileSize = file.lengthSync() ?? await file.length();
+
+        if (!mounted) return;
+
+        if (fileSize != null && fileSize > 5 * 1024 * 1024) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${file.name} melebihi batas 5 MB.')),
+          );
+          return;
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() => _isUploadingSppt = true);
+
+      final response = await LahanApiService().uploadSpptDocuments(
+        _item.id,
+        pickedFiles,
+      );
+
+      if (!mounted) return;
+
+      setState(() => _isUploadingSppt = false);
+
+      if (response.success) {
+        await _fetchSpptDocuments(showLoading: false);
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.message.isNotEmpty
+                  ? response.message
+                  : 'Dokumen SPPT berhasil ditambahkan.',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              response.firstErrorMessage ??
+                  (response.message.isNotEmpty
+                      ? response.message
+                      : 'Gagal mengunggah SPPT.'),
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() => _isUploadingSppt = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memilih atau mengunggah SPPT: $error')),
+      );
+    }
+  }
+
+  Future<void> _deleteSpptDocument(ItemDokumenSppt document) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: const Text('Hapus dokumen SPPT?'),
+            content: Text(
+              'Dokumen "${document.namaFile}" akan dihapus. Data lahan dan dokumen SPPT lainnya tetap tersimpan.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text(
+                  'Hapus',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed || !mounted) return;
+    final response = await LahanApiService().deleteSpptDocument(document.id);
+    if (!mounted) return;
+    if (response.success) {
+      setState(
+        () => _spptDocuments.removeWhere((item) => item.id == document.id),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            response.message.isNotEmpty
+                ? response.message
+                : 'Dokumen SPPT berhasil dihapus.',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            response.message.isNotEmpty
+                ? response.message
+                : 'Dokumen SPPT gagal dihapus.',
+          ),
+        ),
+      );
+    }
+  }
+
+  String _formatSpptSize(int bytes) {
+    if (bytes >= 1024 * 1024)
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes >= 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
+    return '$bytes B';
+  }
+
+  String _formatSpptDate(DateTime? date) {
+    if (date == null) return 'Tanggal tidak tersedia';
+    final local = date.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    return '$day/$month/${local.year}';
+  }
+
+  Widget _buildSpptDocumentsSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: WarnaAplikasi.greenLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Dokumen SPPT',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: WarnaAplikasi.primaryDark,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.greenLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${_spptDocuments.length} file',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: WarnaAplikasi.primaryDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Perbarui dokumen saat masa berlaku atau masa sewa lahan berubah. Format PDF/JPG, maksimal 5 MB per file.',
+            style: TextStyle(
+              fontSize: 11,
+              color: WarnaAplikasi.textGray,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingSpptDocuments)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (_spptDocuments.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              decoration: BoxDecoration(
+                color: WarnaAplikasi.backgroundLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Belum ada dokumen SPPT untuk lahan ini.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
+              ),
+            )
+          else
+            ..._spptDocuments.map(
+              (document) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.backgroundLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.insert_drive_file_outlined,
+                      color: WarnaAplikasi.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            document.namaFile,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: WarnaAplikasi.textDarkGreen,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${_formatSpptSize(document.ukuranBytes)} · ${_formatSpptDate(document.diperbaruiPada)}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: WarnaAplikasi.textGray,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Hapus dokumen SPPT',
+                      onPressed: () => _deleteSpptDocument(document),
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.red,
+                        size: 21,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isUploadingSppt ? null : _pickAndUploadSppt,
+              icon: _isUploadingSppt
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.upload_file_rounded, size: 18),
+              label: Text(
+                _isUploadingSppt ? 'Mengunggah...' : 'Tambah SPPT Baru',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: WarnaAplikasi.primaryDark,
+                side: const BorderSide(color: WarnaAplikasi.greenLight),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _navigateToCatatAktivitas() async {
@@ -498,6 +842,10 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+
+                // Dokumen SPPT yang melekat pada lahan ini.
+                _buildSpptDocumentsSection(),
                 const SizedBox(height: 24),
 
                 // Dokumentasi Petak (Galeri Perkembangan & Aktivitas)

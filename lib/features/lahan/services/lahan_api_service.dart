@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/network/dio_client.dart';
+import 'package:pawon_mobile/features/lahan/models/item_dokumen_sppt.dart';
 import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 
@@ -154,6 +156,73 @@ class LahanApiService {
   Future<ApiResponse<bool>> deleteLahan(String id) async {
     return await _client.delete<bool>(
       '${ApiConstants.lahanEndpoint}/$id',
+      fromJson: (_) => true,
+    );
+  }
+
+  Future<ApiResponse<List<ItemDokumenSppt>>> getSpptDocuments(
+    String idLahan,
+  ) async {
+    return await _client.get<List<ItemDokumenSppt>>(
+      '/documents',
+      fromJson: (data) {
+        if (data is! Map) return <ItemDokumenSppt>[];
+
+        final lands = data['lahan'];
+
+        if (lands is! List) return <ItemDokumenSppt>[];
+
+        Map<String, dynamic>? selectedLand;
+
+        for (final land in lands) {
+          if (land is Map && (land['id_lahan'] ?? '').toString() == idLahan) {
+            selectedLand = Map<String, dynamic>.from(land);
+            break;
+          }
+        }
+
+        final documents = selectedLand?['sppt_documents'];
+
+        if (documents is! List) return <ItemDokumenSppt>[];
+
+        return documents
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  ItemDokumenSppt.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+      },
+    );
+  }
+
+  /// Upload satu atau beberapa dokumen SPPT.
+  Future<ApiResponse<bool>> uploadSpptDocuments(
+    String idLahan,
+    List<PlatformFile> pickedFiles,
+  ) async {
+    final files = <MultipartFile>[];
+
+    for (final file in pickedFiles) {
+      final bytes = await file.readAsBytes();
+
+      files.add(MultipartFile.fromBytes(bytes, filename: file.name));
+    }
+
+    // Dio otomatis mengubah List file menjadi field files[].
+    final formData = FormData.fromMap({'files': files});
+
+    return await _client.post<bool>(
+      '/lahan/$idLahan/sppt',
+      data: formData,
+      options: Options(contentType: Headers.multipartFormDataContentType),
+      fromJson: (_) => true,
+    );
+  }
+
+  Future<ApiResponse<bool>> deleteSpptDocument(String idDokumen) async {
+    return await _client.delete<bool>(
+      '/documents/sppt/$idDokumen',
       fromJson: (_) => true,
     );
   }
