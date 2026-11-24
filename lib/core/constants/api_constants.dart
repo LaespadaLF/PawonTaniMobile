@@ -68,6 +68,10 @@ class ApiConstants {
   // --- Endpoint Rute Komoditas ---
   static const String komoditasEndpoint = '/komoditas';
 
+  // --- Endpoint Rute Marketplace & Penjualan ---
+  static const String marketplaceProdukEndpoint = '/marketplace/produk';
+  static const String penjualanEndpoint = '/penjualan';
+
   /// Normalisasi URL gambar dari storage backend agar selalu dapat dimuat
   /// baik di Android Emulator, HP fisik, maupun Web/Desktop.
   static String? resolveImageUrl(String? path) {

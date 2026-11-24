@@ -1,208 +1,198 @@
-import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
-import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
+import 'package:pawon_mobile/core/utils/currency_input_formatter.dart';
+import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
+import 'package:pawon_mobile/features/penjualan/models/item_produk_saya.dart';
+import 'package:pawon_mobile/features/penjualan/services/marketplace_penjualan_api_service.dart';
 
 class RecordSaleScreen extends StatefulWidget {
-  const RecordSaleScreen({super.key});
+  final ItemProdukSaya? sourceProduct;
+
+  const RecordSaleScreen({super.key, this.sourceProduct});
 
   @override
   State<RecordSaleScreen> createState() => _RecordSaleScreenState();
 }
 
 class _RecordSaleScreenState extends State<RecordSaleScreen> {
-  static const Color _primaryGreen = WarnaAplikasi.primary;
-  static const Color _textDark = WarnaAplikasi.textDark;
-  static const Color _textMedium = WarnaAplikasi.textMedium;
-  static const Color _textLight = WarnaAplikasi.textLight;
-  static const Color _bgPage = WarnaAplikasi.primaryBackground;
-  static const Color _cardBg = Colors.white;
-  static const Color _borderColor = WarnaAplikasi.border;
-  static const Color _lightGreenBg = WarnaAplikasi.bgLightGreen;
+  final _formKey = GlobalKey<FormState>();
 
-  String? _selectedStock;
-  DateTime? _saleDate;
-  double _volumeKg = 2500;
-  double _pricePerKg = 6900;
-  int _selectedPaymentMethod = 0;
-  bool _showSuccessModal = false;
+  late TextEditingController _namaProdukController;
+  late TextEditingController _volumeController;
+  late TextEditingController _hargaSatuanController;
+  late TextEditingController _namaPembeliController;
+  late TextEditingController _teleponPembeliController;
+  late TextEditingController _nominalDpController;
+  late TextEditingController _catatanController;
 
-  final List<String> _stocks = [
-    'GKP Ciherang - Sisa: 4.850 Kg',
-    'Jagung Manis Hibrida - Sisa: 3.200 Kg',
-  ];
+  DateTime _saleDate = DateTime.now();
+  String _tipePembayaran = 'lunas'; // 'lunas' | 'dp'
+  String _metodePembayaran = 'transfer_bri';
+  bool _isLoading = false;
+
+  final _apiService = MarketplacePenjualanApiService();
 
   @override
   void initState() {
     super.initState();
-    _selectedStock = _stocks[0];
-    _saleDate = DateTime(2024, 11, 15);
+    final p = widget.sourceProduct;
+    _namaProdukController = TextEditingController(text: p?.namaProduk ?? '');
+    _volumeController = TextEditingController(text: p != null ? '10' : '100');
+    _hargaSatuanController = TextEditingController(
+      text: p != null ? CurrencyInputFormatter.format(p.harga) : '15.000',
+    );
+    _namaPembeliController = TextEditingController(text: 'Pelanggan WhatsApp');
+    _teleponPembeliController = TextEditingController();
+    _nominalDpController = TextEditingController();
+    _catatanController = TextEditingController();
   }
 
-  String _formatNum(int num) {
-    final s = num.toString();
+  @override
+  void dispose() {
+    _namaProdukController.dispose();
+    _volumeController.dispose();
+    _hargaSatuanController.dispose();
+    _namaPembeliController.dispose();
+    _teleponPembeliController.dispose();
+    _nominalDpController.dispose();
+    _catatanController.dispose();
+    super.dispose();
+  }
+
+  double get _volume => double.tryParse(_volumeController.text.trim()) ?? 0;
+  double get _hargaSatuan => CurrencyInputFormatter.parse(_hargaSatuanController.text);
+  double get _totalHarga => _volume * _hargaSatuan;
+  double get _nominalDp => CurrencyInputFormatter.parse(_nominalDpController.text);
+  double get _sisaDp => _tipePembayaran == 'dp' ? (_totalHarga - _nominalDp) : 0;
+
+  String _formatRupiah(num val) {
+    final s = val.toInt().toString();
     final buf = StringBuffer();
     for (int i = 0; i < s.length; i++) {
       if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
       buf.write(s[i]);
     }
-    return buf.toString();
+    return 'Rp $buf';
   }
 
-  String _formatDate(DateTime date) {
-    const months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    return '${date.day} ${months[date.month]} ${date.year}';
-  }
+  Future<void> _submitPenjualan() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  double get _totalValue => _volumeKg * _pricePerKg;
+    if (widget.sourceProduct != null) {
+      if (_volume > widget.sourceProduct!.stokTersedia) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Jumlah penjualan melebihi stok tersedia (${widget.sourceProduct!.stokTersedia} ${widget.sourceProduct!.satuan})!'),
+            backgroundColor: WarnaAplikasi.errorRedDark,
+          ),
+        );
+        return;
+      }
+    }
+
+    if (_tipePembayaran == 'dp') {
+      if (_nominalDp <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nominal DP harus lebih dari Rp 0!'),
+            backgroundColor: WarnaAplikasi.errorRedDark,
+          ),
+        );
+        return;
+      }
+      if (_nominalDp >= _totalHarga) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nominal DP mencapai total harga. Silakan pilih status Bayar Lunas!'),
+            backgroundColor: WarnaAplikasi.warningOrange,
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final payload = <String, dynamic>{
+        if (widget.sourceProduct != null) 'id_produk': widget.sourceProduct!.idProduk,
+        if (widget.sourceProduct?.idKomoditas != null) 'id_komoditas': widget.sourceProduct!.idKomoditas,
+        'nama_produk': _namaProdukController.text.trim(),
+        'nama_pembeli': _namaPembeliController.text.trim(),
+        'no_telepon_pembeli': _teleponPembeliController.text.trim().isNotEmpty ? _teleponPembeliController.text.trim() : null,
+        'jumlah': _volume,
+        'satuan': widget.sourceProduct?.satuan ?? 'kg',
+        'harga_satuan': _hargaSatuan,
+        'nominal_dibayar': _tipePembayaran == 'lunas' ? _totalHarga : _nominalDp,
+        'status_pembayaran': _tipePembayaran == 'lunas' ? 'lunas' : 'dp',
+        'tanggal_transaksi': "${_saleDate.year.toString().padLeft(4, '0')}-${_saleDate.month.toString().padLeft(2, '0')}-${_saleDate.day.toString().padLeft(2, '0')}",
+        'metode_pembayaran': _metodePembayaran,
+        'catatan': _catatanController.text.trim().isNotEmpty ? _catatanController.text.trim() : null,
+      };
+
+      final res = await _apiService.catatPenjualan(payload);
+
+      if (res.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_tipePembayaran == 'lunas'
+                  ? 'Penjualan Lunas berhasil dicatat! Stok fisik telah diperbarui.'
+                  : 'Penjualan DP berhasil dicatat! Stok ditahan untuk komitmen pesanan.'),
+              backgroundColor: WarnaAplikasi.primary,
+            ),
+          );
+          Navigator.of(context).pop(true);
+        }
+      } else {
+        throw Exception(res.message);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mencatat penjualan: $e'),
+            backgroundColor: WarnaAplikasi.errorRedDark,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgPage,
+      backgroundColor: WarnaAplikasi.bgPage,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                const PawonFormHeader(
-                    title: 'Catat Penjualan',
-                    subtitle: 'Formulir pembukuan hasil panen',
-                  ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        _buildFinancialTag(),
-                        const SizedBox(height: 12),
-                        _buildStockPicker(),
-                        const SizedBox(height: 12),
-                        _buildSaleDateSection(),
-                        const SizedBox(height: 12),
-                        _buildVolumeSection(),
-                        const SizedBox(height: 12),
-                        _buildPriceSection(),
-                        const SizedBox(height: 12),
-                        _buildSummaryCard(),
-                        const SizedBox(height: 12),
-                        _buildPaymentMethodSection(),
-                        const SizedBox(height: 12),
-                        _buildReceiptSection(),
-                        const SizedBox(height: 12),
-                        _buildNotesSection(),
-                        const SizedBox(height: 12),
-                        _buildSaveButton(),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (_showSuccessModal)
-              _buildSuccessModal(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildFinancialTag() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: _lightGreenBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: WarnaAplikasi.greenPill),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.bookmark_added_rounded, color: _primaryGreen, size: 14),
-          SizedBox(width: 8),
-          Text('# PENCATATAN FINANSIAL',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _primaryGreen, letterSpacing: 0.5)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStockPicker() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Catat Penjualan Hasil Panen',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _textDark)),
-            const SizedBox(height: 4),
-            const Text('Pantauan kas dan penjualan stok lumbung secara transparan.',
-                style: TextStyle(fontSize: 11, color: _textLight)),
-            const SizedBox(height: 12),
-            const Text('Pilih Stok Panen', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _textDark)),
-            const SizedBox(height: 6),
-            const Row(
-              children: [
-                Text('Tersedia', style: TextStyle(fontSize: 11, color: _textLight)),
-              ],
+            PawonFormHeader(
+              title: widget.sourceProduct != null ? 'Catat Penjualan Produk' : 'Catat Penjualan',
+              subtitle: 'Pembukuan transaksi hasil panen dan pembaruan stok',
             ),
-            const SizedBox(height: 8),
-            // Stock dropdown
-            ..._stocks.asMap().entries.map((e) {
-              final stock = e.value;
-              final selected = _selectedStock == stock;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedStock = stock),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: selected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: selected ? _primaryGreen : _borderColor, width: selected ? 1.5 : 1),
-                  ),
-                  child: Row(
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
                     children: [
-                      Container(
-                        width: 30, height: 30,
-                        decoration: BoxDecoration(
-                          color: selected ? _primaryGreen : WarnaAplikasi.divider,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(selected ? Icons.check_rounded : Icons.grain_rounded,
-                            color: selected ? Colors.white : _textLight, size: 15),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(stock,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                                color: selected ? _primaryGreen : _textDark)),
-                      ),
+                      if (widget.sourceProduct != null) _buildProductBanner(),
+                      const SizedBox(height: 14),
+                      _buildTransactionDetailsCard(),
+                      const SizedBox(height: 14),
+                      _buildPaymentSectionCard(),
+                      const SizedBox(height: 14),
+                      _buildBuyerDetailsCard(),
+                      const SizedBox(height: 20),
+                      _buildSubmitButton(),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
-              );
-            }),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: WarnaAplikasi.surfaceLight, borderRadius: BorderRadius.circular(10)),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline_rounded, size: 13, color: _textLight),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text('Sumber: Panen 28 Okt 2024 (Petak Sawah Barat, Kadar Air - 14%)',
-                        style: TextStyle(fontSize: 10.5, color: _textLight)),
-                  ),
-                ],
               ),
             ),
           ],
@@ -211,319 +201,44 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     );
   }
 
-  Widget _buildSaleDateSection() {
+  Widget _buildProductBanner() {
+    final p = widget.sourceProduct!;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Tanggal Penjualan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _textDark)),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _saleDate ?? DateTime.now(),
-                  firstDate: DateTime(2024),
-                  lastDate: DateTime.now(),
-                  builder: (ctx, child) {
-                    return Theme(
-                      data: Theme.of(ctx).copyWith(
-                        colorScheme: const ColorScheme.light(primary: _primaryGreen),
-                      ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (date != null) setState(() => _saleDate = date);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    color: WarnaAplikasi.surfaceLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _borderColor)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 16, color: _primaryGreen),
-                    const SizedBox(width: 10),
-                    Text(_saleDate != null ? _formatDate(_saleDate!) : 'Pilih Tanggal',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _textDark)),
-                    const Spacer(),
-                    const Icon(Icons.chevron_right_rounded, color: _textLight, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVolumeSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Volume yang Dijual', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _textDark)),
-            const SizedBox(height: 8),
-            // Quick amounts
-            Row(
-              children: ['25%', '50%', '75%', 'Semua'].map((label) {
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      final stock = 4850.0;
-                      double val;
-                      if (label == '25%') { val = stock * 0.25; }
-                      else if (label == '50%') { val = stock * 0.5; }
-                      else if (label == '75%') { val = stock * 0.75; }
-                      else { val = stock; }
-                      setState(() => _volumeKg = val);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 6),
-                      padding: const EdgeInsets.symmetric(vertical: 7),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.surfaceLight,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: _borderColor),
-                      ),
-                      child: Text(label,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _textMedium)),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-            // Slider
-            Row(
-              children: [
-                Text('${_formatNum(_volumeKg.toInt())} Kg',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textDark)),
-                const Spacer(),
-                Text('Maks: 4.850 Kg', style: const TextStyle(fontSize: 11, color: _textLight)),
-              ],
-            ),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                activeTrackColor: _primaryGreen,
-                inactiveTrackColor: WarnaAplikasi.borderLight,
-                thumbColor: _primaryGreen,
-                overlayColor: WarnaAplikasi.primary.withValues(alpha: 0.1),
-              ),
-              child: Slider(
-                value: _volumeKg,
-                min: 100,
-                max: 4850,
-                divisions: 97,
-                onChanged: (val) => setState(() => _volumeKg = val),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPriceSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Harga Satuan per Kg', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _textDark)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                  color: WarnaAplikasi.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _borderColor)),
-              child: Row(
-                children: [
-                  const Text('Rp', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _primaryGreen)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(_formatNum(_pricePerKg.toInt()),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textDark)),
-                  ),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => setState(() => _pricePerKg = (_pricePerKg - 100).clamp(1000, 20000)),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: _lightGreenBg, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.remove_rounded, color: _primaryGreen, size: 16),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => setState(() => _pricePerKg = (_pricePerKg + 100).clamp(1000, 20000)),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: _primaryGreen, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(color: WarnaAplikasi.hppAmberBg, borderRadius: BorderRadius.circular(8), border: Border.all(color: WarnaAplikasi.hppAmberBorder)),
-              child: const Text('\u25B2 Acuan HPP Poktan hari ini: Rp 6.700 - Rp 7.100 /Kg',
-                  style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.hppAmberText, fontWeight: FontWeight.w600)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [WarnaAplikasi.gradientStart, WarnaAplikasi.primary, WarnaAplikasi.gradientEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: WarnaAplikasi.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
+        color: WarnaAplikasi.greenLight,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: WarnaAplikasi.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Text('RINGKASAN NILAI JUAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.5)),
-                Spacer(),
-                Text('\u2713 Otomatis', style: TextStyle(fontSize: 10, color: WarnaAplikasi.successGreenBright, fontWeight: FontWeight.w700)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('Rp ${_formatNum(_totalValue.toInt())}',
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -1)),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('${_formatNum(_volumeKg.toInt())} Kg x Rp ${_formatNum(_pricePerKg.toInt())}',
-                        style: const TextStyle(fontSize: 10, color: Colors.white60)),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentMethodSection() {
-    final methods = [
-      _PayMethod(Icons.account_balance_rounded, 'Lunas (Transfer Bank BRI)', 'Rekening Poktan: 0129-01-xxx-55-01', WarnaAplikasi.paymentBRI),
-      _PayMethod(Icons.payments_rounded, 'Lunas (Tunai Langsung)', 'Pembayaran kas kontan di area Lumbung', WarnaAplikasi.paymentCash),
-      _PayMethod(Icons.schedule_rounded, 'Tempo / Berhenti (DP 50%)\nPelunasan H+7 pasca-penyerahan', 'Sisa dilunaskan setelah batas toleransi', WarnaAplikasi.paymentTempo),
-    ];
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Column(
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-            child: Row(
-              children: [
-                const Icon(Icons.payment_rounded, size: 15, color: _primaryGreen),
-                const SizedBox(width: 8),
-                const Expanded(child: Text('Metode & Status Bayar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _textDark))),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(color: _lightGreenBg, borderRadius: BorderRadius.circular(8)),
-                  child: const Text('1 Terpilih', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _primaryGreen)),
-                ),
-              ],
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: WarnaAplikasi.border),
             ),
+            child: const Center(child: Text('🌾', style: TextStyle(fontSize: 22))),
           ),
-          const Divider(color: WarnaAplikasi.divider, height: 1),
-          Padding(
-            padding: const EdgeInsets.all(12),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
-              children: methods.asMap().entries.map((e) {
-                final i = e.key;
-                final m = e.value;
-                final selected = _selectedPaymentMethod == i;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedPaymentMethod = i),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: selected ? _lightGreenBg : WarnaAplikasi.surfaceLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: selected ? _primaryGreen : _borderColor, width: selected ? 1.5 : 1),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 18, height: 18,
-                          margin: const EdgeInsets.only(top: 2),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: selected ? _primaryGreen : _borderColor, width: 2),
-                            color: selected ? _primaryGreen : Colors.transparent,
-                          ),
-                          child: selected ? const Icon(Icons.check, color: Colors.white, size: 10) : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(color: m.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(7)),
-                          child: Icon(m.icon, color: m.color, size: 14),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(m.title,
-                                  style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.w800 : FontWeight.w600, color: _textDark)),
-                              const SizedBox(height: 2),
-                              Text(m.subtitle, style: const TextStyle(fontSize: 10.5, color: _textLight, height: 1.3)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.namaProduk,
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primaryDark),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Stok Tersedia: ${p.stokTersedia} ${p.satuan} &bull; Harga Listing: ${p.hargaFormatted}',
+                  style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textMedium, fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
           ),
         ],
@@ -531,278 +246,343 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     );
   }
 
-  Widget _buildReceiptSection() {
+  Widget _buildTransactionDetailsCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Lampiran Bukti Nota / Timbangan    Opsional',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _textDark)),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                width: double.infinity,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: WarnaAplikasi.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _borderColor),
-                ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WarnaAplikasi.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Detail Komoditas & Volume',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+          ),
+          const SizedBox(height: 14),
+
+          // Nama Produk / Snapshot
+          const Text('Nama Produk / Komoditas *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _namaProdukController,
+            decoration: _inputDecoration(hint: 'Nama produk hasil panen'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Nama produk wajib diisi' : null,
+          ),
+          const SizedBox(height: 14),
+
+          // Volume & Harga
+          Row(
+            children: [
+              Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: _lightGreenBg, shape: BoxShape.circle),
-                      child: const Icon(Icons.add_a_photo_rounded, color: _primaryGreen, size: 18),
+                    Text('Volume (${widget.sourceProduct?.satuan ?? 'Kg'}) *',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _volumeController,
+                      keyboardType: TextInputType.number,
+                      decoration: _inputDecoration(hint: '0'),
+                      onChanged: (_) => setState(() {}),
+                      validator: (v) {
+                        final val = double.tryParse(v ?? '');
+                        if (val == null || val <= 0) return 'Volume > 0';
+                        return null;
+                      },
                     ),
-                    const SizedBox(height: 5),
-                    const Text('Ambil Foto Nota\nKamera HP saja',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 11, color: _textLight, height: 1.3)),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNotesSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: _borderColor)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Catatan Penjualan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _textDark)),
-            const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                  color: WarnaAplikasi.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _borderColor)),
-              child: const TextField(
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Berasal dari Kebun Sosial, kadar air antam 16%, langsung dianglur armada trk Koperasi...',
-                  hintStyle: TextStyle(color: _textLight, fontSize: 11.5),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Harga Aktual (Rp) *',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _hargaSatuanController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [CurrencyInputFormatter()],
+                      decoration: _inputDecoration(hint: '0', prefixText: 'Rp '),
+                      onChanged: (_) => setState(() {}),
+                      validator: (v) {
+                        final val = CurrencyInputFormatter.parse(v ?? '');
+                        if (val <= 0) return 'Harga > 0';
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
-                style: TextStyle(fontSize: 12.5, color: _textDark, height: 1.4),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => setState(() => _showSuccessModal = true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _primaryGreen,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ],
           ),
-          icon: const Icon(Icons.save_rounded, size: 18),
-          label: const Text('Simpan Transaksi Penjualan',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-        ),
+          const SizedBox(height: 14),
+
+          // Total Ringkasan Box
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: WarnaAplikasi.bgPaleGreen,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: WarnaAplikasi.border),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total Nilai Transaksi:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark),
+                ),
+                Text(
+                  _formatRupiah(_totalHarga),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: WarnaAplikasi.primary),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSuccessModal(BuildContext context) {
-    return GestureDetector(
-      onTap: () => setState(() => _showSuccessModal = false),
-      child: Container(
-        color: Colors.black.withValues(alpha: 0.65),
-        child: Center(
-          child: GestureDetector(
-            onTap: () {}, // prevent dismiss when tapping modal
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Stack(
-                children: [
-                  // Close button
-                  Positioned(
-                    top: 14,
-                    right: 14,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _showSuccessModal = false),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        child: const Icon(Icons.close_rounded, size: 20, color: _textLight),
+  Widget _buildPaymentSectionCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WarnaAplikasi.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Skema Pembayaran',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+          ),
+          const SizedBox(height: 12),
+
+          // Toggle Lunas vs DP
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _tipePembayaran = 'lunas'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _tipePembayaran == 'lunas' ? WarnaAplikasi.statusLunasBg : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _tipePembayaran == 'lunas' ? WarnaAplikasi.statusLunasText : WarnaAplikasi.border,
+                      ),
+                    ),
+                    child: Text(
+                      'Bayar Lunas',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: _tipePembayaran == 'lunas' ? FontWeight.w700 : FontWeight.w500,
+                        color: _tipePembayaran == 'lunas' ? WarnaAplikasi.statusLunasText : WarnaAplikasi.textGray,
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Success Icon
-                        Container(
-                          width: 70,
-                          height: 70,
-                          decoration: const BoxDecoration(color: WarnaAplikasi.borderField, shape: BoxShape.circle),
-                          child: Center(
-                            child: Container(
-                              width: 46,
-                              height: 46,
-                              decoration: const BoxDecoration(color: WarnaAplikasi.primaryDark, shape: BoxShape.circle),
-                              child: const Icon(Icons.check_rounded, color: Colors.white, size: 26),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text('Transaksi Berhasil Disimpan!',
-                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _textDark, letterSpacing: -0.3),
-                            textAlign: TextAlign.center),
-                        const SizedBox(height: 8),
-                        const Text(
-                            'Data penjualan sudah tersimpan di sistem. Saldo dan stok lumbung telah diperbarui sesuai data.',
-                            style: TextStyle(fontSize: 12, color: _textLight, height: 1.4),
-                            textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        // Info Box
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: WarnaAplikasi.bgSuccessLight,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: WarnaAplikasi.greenPill),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildModalRow(Icons.confirmation_number_outlined, 'No. Tiket / ID', 'TRX-PN-20241115-889'),
-                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
-                              _buildModalRow(Icons.grain_rounded, 'Komoditas', 'GKP Ciherang'),
-                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
-                              _buildModalRow(Icons.scale_rounded, 'Volume & Harga',
-                                  '${_formatNum(_volumeKg.toInt())} Kg x Rp ${_formatNum(_pricePerKg.toInt())}'),
-                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
-                              _buildModalRow(Icons.groups_2_outlined, 'Mitra Pembeli', 'Poktan Sumber Makmur'),
-                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
-                              _buildModalRow(Icons.inventory_rounded, 'Sisa Stok Lumbung', '2.350 Kg (tersisa)'),
-                              const Divider(color: WarnaAplikasi.dividerGreen, height: 16),
-                              Row(
-                                children: [
-                                  const Icon(Icons.payments_rounded, size: 14, color: WarnaAplikasi.grayGreenDark),
-                                  const SizedBox(width: 8),
-                                  const Expanded(child: Text('Total Nilai',
-                                      style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.grayGreenDark))),
-                                  Text('Rp ${_formatNum(_totalValue.toInt())}',
-                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _primaryGreen)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Primary button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 46,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              setState(() => _showSuccessModal = false);
-                              Navigator.pop(context);
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primaryGreen,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                            icon: const Icon(Icons.receipt_long_rounded, size: 16, color: Colors.white),
-                            label: const Text('Lihat Rincian & Cetak Nota',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // WhatsApp button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 46,
-                          child: OutlinedButton.icon(
-                            onPressed: () {},
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: WarnaAplikasi.whatsappGreen,
-                              side: const BorderSide(color: WarnaAplikasi.whatsappGreen, width: 1.5),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                            icon: const Icon(Icons.share_rounded, size: 16),
-                            label: const Text('Bagikan ke WhatsApp Mitra',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextButton(
-                          onPressed: () {
-                            setState(() => _showSuccessModal = false);
-                            Navigator.pop(context);
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Kembali ke Riwayat Penjualan',
-                              style: TextStyle(fontSize: 12, color: _textLight, fontWeight: FontWeight.w600)),
-                        ),
-                      ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _tipePembayaran = 'dp'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _tipePembayaran == 'dp' ? WarnaAplikasi.statusUangMukaBg : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _tipePembayaran == 'dp' ? WarnaAplikasi.statusUangMukaText : WarnaAplikasi.border,
+                      ),
+                    ),
+                    child: Text(
+                      'Uang Muka (DP)',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: _tipePembayaran == 'dp' ? FontWeight.w700 : FontWeight.w500,
+                        color: _tipePembayaran == 'dp' ? WarnaAplikasi.statusUangMukaText : WarnaAplikasi.textGray,
+                      ),
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          if (_tipePembayaran == 'dp') ...[
+            const Text('Nominal DP Diterima (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: _nominalDpController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [CurrencyInputFormatter()],
+              decoration: _inputDecoration(hint: 'Misal: 500.000', prefixText: 'Rp '),
+              onChanged: (_) => setState(() {}),
+              validator: (v) {
+                if (_tipePembayaran == 'dp') {
+                  final val = CurrencyInputFormatter.parse(v ?? '');
+                  if (val <= 0) return 'DP harus > 0';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // Sisa Pembayaran Tag
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: WarnaAplikasi.warningOrangeBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: WarnaAplikasi.warningOrange.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Sisa Tagihan Pelunasan:', style: TextStyle(fontSize: 12, color: WarnaAplikasi.warningOrange, fontWeight: FontWeight.w600)),
+                  Text(_formatRupiah(_sisaDp > 0 ? _sisaDp : 0), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: WarnaAplikasi.warningOrange)),
                 ],
               ),
             ),
+            const SizedBox(height: 14),
+          ],
+
+          // Metode Pembayaran
+          const Text('Metode Penerimaan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            value: _metodePembayaran,
+            decoration: _inputDecoration(hint: 'Metode'),
+            items: const [
+              DropdownMenuItem(value: 'transfer_bri', child: Text('Transfer Bank BRI')),
+              DropdownMenuItem(value: 'transfer_bank_lain', child: Text('Transfer Bank Lain')),
+              DropdownMenuItem(value: 'tunai', child: Text('Tunai Langsung')),
+              DropdownMenuItem(value: 'kas_poktan', child: Text('Melalui Kas Poktan')),
+            ],
+            onChanged: (val) {
+              if (val != null) setState(() => _metodePembayaran = val);
+            },
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildModalRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: WarnaAplikasi.grayGreenDark),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.grayGreenDark)),
-        const Spacer(),
-        Flexible(
-          child: Text(value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen)),
-        ),
-      ],
+  Widget _buildBuyerDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: WarnaAplikasi.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Informasi Pembeli & Catatan',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+          ),
+          const SizedBox(height: 14),
+
+          const Text('Nama Pembeli / Mitra *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _namaPembeliController,
+            decoration: _inputDecoration(hint: 'Nama pembeli / pedagang / koperasi'),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Nama pembeli wajib diisi' : null,
+          ),
+          const SizedBox(height: 12),
+
+          const Text('No. WhatsApp Pembeli (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _teleponPembeliController,
+            keyboardType: TextInputType.phone,
+            decoration: _inputDecoration(hint: '0812xxxxxxxx'),
+          ),
+          const SizedBox(height: 12),
+
+          const Text('Catatan Transaksi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _catatanController,
+            maxLines: 2,
+            decoration: _inputDecoration(hint: 'Contoh: Diambil hari Rabu, timbangan petak B...'),
+          ),
+        ],
+      ),
     );
   }
-}
 
-class _PayMethod {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _submitPenjualan,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: WarnaAplikasi.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: WarnaAplikasi.primary.withValues(alpha: 0.5),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 2,
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+              )
+            : const Text(
+                'Simpan Catatan Penjualan',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+      ),
+    );
+  }
 
-  const _PayMethod(this.icon, this.title, this.subtitle, this.color);
+  InputDecoration _inputDecoration({required String hint, String? prefixText}) {
+    return InputDecoration(
+      hintText: hint,
+      prefixText: prefixText,
+      hintStyle: const TextStyle(fontSize: 13, color: WarnaAplikasi.textGrayLight),
+      filled: true,
+      fillColor: WarnaAplikasi.bgInput,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: WarnaAplikasi.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: WarnaAplikasi.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: WarnaAplikasi.errorRedDark),
+      ),
+    );
+  }
 }

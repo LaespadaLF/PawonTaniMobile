@@ -79,7 +79,7 @@ class PawonFormHeader extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            ?trailing,
+            if (trailing != null) trailing!,
           ],
         ),
       ),
