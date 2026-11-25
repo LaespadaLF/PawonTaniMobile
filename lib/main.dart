@@ -37,7 +37,7 @@ class PawonTaniApp extends StatelessWidget {
           primary: WarnaAplikasi.primary,
           surface: Colors.white,
         ),
-        fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+        fontFamily: GoogleFonts.poppins().fontFamily,
       ),
       home: const AuthGate(),
     );

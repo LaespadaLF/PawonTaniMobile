@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class WarnaAplikasi {
   // Greens
-  static const Color primary = Color(0xFF285438);
+  static const Color primary = Color(0xFF24573A); // Hijau Tua PawonTani
   static const Color primaryDark = Color(0xFF142419);
-  static const Color primaryMedium = Color(0xFF264E36);
+  static const Color primaryMedium = Color(0xFF24573A);
   static const Color primaryLight = Color(0xFF3B6B4F);
   static const Color primaryBackground = Color(0xFFF9FAF9);
   
-  static const Color greenLight = Color(0xFFE8F4EC);
+  static const Color greenLight = Color(0xFFEAF5E8); // Hijau Muda Sekunder
   static const Color greenPill = Color(0xFFD6EADB);
   static const Color greenText = Color(0xFF1E5334);
   
