@@ -13,12 +13,14 @@ class AktivitasApiService {
   /// Mengambil daftar aktivitas tanam dengan parameter filter opsional.
   Future<ApiResponse<List<PlantActivityItem>>> getAktivitasList({
     String? lahanId,
+    String? idSiklus,
     String? kategori,
     String? kondisi,
     String? query,
   }) async {
     final queryParams = <String, dynamic>{};
     if (lahanId != null && lahanId.isNotEmpty) queryParams['id_lahan'] = lahanId;
+    if (idSiklus != null && idSiklus.isNotEmpty) queryParams['id_siklus'] = idSiklus;
     if (kategori != null && kategori.isNotEmpty && kategori != 'Semua') {
       queryParams['kategori'] = kategori;
     }

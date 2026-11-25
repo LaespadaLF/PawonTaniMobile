@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/models/item_siklus_tanam.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_detail_lahan.dart';
 
 final transparentPng = <int>[
@@ -96,6 +97,16 @@ void main() {
     statusVerifikasi: 'terverifikasi',
     isCanDelete: false,
     isCanEdit: true,
+    siklusBerjalan: ItemSiklusTanam(
+      idSiklus: 'SKL-TEST-001',
+      idLahan: 'LHN-TEST-001',
+      idKomoditas: 'KMD-001',
+      komoditasNama: 'Padi Ciherang',
+      musimTanam: 'MT-1 (Musim Hujan)',
+      status: 'aktif',
+      isBerjalan: true,
+      isBolehInput: true,
+    ),
   );
 
   Widget createDetailWidget(ItemLahan item) {
@@ -205,6 +216,20 @@ void main() {
       expect(find.text('Ketuk untuk geser'), findsOneWidget);
       mapWidget = tester.widget(flutterMapFinder);
       expect(mapWidget.options.interactionOptions.flags, equals(InteractiveFlag.none));
+    });
+
+    testWidgets('5. F-03 Single Source of Truth: jika siklusBerjalan null pada lahan aktif, tampilkan Belum Ada Siklus Aktif', (tester) async {
+      final noCycleActiveItem = baseItem.copyWith(
+        siklusBerjalan: null,
+      );
+
+      await tester.pumpWidget(createDetailWidget(noCycleActiveItem));
+      await tester.pump();
+
+      // Memastikan kartu 'Belum Ada Siklus Aktif' tampil jujur dan tombol 'Mulai Siklus Tanam' tersedia
+      expect(find.text('Belum Ada Siklus Aktif'), findsOneWidget);
+      expect(find.text('Mulai Siklus Tanam'), findsOneWidget);
+      expect(find.text('Belum Ada Siklus'), findsOneWidget); // subtitle header
     });
   });
 }

@@ -16,6 +16,7 @@ class PanenApiService {
     String? status,
     String? cropType,
     String? lahanId,
+    String? idSiklus,
     String? query,
   }) async {
     final queryParams = <String, dynamic>{};
@@ -27,6 +28,9 @@ class PanenApiService {
     }
     if (lahanId != null && lahanId.isNotEmpty) {
       queryParams['id_lahan'] = lahanId;
+    }
+    if (idSiklus != null && idSiklus.isNotEmpty) {
+      queryParams['id_siklus'] = idSiklus;
     }
     if (query != null && query.isNotEmpty) {
       queryParams['q'] = query;

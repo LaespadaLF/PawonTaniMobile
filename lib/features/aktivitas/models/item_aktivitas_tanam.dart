@@ -92,7 +92,10 @@ class PlantActivityItem {
   final List<String> photos;
   final int? dayNumber;
   final String? lahanId;
+  final String? idSiklus;
   final double? biaya;
+
+  bool get isLegacy => idSiklus == null || idSiklus!.isEmpty;
 
   const PlantActivityItem({
     required this.id,
@@ -109,6 +112,7 @@ class PlantActivityItem {
     this.photos = const [],
     this.dayNumber,
     this.lahanId,
+    this.idSiklus,
     this.biaya,
   });
 
@@ -145,6 +149,7 @@ class PlantActivityItem {
 
     final dayNumber = int.tryParse((json['day_number'] ?? json['dayNumber'] ?? json['hari_setelah_tanam'])?.toString() ?? '');
     final lahanId = (json['id_lahan'] ?? json['lahan_id'])?.toString();
+    final idSiklus = (json['id_siklus'] ?? json['siklus_id'] ?? json['siklus']?['id_siklus'])?.toString();
     final biaya = double.tryParse((json['biaya'])?.toString() ?? '');
 
     return PlantActivityItem(
@@ -162,6 +167,7 @@ class PlantActivityItem {
       photos: parsedPhotos,
       dayNumber: dayNumber,
       lahanId: lahanId,
+      idSiklus: idSiklus,
       biaya: biaya,
     );
   }
@@ -170,6 +176,7 @@ class PlantActivityItem {
     return {
       'id_aktivitas': id,
       'id_lahan': lahanId,
+      'id_siklus': idSiklus,
       'kategori': category.name,
       'judul': title,
       'kondisi_tanaman': condition.name,
@@ -198,6 +205,7 @@ class PlantActivityItem {
     List<String>? photos,
     int? dayNumber,
     String? lahanId,
+    String? idSiklus,
     double? biaya,
   }) {
     return PlantActivityItem(
@@ -215,6 +223,7 @@ class PlantActivityItem {
       photos: photos ?? this.photos,
       dayNumber: dayNumber ?? this.dayNumber,
       lahanId: lahanId ?? this.lahanId,
+      idSiklus: idSiklus ?? this.idSiklus,
       biaya: biaya ?? this.biaya,
     );
   }

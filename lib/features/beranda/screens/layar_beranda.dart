@@ -12,6 +12,8 @@ import 'package:pawon_mobile/features/beranda/widgets/kartu_banner_petani.dart';
 import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_tambah_lahan.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_catat_panen.dart';
+import 'package:pawon_mobile/features/notifikasi/repositories/notifikasi_repository.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_daftar_notifikasi.dart';
 
 class HomeScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -35,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadBerandaData();
+    NotifikasiRepository.instance.fetchUnreadCount();
   }
 
   Future<void> _loadBerandaData() async {
@@ -43,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _errorMessage = null;
     });
 
+    NotifikasiRepository.instance.fetchUnreadCount();
     final res = await _apiService.getRingkasan();
 
     if (!mounted) return;
@@ -215,11 +219,12 @@ class _HomeScreenState extends State<HomeScreen> {
         // Action Icons
         Row(
           children: [
-            // Notification Button with Badge
+            // Notification Button with Dynamic Badge
             InkWell(
               onTap: () => _showNotificationsModal(context),
               borderRadius: BorderRadius.circular(12),
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
                   Container(
                     width: 38,
@@ -234,17 +239,40 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: WarnaAplikasi.primaryDark,
                     ),
                   ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: WarnaAplikasi.errorRed,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: NotifikasiRepository.instance.unreadCountListenable,
+                    builder: (context, unreadCount, _) {
+                      if (unreadCount <= 0) return const SizedBox.shrink();
+
+                      final badgeText = unreadCount > 99 ? '99+' : unreadCount.toString();
+                      return Positioned(
+                        top: -3,
+                        right: -3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          decoration: BoxDecoration(
+                            color: WarnaAplikasi.errorRed,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          child: Center(
+                            child: Text(
+                              badgeText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -454,66 +482,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showNotificationsModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const NotificationScreen(),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text('Notifikasi Terkini', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-              const SizedBox(height: 14),
-              _buildNotifItem('Lahan Sawah Barat disetujui oleh Pengurus', '10 menit yang lalu'),
-              const SizedBox(height: 10),
-              _buildNotifItem('Peringatan cuaca hujan lebat esok hari', '1 jam yang lalu'),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNotifItem(String title, String time) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: WarnaAplikasi.greenLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: WarnaAplikasi.primary, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark)),
-                const SizedBox(height: 2),
-                Text(time, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    ).then((_) {
+      NotifikasiRepository.instance.fetchUnreadCount();
+    });
   }
 
   void _showProfileModal(BuildContext context) {

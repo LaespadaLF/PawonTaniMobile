@@ -6,6 +6,7 @@ import 'package:pawon_mobile/core/network/dio_client.dart';
 import 'package:pawon_mobile/features/lahan/models/item_dokumen_sppt.dart';
 import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/models/item_siklus_tanam.dart';
 
 /// Service networking untuk memanggil endpoint lahan backend Laravel.
 class LahanApiService {
@@ -239,6 +240,154 @@ class LahanApiService {
             .map((item) => ItemKomoditas.fromJson(Map<String, dynamic>.from(item as Map)))
             .toList();
       },
+    );
+  }
+
+  /// Mengambil siklus tanam yang sedang berjalan pada suatu lahan:
+  /// `GET /api/v1/lahan/{id}/siklus/berjalan`.
+  Future<ApiResponse<ItemSiklusTanam?>> getSiklusBerjalan(String idLahan) async {
+    return await _client.get<ItemSiklusTanam?>(
+      '${ApiConstants.lahanEndpoint}/$idLahan/siklus/berjalan',
+      fromJson: (data) {
+        if (data == null || data is! Map) return null;
+        return ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data));
+      },
+    );
+  }
+
+  /// Mengambil riwayat siklus tanam pada suatu lahan:
+  /// `GET /api/v1/lahan/{id}/siklus`.
+  Future<ApiResponse<List<ItemSiklusTanam>>> getRiwayatSiklus(
+    String idLahan, {
+    int? page,
+    int? perPage,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (page != null) queryParams['page'] = page;
+    if (perPage != null) queryParams['per_page'] = perPage;
+
+    return await _client.get<List<ItemSiklusTanam>>(
+      '${ApiConstants.lahanEndpoint}/$idLahan/siklus',
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      fromJson: (data) {
+        if (data is! List) return <ItemSiklusTanam>[];
+        return data
+            .map((item) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+      },
+    );
+  }
+
+  /// Membuat Siklus Tanam baru:
+  /// `POST /api/v1/siklus-tanam`.
+  Future<ApiResponse<ItemSiklusTanam>> createSiklusTanam(Map<String, dynamic> payload) async {
+    return await _client.post<ItemSiklusTanam>(
+      ApiConstants.siklusTanamEndpoint,
+      data: payload,
+      fromJson: (data) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Mengubah status operasional lahan menjadi persiapan:
+  /// `POST /api/v1/lahan/{id}/mulai-persiapan`.
+  Future<ApiResponse<ItemLahan>> mulaiPersiapan(String idLahan) async {
+    return await _client.post<ItemLahan>(
+      '${ApiConstants.lahanEndpoint}/$idLahan/mulai-persiapan',
+      fromJson: (data) => ItemLahan.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Membatalkan persiapan lahan (kembali ke istirahat):
+  /// `POST /api/v1/lahan/{id}/batalkan-persiapan`.
+  Future<ApiResponse<ItemLahan>> batalkanPersiapan(String idLahan) async {
+    return await _client.post<ItemLahan>(
+      '${ApiConstants.lahanEndpoint}/$idLahan/batalkan-persiapan',
+      fromJson: (data) => ItemLahan.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Mengambil detail siklus tanam:
+  /// `GET /api/v1/siklus-tanam/{id}`.
+  Future<ApiResponse<ItemSiklusTanam>> getSiklusDetail(String idSiklus) async {
+    return await _client.get<ItemSiklusTanam>(
+      '${ApiConstants.siklusTanamEndpoint}/$idSiklus',
+      fromJson: (data) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Mengajukan pengakhiran berhasil (selesai):
+  /// `POST /api/v1/siklus-tanam/{id}/ajukan-selesai`.
+  Future<ApiResponse<ItemSiklusTanam>> ajukanPengakhiranSelesai(
+    String idSiklus, {
+    required String alasan,
+    MultipartFile? fotoBukti,
+  }) async {
+    dynamic payload;
+    if (fotoBukti != null) {
+      final formData = FormData();
+      formData.fields.add(MapEntry('alasan', alasan));
+      formData.files.add(MapEntry('foto_bukti', fotoBukti));
+      payload = formData;
+    } else {
+      payload = {'alasan': alasan};
+    }
+
+    return await _client.post<ItemSiklusTanam>(
+      '${ApiConstants.siklusTanamEndpoint}/$idSiklus/ajukan-selesai',
+      data: payload,
+      fromJson: (data) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Mengajukan pengakhiran gagal (gagal panen):
+  /// `POST /api/v1/siklus-tanam/{id}/ajukan-gagal`.
+  Future<ApiResponse<ItemSiklusTanam>> ajukanPengakhiranGagal(
+    String idSiklus, {
+    required String alasan,
+    required MultipartFile fotoBukti,
+  }) async {
+    final formData = FormData();
+    formData.fields.add(MapEntry('alasan', alasan));
+    formData.files.add(MapEntry('foto_bukti', fotoBukti));
+
+    return await _client.post<ItemSiklusTanam>(
+      '${ApiConstants.siklusTanamEndpoint}/$idSiklus/ajukan-gagal',
+      data: formData,
+      fromJson: (data) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Membatalkan siklus tanam langsung (tanpa aktivitas & tanpa panen):
+  /// `POST /api/v1/siklus-tanam/{id}/batalkan`.
+  Future<ApiResponse<ItemSiklusTanam>> batalkanSiklus(
+    String idSiklus, {
+    required String alasan,
+  }) async {
+    return await _client.post<ItemSiklusTanam>(
+      '${ApiConstants.siklusTanamEndpoint}/$idSiklus/batalkan',
+      data: {'alasan': alasan},
+      fromJson: (data) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data as Map)),
+    );
+  }
+
+  /// Verifikasi persetujuan/penolakan pengakhiran oleh Ketua/Pengurus:
+  /// `POST /api/v1/siklus-tanam/{id}/verifikasi-pengakhiran`.
+  Future<ApiResponse<ItemSiklusTanam>> verifikasiPengakhiranSiklus(
+    String idSiklus, {
+    required String keputusan,
+    String? catatan,
+  }) async {
+    final payload = <String, dynamic>{
+      'keputusan': keputusan,
+    };
+    if (catatan != null && catatan.trim().isNotEmpty) {
+      payload['catatan'] = catatan.trim();
+    }
+
+    return await _client.post<ItemSiklusTanam>(
+      '${ApiConstants.siklusTanamEndpoint}/$idSiklus/verifikasi-pengakhiran',
+      data: payload,
+      fromJson: (data) => ItemSiklusTanam.fromJson(Map<String, dynamic>.from(data as Map)),
     );
   }
 }

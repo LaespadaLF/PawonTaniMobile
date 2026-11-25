@@ -6,6 +6,7 @@ import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/dialog_sukses_simpan.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/models/item_siklus_tanam.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
@@ -16,12 +17,14 @@ class RecordHarvestScreen extends StatefulWidget {
   final Function(HarvestItem)? onSave;
   final String? initialLahanId;
   final String? initialLahanName;
+  final ItemSiklusTanam? initialSiklus;
 
   const RecordHarvestScreen({
     super.key,
     this.onSave,
     this.initialLahanId,
     this.initialLahanName,
+    this.initialSiklus,
   });
 
   @override
@@ -35,7 +38,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   // Lahan Garapan selection
   List<ItemLahan> _lahanList = [];
   ItemLahan? _selectedItemLahan;
+  ItemSiklusTanam? _activeSiklus;
   bool _isLoadingLahan = true;
+  bool _isLoadingSiklus = false;
   bool _isSaving = false;
 
   final String _musimTanam = 'Musim Rendeng';
@@ -129,10 +134,50 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
         _isLoadingLahan = false;
         _syncCommodityFromLahan(preselected);
       });
+
+      if (widget.initialSiklus != null && preselected?.id == widget.initialLahanId) {
+        setState(() {
+          _activeSiklus = widget.initialSiklus;
+          _syncFromSiklus(_activeSiklus!);
+        });
+      } else if (preselected != null) {
+        _fetchSiklusForSelectedLahan(preselected.id);
+      }
     } else {
       setState(() {
         _isLoadingLahan = false;
       });
+    }
+  }
+
+  void _syncFromSiklus(ItemSiklusTanam siklus) {
+    final kom = siklus.komoditasNama.toLowerCase().trim();
+    if (kom.contains('jagung')) {
+      _cropType = CropType.jagung;
+      _commodityName = 'Jagung Pipil Kering (JPK)';
+    } else {
+      _cropType = CropType.padi;
+      _commodityName = 'Gabah Kering Panen (GKP)';
+    }
+    if (siklus.varietas != null && siklus.varietas!.isNotEmpty) {
+      _varietasName = siklus.varietas!;
+    }
+  }
+
+  Future<void> _fetchSiklusForSelectedLahan(String lahanId) async {
+    setState(() => _isLoadingSiklus = true);
+    try {
+      final res = await _lahanService.getSiklusBerjalan(lahanId);
+      if (!mounted) return;
+      setState(() {
+        _activeSiklus = res.data;
+        _isLoadingSiklus = false;
+        if (_activeSiklus != null) {
+          _syncFromSiklus(_activeSiklus!);
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSiklus = false);
     }
   }
 
@@ -224,6 +269,28 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
       return;
     }
 
+    if (_activeSiklus == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lahan ini tidak memiliki siklus tanam aktif. Panen wajib terhubung dengan siklus berjalan.'),
+          backgroundColor: WarnaAplikasi.warningOrange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (!_activeSiklus!.isAktif) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Siklus tanam sedang ${_activeSiklus!.statusLabel} dan tidak dapat menerima catatan panen baru.'),
+          backgroundColor: WarnaAplikasi.warningOrange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_currentWeightKg <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Berat hasil panen harus lebih dari 0.'), backgroundColor: WarnaAplikasi.errorRedDark),
@@ -243,6 +310,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
 
     final payload = <String, dynamic>{
       'id_lahan': _selectedItemLahan!.id,
+      'id_siklus': _activeSiklus!.idSiklus,
       'komoditas_nama': _cropType.displayName,
       'varietas': _varietasName,
       'jenis_panen': _commodityName,
@@ -471,6 +539,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                             _syncCommodityFromLahan(lhn);
                           });
                           Navigator.pop(ctx);
+                          _fetchSiklusForSelectedLahan(lhn.id);
                         },
                       );
                     }),
@@ -540,7 +609,99 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             ),
           ),
         ),
+        if (_isLoadingSiklus) ...[
+          const SizedBox(height: 8),
+          const Row(
+            children: [
+              SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary)),
+              SizedBox(width: 8),
+              Text('Memeriksa siklus tanam berjalan...', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
+            ],
+          ),
+        ] else if (_activeSiklus != null) ...[
+          const SizedBox(height: 8),
+          _buildSiklusBanner(),
+        ] else if (_selectedItemLahan != null && !_isLoadingLahan) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Lahan ini tidak memiliki siklus tanam aktif. Panen hanya dapat dicatat jika lahan memiliki siklus tanam berjalan.',
+                    style: TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildSiklusBanner() {
+    if (_activeSiklus == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: WarnaAplikasi.primaryBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: WarnaAplikasi.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: WarnaAplikasi.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.autorenew_rounded, size: 16, color: WarnaAplikasi.primaryDark),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      _activeSiklus!.musimTanam,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: WarnaAplikasi.greenLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _activeSiklus!.statusLabel,
+                        style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_activeSiklus!.komoditasNama}${_activeSiklus!.varietas != null && _activeSiklus!.varietas!.isNotEmpty ? ' • ${_activeSiklus!.varietas}' : ''}',
+                  style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

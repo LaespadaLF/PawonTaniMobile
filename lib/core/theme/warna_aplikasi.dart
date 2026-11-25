@@ -164,6 +164,9 @@ class WarnaAplikasi {
   static const Color statusBadgeBlueBg = Color(0xFFE0F2FE);
   static const Color statusBadgeBlueText = Color(0xFF0284C7);
   static const Color textGrayDark = Color(0xFF374151);
+  static const Color bgGray = Color(0xFFF1F5F9);
+  static const Color bgErrorLight = Color(0xFFFEF2F2);
+  static const Color errorBorder = Color(0xFFFECACA);
   static const Color bannerIconBg = Color(0xFFD3E8D8);
   static const Color textDarkGrayGreen = Color(0xFF4B6653);
   static const Color errorRedLight = Color(0xFFFEE2E2);

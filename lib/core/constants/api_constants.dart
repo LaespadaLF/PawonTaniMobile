@@ -56,6 +56,9 @@ class ApiConstants {
   // --- Endpoint Rute Lahan ---
   static const String lahanEndpoint = '/lahan';
 
+  // --- Endpoint Rute Siklus Tanam ---
+  static const String siklusTanamEndpoint = '/siklus-tanam';
+
   // --- Endpoint Rute Beranda ---
   static const String berandaRingkasanEndpoint = '/beranda/ringkasan';
 
@@ -71,6 +74,12 @@ class ApiConstants {
   // --- Endpoint Rute Marketplace & Penjualan ---
   static const String marketplaceProdukEndpoint = '/marketplace/produk';
   static const String penjualanEndpoint = '/penjualan';
+
+  // --- Endpoint Rute Notifikasi ---
+  static const String notifikasiEndpoint = '/notifikasi';
+  static const String notifikasiUnreadCountEndpoint = '/notifikasi/unread-count';
+  static const String notifikasiBacaSemuaEndpoint = '/notifikasi/baca-semua';
+  static String notifikasiBacaEndpoint(String id) => '/notifikasi/$id/baca';
 
   /// Normalisasi URL gambar dari storage backend agar selalu dapat dimuat
   /// baik di Android Emulator, HP fisik, maupun Web/Desktop.

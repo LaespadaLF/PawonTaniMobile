@@ -20,6 +20,7 @@ class LandScreen extends StatefulWidget {
 
 class _LandScreenState extends State<LandScreen> {
   int _selectedFilterIndex = 0;
+  bool _isSortNewest = true;
   List<ItemLahan> _ItemLahans = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
@@ -28,6 +29,33 @@ class _LandScreenState extends State<LandScreen> {
   int? _totalPlots;
   final ScrollController _scrollController = ScrollController();
   String? _errorMessage;
+
+  List<ItemLahan> get _displayedLahans {
+    List<ItemLahan> list = List.from(_ItemLahans);
+
+    // Filter berdasarkan status operasional (Semua, Aktif, Persiapan, Istirahat)
+    if (_selectedFilterIndex == 1) {
+      // Aktif
+      list = list.where((item) => item.status == StatusLahan.aktif).toList();
+    } else if (_selectedFilterIndex == 2) {
+      // Persiapan
+      list = list.where((item) => item.status == StatusLahan.persiapan).toList();
+    } else if (_selectedFilterIndex == 3) {
+      // Istirahat
+      list = list.where((item) => item.status == StatusLahan.istirahat).toList();
+    }
+
+    // Sorting (Terbaru vs Terlama)
+    list.sort((a, b) {
+      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final cmp = _isSortNewest ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
+      if (cmp != 0) return cmp;
+      return _isSortNewest ? b.id.compareTo(a.id) : a.id.compareTo(b.id);
+    });
+
+    return list;
+  }
 
   @override
   void initState() {
@@ -338,7 +366,8 @@ class _LandScreenState extends State<LandScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filterChips = ['Semua', 'Aktif Ditanami', 'Masa Olah Tanah'];
+    final filterChips = ['Semua', 'Aktif', 'Persiapan', 'Istirahat'];
+    final displayed = _displayedLahans;
 
     double totalArea = _ItemLahans.fold(0.0, (sum, item) => sum + item.luas);
     int totalPlots = _totalPlots ?? _ItemLahans.length;
@@ -515,11 +544,30 @@ class _LandScreenState extends State<LandScreen> {
                               'Lahan Saya',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
                             ),
-                            Row(
-                              children: [
-                                Text('Terbaru', style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
-                                const Icon(Icons.keyboard_arrow_down, size: 16, color: WarnaAplikasi.textGray),
-                              ],
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _isSortNewest = !_isSortNewest;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      _isSortNewest ? 'Terbaru' : 'Terlama',
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.primary),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      _isSortNewest ? Icons.arrow_downward : Icons.arrow_upward,
+                                      size: 14,
+                                      color: WarnaAplikasi.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -585,18 +633,48 @@ class _LandScreenState extends State<LandScreen> {
                         ),
                       ),
                     )
+                  else if (displayed.isEmpty)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Column(
+                              children: [
+                                const Icon(Icons.filter_list_off_rounded, size: 40, color: WarnaAplikasi.textGray),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Tidak ada lahan dengan filter "${filterChips[_selectedFilterIndex]}".',
+                                  style: const TextStyle(color: WarnaAplikasi.textGray),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
                   else
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
-                            final item = _ItemLahans[index];
+                            final item = displayed[index];
                             final isAktif = item.status == StatusLahan.aktif;
-                            final tagColor = isAktif ? WarnaAplikasi.greenLight : WarnaAplikasi.warningOrangeBg;
-                            final tagTextColor = isAktif ? WarnaAplikasi.primary : WarnaAplikasi.warningOrange;
-                            final tagText = isAktif ? 'Aktif Ditanami' : (item.status == StatusLahan.persiapan ? 'Dalam Proses' : 'Masa Olah Tanah');
-                            final dotColor = isAktif ? WarnaAplikasi.successGreen : WarnaAplikasi.hppAmberBg;
+                            final isPersiapan = item.status == StatusLahan.persiapan;
+                            final tagColor = isAktif
+                                ? WarnaAplikasi.greenLight
+                                : (isPersiapan ? WarnaAplikasi.warningOrangeBg : WarnaAplikasi.bgInput);
+                            final tagTextColor = isAktif
+                                ? WarnaAplikasi.primary
+                                : (isPersiapan ? WarnaAplikasi.warningOrange : WarnaAplikasi.textGray);
+                            final tagText = isAktif
+                                ? 'Aktif Ditanami'
+                                : (isPersiapan ? 'Dalam Persiapan' : 'Masa Istirahat');
+                            final dotColor = isAktif
+                                ? WarnaAplikasi.successGreen
+                                : (isPersiapan ? WarnaAplikasi.hppAmberBg : WarnaAplikasi.textGrayLight);
 
                             return InkWell(
                               onTap: () {
@@ -713,7 +791,7 @@ class _LandScreenState extends State<LandScreen> {
                               ),
                             );
                           },
-                          childCount: _ItemLahans.length,
+                          childCount: displayed.length,
                         ),
                       ),
                     ),

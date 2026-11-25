@@ -7,7 +7,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
-import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/features/lahan/widgets/layar_pilih_titik_peta.dart';
@@ -40,11 +39,6 @@ class _EditLandScreenState extends State<EditLandScreen> {
   final List<Uint8List> _selectedImageBytesList = [];
   final List<String> _keptOldPhotos = [];
 
-  List<ItemKomoditas> _komoditasList = [];
-  bool _isLoadingKomoditas = true;
-  String? _komoditasError;
-  bool _commodityNotFoundInList = false;
-
   @override
   void initState() {
     super.initState();
@@ -70,7 +64,6 @@ class _EditLandScreenState extends State<EditLandScreen> {
     if (_keptOldPhotos.isEmpty && widget.item.fotoLahan != null && widget.item.fotoLahan!.trim().isNotEmpty) {
       _keptOldPhotos.add(widget.item.fotoLahan!);
     }
-    _loadKomoditas();
   }
 
   @override
@@ -123,57 +116,6 @@ class _EditLandScreenState extends State<EditLandScreen> {
     setState(() {
       _selectedAreaUnit = newUnit;
     });
-  }
-
-  Future<void> _loadKomoditas() async {
-    setState(() {
-      _isLoadingKomoditas = true;
-      _komoditasError = null;
-      _commodityNotFoundInList = false;
-    });
-
-    final service = LahanApiService();
-    final response = await service.getKomoditasList();
-
-    if (!mounted) return;
-
-    if (response.success && response.data != null) {
-      setState(() {
-        _komoditasList = response.data!;
-        _isLoadingKomoditas = false;
-
-        // Cek kecocokan komoditas lama
-        if (widget.item.idKomoditas != null && widget.item.idKomoditas!.isNotEmpty) {
-          final exists = _komoditasList.any((c) => c.idKomoditas == widget.item.idKomoditas);
-          if (exists) {
-            _selectedCropId = widget.item.idKomoditas;
-            _commodityNotFoundInList = false;
-          } else {
-            // ID lama tidak ditemukan di master komoditas aktif
-            _commodityNotFoundInList = true;
-            _selectedCropId = widget.item.idKomoditas;
-          }
-        } else if (widget.item.komoditas.isNotEmpty) {
-          // Fallback pencocokan berdasarkan nama jika idKomoditas null
-          final matchByName = _komoditasList.where(
-            (c) => c.namaKomoditas.toLowerCase() == widget.item.komoditas.toLowerCase(),
-          );
-          if (matchByName.isNotEmpty) {
-            _selectedCropId = matchByName.first.idKomoditas;
-            _commodityNotFoundInList = false;
-          } else {
-            _commodityNotFoundInList = true;
-          }
-        }
-      });
-    } else {
-      setState(() {
-        _isLoadingKomoditas = false;
-        _komoditasError = response.message.isNotEmpty
-            ? response.message
-            : 'Gagal memuat daftar komoditas.';
-      });
-    }
   }
 
   @override
@@ -507,170 +449,26 @@ class _EditLandScreenState extends State<EditLandScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Crop Dropdown
-              RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Komoditas / Tanaman ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
-              ])),
-              const SizedBox(height: 8),
-              if (_isLoadingKomoditas)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: WarnaAplikasi.border),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    children: [
-                      SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-                      SizedBox(width: 12),
-                      Text('Memuat daftar komoditas...', style: TextStyle(fontSize: 13, color: WarnaAplikasi.textGrayLight)),
-                    ],
-                  ),
-                )
-              else if (_komoditasError != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.red.shade300),
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.red.shade50,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _komoditasError!,
-                          style: const TextStyle(fontSize: 12, color: Colors.red),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _loadKomoditas,
-                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-                        child: const Text('Coba Lagi', style: TextStyle(fontSize: 12)),
-                      ),
-                    ],
-                  ),
-                )
-              else ...[
-                if (_commodityNotFoundInList) ...[
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.amber.shade300),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.info_outline, color: Colors.amber, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Komoditas saat ini "${widget.item.komoditas.isNotEmpty ? widget.item.komoditas : widget.item.idKomoditas}" tidak ada pada master komoditas aktif. Hubungi pengurus atau pilih komoditas baru dari daftar di bawah jika ingin menggantinya.',
-                            style: TextStyle(fontSize: 11, color: Colors.brown.shade800),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedCropId,
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      hint: const Text('Pilih komoditas'),
-                      items: [
-                        if (_commodityNotFoundInList && _selectedCropId != null)
-                          DropdownMenuItem<String>(
-                            value: _selectedCropId,
-                            child: Row(
-                              children: [
-                                const Icon(Icons.archive_outlined, color: Colors.amber, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${widget.item.komoditas.isNotEmpty ? widget.item.komoditas : _selectedCropId} (Arsip/Lama)',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.brown),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ..._komoditasList.map((e) => DropdownMenuItem(
-                          value: e.idKomoditas,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.eco_outlined, color: WarnaAplikasi.primaryLight, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  '${e.namaKomoditas} (${e.kategori})',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedCropId = val;
-                            if (_komoditasList.any((c) => c.idKomoditas == val)) {
-                              _commodityNotFoundInList = false;
-                            }
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-
-              // Season Dropdown
-              RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Musim Tanam ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
-              ])),
-              const SizedBox(height: 8),
+              // Info Banner: Informasi Penanaman
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(border: Border.all(color: WarnaAplikasi.border), borderRadius: BorderRadius.circular(12)),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedSeason,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: {
-                      _selectedSeason,
-                      'MT-1 (Musim Hujan)',
-                      'MT-2 (Kemarau I)',
-                      'MT-3 (Kemarau II)',
-                    }.map((e) => DropdownMenuItem(value: e, child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined, color: WarnaAplikasi.textGray, size: 18),
-                        const SizedBox(width: 8),
-                        Text(e),
-                      ],
-                    ))).toList(),
-                    onChanged: (v) {
-                      if (v != null) {
-                        setState(() => _selectedSeason = v);
-                      }
-                    },
-                  ),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.greenLight.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: WarnaAplikasi.greenPill),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Icon(Icons.info_outline, color: WarnaAplikasi.primary, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Komoditas, varietas, dan musim tanam operasional dikelola secara terpusat melalui fitur Siklus Tanam pada halaman Detail Lahan.',
+                        style: TextStyle(fontSize: 11, color: WarnaAplikasi.primaryDark, height: 1.3),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
@@ -1168,16 +966,6 @@ class _EditLandScreenState extends State<EditLandScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Silakan masukkan alamat / lokasi petak lahan.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (_selectedCropId == null || _selectedCropId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan pilih komoditas / tanaman terlebih dahulu.'),
           behavior: SnackBarBehavior.floating,
         ),
       );

@@ -206,12 +206,159 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildVerificationAlert() {
+    if (_currentItem.status == HarvestStatus.disetujui) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: WarnaAplikasi.bgPaleGreen2,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: WarnaAplikasi.greenPill),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: WarnaAplikasi.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: WarnaAplikasi.greenPill,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Telah Diverifikasi',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: WarnaAplikasi.greenText,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _currentItem.validatedAt,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: WarnaAplikasi.textGrayGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Divalidasi oleh: ${_currentItem.validatedBy.isNotEmpty ? _currentItem.validatedBy : "Pengurus Poktan"}.',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: WarnaAplikasi.grayGreenDark,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_currentItem.status == HarvestStatus.ditolak) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Perlu Perbaikan / Ditolak',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _currentItem.validatedAt,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _currentItem.validatedNotes != null && _currentItem.validatedNotes!.isNotEmpty
+                        ? 'Catatan Pengurus: "${_currentItem.validatedNotes}". Silakan ketuk tombol edit untuk mengajukan revisi.'
+                        : 'Catatan panen ini ditolak pengurus poktan. Silakan periksa kembali dan ajukan perbaikan.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.red.shade900,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Status Menunggu
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: WarnaAplikasi.bgPaleGreen2,
+        color: WarnaAplikasi.warningOrange.withOpacity(0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: WarnaAplikasi.greenPill),
+        border: Border.all(color: WarnaAplikasi.warningOrange.withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,11 +366,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(
-              color: WarnaAplikasi.primary,
+              color: WarnaAplikasi.warningOrange,
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.check_rounded,
+              Icons.hourglass_top_rounded,
               size: 13,
               color: Colors.white,
             ),
@@ -233,39 +380,27 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.greenPill,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'Telah Diverifikasi',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.greenText,
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: WarnaAplikasi.warningOrange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Menunggu Verifikasi',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: WarnaAplikasi.warningOrange,
                     ),
-                    Text(
-                      _currentItem.validatedAt,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: WarnaAplikasi.textGrayGreen,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Divalidasi oleh: ${_currentItem.validatedBy} langsung di timbangan panen.',
-                  style: const TextStyle(
+                const Text(
+                  'Catatan panen ini telah diajukan dan sedang menunggu verifikasi dari pengurus poktan.',
+                  style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.grayGreenDark,
+                    color: WarnaAplikasi.textDarkGreen,
                     height: 1.3,
                   ),
                 ),
@@ -342,20 +477,44 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0x33FFFFFF),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_currentItem.isLegacy) ...[
+                    Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amberAccent),
+                      ),
+                      child: const Text(
+                        'Legacy',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amberAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0x33FFFFFF),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -955,57 +1114,110 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       ),
       child: Row(
         children: [
-          // Cetak Bukti PDF
-          Expanded(
-            child: SizedBox(
-              height: 46,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Menyiapkan berkas Cetak Bukti PDF...'),
-                      behavior: SnackBarBehavior.floating,
+          if (_currentItem.status == HarvestStatus.ditolak) ...[
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: _openEditScreen,
+                  icon: const Icon(Icons.replay_rounded, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Ajukan Revisi Panen',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
-                  );
-                },
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
-                label: const Text(
-                  'Cetak Bukti PDF',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: WarnaAplikasi.warningOrange,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: WarnaAplikasi.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  elevation: 0,
+              ),
+            ),
+          ] else ...[
+            // Cetak Bukti PDF
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Menyiapkan berkas Cetak Bukti PDF...'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Cetak Bukti PDF',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: WarnaAplikasi.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
           const SizedBox(width: 10),
 
-          // Edit Button (pencil)
-          InkWell(
-            onTap: _openEditScreen,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.bgPaleGreen2,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: WarnaAplikasi.greenPill),
+          // Edit Button
+          if (_currentItem.status == HarvestStatus.disetujui)
+            InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Catatan panen yang telah disetujui Poktan telah terkunci dan tidak dapat diedit.'),
+                    backgroundColor: WarnaAplikasi.primaryDark,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: const Icon(
+                  Icons.lock_outline_rounded,
+                  color: Colors.grey,
+                  size: 20,
+                ),
               ),
-              child: const Icon(
-                Icons.edit_outlined,
-                color: WarnaAplikasi.primary,
-                size: 20,
+            )
+          else
+            InkWell(
+              onTap: _openEditScreen,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.bgPaleGreen2,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: WarnaAplikasi.greenPill),
+                ),
+                child: const Icon(
+                  Icons.edit_outlined,
+                  color: WarnaAplikasi.primary,
+                  size: 20,
+                ),
               ),
             ),
-          ),
           const SizedBox(width: 8),
 
           // Delete Button (trash)

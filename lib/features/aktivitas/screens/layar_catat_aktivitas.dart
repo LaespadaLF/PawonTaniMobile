@@ -8,18 +8,21 @@ import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart
 import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
 import 'package:pawon_mobile/features/aktivitas/widgets/dialog_sukses_aktivitas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/models/item_siklus_tanam.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 
 class RecordActivityScreen extends StatefulWidget {
   final Function(PlantActivityItem)? onSave;
   final String? initialLahanId;
   final String? initialLahanName;
+  final ItemSiklusTanam? initialSiklus;
 
   const RecordActivityScreen({
     super.key,
     this.onSave,
     this.initialLahanId,
     this.initialLahanName,
+    this.initialSiklus,
   });
 
   @override
@@ -35,6 +38,10 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   ItemLahan? _selectedItemLahan;
   bool _isLoadingLahan = true;
   bool _isSaving = false;
+
+  // Siklus Tanam selection & validation (Phase 3)
+  ItemSiklusTanam? _activeSiklus;
+  bool _isLoadingSiklus = false;
 
   // Date & Time (Default to Now)
   DateTime _selectedDate = DateTime.now();
@@ -67,6 +74,9 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
         status: StatusLahan.aktif,
       );
     }
+    if (widget.initialSiklus != null) {
+      _activeSiklus = widget.initialSiklus;
+    }
     _fetchLahanList();
   }
 
@@ -74,6 +84,20 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchSiklusForSelectedLahan(String lahanId) async {
+    setState(() => _isLoadingSiklus = true);
+    try {
+      final response = await _lahanService.getSiklusBerjalan(lahanId);
+      if (!mounted) return;
+      setState(() {
+        _activeSiklus = response.data;
+        _isLoadingSiklus = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSiklus = false);
+    }
   }
 
   Future<void> _fetchLahanList() async {
@@ -103,6 +127,12 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
         _selectedItemLahan = preselected;
         _isLoadingLahan = false;
       });
+
+      if (widget.initialSiklus != null && preselected?.id == widget.initialLahanId) {
+        setState(() => _activeSiklus = widget.initialSiklus);
+      } else if (preselected != null) {
+        _fetchSiklusForSelectedLahan(preselected.id);
+      }
     } else {
       setState(() {
         _isLoadingLahan = false;
@@ -240,11 +270,34 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
       return;
     }
 
+    if (_activeSiklus == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Petak lahan belum memiliki siklus tanam aktif. Silakan mulai siklus tanam terlebih dahulu.'),
+          backgroundColor: WarnaAplikasi.errorRedDark,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (!_activeSiklus!.isAktif) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Siklus tanam sedang ${_activeSiklus!.statusLabel} dan tidak dapat menerima aktivitas baru.'),
+          backgroundColor: WarnaAplikasi.errorRedDark,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
       final payload = <String, dynamic>{
         'id_lahan': _selectedItemLahan!.id,
+        'id_siklus': _activeSiklus!.idSiklus,
         'kategori': _selectedCategory.name,
         'judul': _selectedCategory.label,
         'kondisi_tanaman': _selectedCondition.name,
@@ -466,6 +519,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                   ),
                 ),
               ),
+            _buildSiklusBanner(),
             const SizedBox(height: 20),
 
             // 2. Tanggal & Waktu
@@ -768,6 +822,155 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
     );
   }
 
+  Widget _buildSiklusBanner() {
+    if (_isLoadingSiklus) {
+      return Container(
+        margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: WarnaAplikasi.primaryBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: WarnaAplikasi.borderField),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Memeriksa status siklus tanam aktif...',
+              style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayGreen),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_activeSiklus == null) {
+      return Container(
+        margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: WarnaAplikasi.bgErrorLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: WarnaAplikasi.errorBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: WarnaAplikasi.errorRedDark, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Belum Ada Siklus Tanam Aktif',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.errorRedDark),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Aktivitas pertanian harus terikat pada siklus tanam yang aktif. Silakan mulai siklus tanam terlebih dahulu di menu Detail Lahan.',
+                    style: TextStyle(fontSize: 11, color: WarnaAplikasi.errorRedDark, height: 1.3),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!_activeSiklus!.isAktif) {
+      return Container(
+        margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: WarnaAplikasi.statusTempoBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: WarnaAplikasi.warningOrange.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.info_outline_rounded, color: WarnaAplikasi.warningOrange, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Siklus Berstatus ${_activeSiklus!.statusLabel}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.warningOrange),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Siklus ini sedang dalam proses pengakhiran dan tidak dapat menerima aktivitas baru.',
+                    style: TextStyle(fontSize: 11, color: WarnaAplikasi.textDarkGrayGreen, height: 1.3),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Active cycle
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: WarnaAplikasi.greenLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: WarnaAplikasi.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.eco_rounded, color: WarnaAplikasi.primary, size: 16),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Siklus Aktif: ${_activeSiklus!.komoditasNama.isNotEmpty ? _activeSiklus!.komoditasNama : (_selectedItemLahan?.komoditas ?? "Pertanian")}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  'Mulai: ${_activeSiklus!.tanggalMulaiFormatted} • Target: ${_activeSiklus!.targetPanenTon != null ? "${_activeSiklus!.targetPanenTon} ton" : "-"}',
+                  style: const TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGrayGreen),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: WarnaAplikasi.bgSuccessLight,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              'Aktif',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFieldLabel(String label) {
     return Text(
       label,
@@ -919,6 +1122,7 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                       _selectedItemLahan = lahan;
                     });
                     Navigator.pop(context);
+                    _fetchSiklusForSelectedLahan(lahan.id);
                   },
                 );
               }),

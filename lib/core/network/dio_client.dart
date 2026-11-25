@@ -140,6 +140,31 @@ class DioClient {
     }
   }
 
+  /// Request HTTP PATCH terstruktur
+  Future<ApiResponse<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    T Function(dynamic json)? fromJson,
+  }) async {
+    try {
+      final response = await _dio.patch(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken,
+      );
+      return _handleSuccess(response, fromJson);
+    } on DioException catch (e) {
+      return _handleError<T>(e);
+    } catch (e) {
+      return ApiResponse.error(message: 'Terjadi kesalahan tidak terduga: $e');
+    }
+  }
+
   /// Request HTTP DELETE terstruktur
   Future<ApiResponse<T>> delete<T>(
     String path, {
