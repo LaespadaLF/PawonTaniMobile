@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/artikel/models/item_artikel.dart';
+import 'package:pawon_mobile/features/artikel/screens/layar_daftar_edukasi.dart';
+import 'package:pawon_mobile/features/artikel/screens/layar_detail_artikel.dart';
 import 'package:pawon_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:pawon_mobile/features/beranda/models/beranda_ringkasan_model.dart';
 import 'package:pawon_mobile/features/beranda/services/beranda_api_service.dart';
@@ -166,7 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // 5. Informasi & Panduan Pertanian
                 HomeArticlesSection(
-                  onAllTap: () => widget.onNavigateTab?.call(5),
+                  onAllTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LayarDaftarEdukasi()),
+                    );
+                  },
                   onArticleTap: (article) => _showArticleDetail(context, article),
                 ),
                 const SizedBox(height: 20),
@@ -589,23 +596,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showArticleDetail(BuildContext context, ArticleItem article) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(article.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-            const SizedBox(height: 8),
-            Text(article.category, style: const TextStyle(fontSize: 12, color: WarnaAplikasi.primary, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            Text(article.summary ?? 'Panduan pertanian praktis untuk petani.', style: const TextStyle(fontSize: 13, color: WarnaAplikasi.textGray)),
-          ],
-        ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LayarDetailArtikel(article: article),
       ),
     );
   }
