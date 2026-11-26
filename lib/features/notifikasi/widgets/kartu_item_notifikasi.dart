@@ -47,18 +47,25 @@ class NotificationItemCard extends StatelessWidget {
         iconBgColor = WarnaAplikasi.bgPaleGreen2;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final normalCardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final unreadCardBg = isDark ? const Color(0xFF283A2E) : const Color(0xFFF1F8F4);
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final bodyColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isUnread ? const Color(0xFFF1F8F4) : Colors.white,
+        color: isUnread ? unreadCardBg : normalCardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isUnread ? WarnaAplikasi.primary.withAlpha(50) : WarnaAplikasi.borderPale,
+          color: isUnread ? WarnaAplikasi.primary.withAlpha(isDark ? 100 : 50) : borderColor,
           width: isUnread ? 1.2 : 0.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(isUnread ? 8 : 4),
+            color: Colors.black.withAlpha(isDark ? 20 : (isUnread ? 8 : 4)),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -107,7 +114,7 @@ class NotificationItemCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
-                                color: WarnaAplikasi.primaryDark,
+                                color: titleColor,
                                 height: 1.2,
                               ),
                               maxLines: 2,
@@ -132,7 +139,7 @@ class NotificationItemCard extends StatelessWidget {
                         item.pesan,
                         style: TextStyle(
                           fontSize: 12.2,
-                          color: isUnread ? const Color(0xFF333333) : WarnaAplikasi.textGray,
+                          color: bodyColor,
                           height: 1.35,
                         ),
                         maxLines: 3,

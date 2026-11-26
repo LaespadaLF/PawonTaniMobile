@@ -19,6 +19,9 @@ class HomeQuickActionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,12 +29,12 @@ class HomeQuickActionsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Aksi Cepat',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: WarnaAplikasi.primaryDark,
+                color: headerColor,
               ),
             ),
             InkWell(
@@ -107,13 +110,19 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1E2820) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF2C3E32) : WarnaAplikasi.borderPale;
+    final iconBoxBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.bgPaleGreen2;
+    final labelColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+
     return Container(
       height: 98,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: WarnaAplikasi.borderPale,
+          color: borderColor,
           width: 1,
         ),
         boxShadow: const [
@@ -139,14 +148,14 @@ class _QuickActionButton extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.bgPaleGreen2,
+                    color: iconBoxBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Icon(
                       icon,
                       size: 20,
-                      color: WarnaAplikasi.primary,
+                      color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary,
                     ),
                   ),
                 ),
@@ -157,10 +166,10 @@ class _QuickActionButton extends StatelessWidget {
                   label,
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.primaryDark,
+                    color: labelColor,
                     height: 1.15,
                   ),
                 ),

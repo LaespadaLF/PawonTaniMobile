@@ -13,6 +13,13 @@ class LayarDetailArtikel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final bodyTextColor = isDark ? const Color(0xFFE2E9E4) : const Color(0xFF2D3748);
+    final leadBg = isDark ? const Color(0xFF1D2420) : WarnaAplikasi.bgPaleGreen3;
+    final leadBorder = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale2;
+    final leadTextColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textDarkGreen;
+
     Color badgeBg;
     Color badgeTextColor;
 
@@ -33,7 +40,7 @@ class LayarDetailArtikel extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       appBar: PawonFormHeader(
         title: 'Detail Edukasi',
         subtitle: 'Baca panduan & artikel pertanian',
@@ -102,10 +109,10 @@ class LayarDetailArtikel extends StatelessWidget {
                   // Judul
                   Text(
                     article.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                       height: 1.3,
                     ),
                   ),
@@ -119,10 +126,10 @@ class LayarDetailArtikel extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           'Komoditas: ${article.commodityName}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: WarnaAplikasi.primary,
+                            color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                           ),
                         ),
                       ],
@@ -130,7 +137,7 @@ class LayarDetailArtikel extends StatelessWidget {
                   ],
 
                   const SizedBox(height: 16),
-                  const Divider(color: WarnaAplikasi.borderField),
+                  Divider(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField),
                   const SizedBox(height: 14),
 
                   // Ringkasan (Lead) jika ada
@@ -139,16 +146,16 @@ class LayarDetailArtikel extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: WarnaAplikasi.bgPaleGreen3,
+                        color: leadBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: WarnaAplikasi.borderPale2),
+                        border: Border.all(color: leadBorder),
                       ),
                       child: Text(
                         article.summary!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
-                          color: WarnaAplikasi.textDarkGreen,
+                          color: leadTextColor,
                           height: 1.5,
                         ),
                       ),
@@ -159,9 +166,9 @@ class LayarDetailArtikel extends StatelessWidget {
                   // Isi Konten Lengkap
                   Text(
                     _formatContent(article.content ?? article.summary ?? 'Belum ada konten detail untuk artikel ini.'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14.5,
-                      color: Color(0xFF2D3748),
+                      color: bodyTextColor,
                       height: 1.7,
                     ),
                   ),

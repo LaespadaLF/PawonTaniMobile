@@ -73,6 +73,9 @@ class _HomeArticlesSectionState extends State<HomeArticlesSection> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -80,12 +83,12 @@ class _HomeArticlesSectionState extends State<HomeArticlesSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Informasi & Panduan Pertanian',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: WarnaAplikasi.primaryDark,
+                color: headerColor,
               ),
             ),
             InkWell(
@@ -204,18 +207,24 @@ class _ArticleCard extends StatelessWidget {
         break;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         width: 240,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: WarnaAplikasi.borderField),
+          border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -270,10 +279,10 @@ class _ArticleCard extends StatelessWidget {
                     item.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                       height: 1.3,
                     ),
                   ),
@@ -282,17 +291,17 @@ class _ArticleCard extends StatelessWidget {
                   // Read Time
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.access_time_rounded,
                         size: 13,
-                        color: WarnaAplikasi.textGray,
+                        color: subtitleColor,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         item.readTime,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: WarnaAplikasi.textGray,
+                          color: subtitleColor,
                         ),
                       ),
                     ],

@@ -35,6 +35,9 @@ class HomeFarmSummarySection extends StatelessWidget {
         : 'dari $totalLahanVal total lahan';
     final aktivitasVal = statistik != null ? '${statistik!.totalAktivitas}' : '0';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -42,12 +45,12 @@ class HomeFarmSummarySection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Ringkasan Pertanian',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: WarnaAplikasi.primaryDark,
+                color: headerColor,
               ),
             ),
             InkWell(
@@ -163,13 +166,21 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1E2820) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF2C3E32) : WarnaAplikasi.borderPale;
+    final valColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final titleColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final subColor = isDark ? Colors.grey.shade400 : WarnaAplikasi.textGray;
+    final iconBoxBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight;
+
     return Container(
       constraints: const BoxConstraints(minHeight: 128),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: WarnaAplikasi.borderPale,
+          color: borderColor,
           width: 1,
         ),
         boxShadow: const [
@@ -198,7 +209,7 @@ class _StatCard extends StatelessWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: WarnaAplikasi.greenLight,
+                        color: iconBoxBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(child: iconWidget),
@@ -216,20 +227,20 @@ class _StatCard extends StatelessWidget {
                   children: [
                     Text(
                       value,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: WarnaAplikasi.primaryDark,
+                        color: valColor,
                         letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: WarnaAplikasi.primaryDark,
+                        color: titleColor,
                       ),
                     ),
                     if (subtitle != null) ...[
@@ -238,10 +249,10 @@ class _StatCard extends StatelessWidget {
                         subtitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w400,
-                          color: WarnaAplikasi.textGray,
+                          color: subColor,
                         ),
                       ),
                     ],
@@ -263,14 +274,19 @@ class _ConditionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final boxBg = isDark ? const Color(0xFF1E2820) : WarnaAplikasi.greenLight;
+    final titleColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final subColor = isDark ? Colors.grey.shade400 : WarnaAplikasi.textGray;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: WarnaAplikasi.greenLight,
+        color: boxBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: WarnaAplikasi.primary.withValues(alpha: 0.15),
+          color: isDark ? const Color(0xFF2C3E32) : WarnaAplikasi.primary.withValues(alpha: 0.15),
           width: 1,
         ),
       ),
@@ -290,7 +306,7 @@ class _ConditionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -299,15 +315,15 @@ class _ConditionCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.primaryDark,
+                    color: titleColor,
                   ),
                 ),
-                SizedBox(height: 1),
+                const SizedBox(height: 1),
                 Text(
                   'Semua lahan terpantau normal dan aktif.',
                   style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.textGray,
+                    color: subColor,
                   ),
                 ),
               ],
@@ -315,7 +331,7 @@ class _ConditionCard extends StatelessWidget {
           ),
           if (onTap != null)
             IconButton(
-              icon: const Icon(Icons.info_outline_rounded, size: 18, color: WarnaAplikasi.primary),
+              icon: Icon(Icons.info_outline_rounded, size: 18, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary),
               onPressed: onTap,
             ),
         ],

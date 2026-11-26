@@ -164,7 +164,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WarnaAplikasi.bgPage,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -202,13 +202,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   }
 
   Widget _buildProductBanner() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final p = widget.sourceProduct!;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: WarnaAplikasi.greenLight,
+        color: isDark ? const Color(0xFF1D2420) : WarnaAplikasi.greenLight,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.border),
       ),
       child: Row(
         children: [
@@ -216,9 +217,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF283A2E) : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: WarnaAplikasi.border),
+              border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.border),
             ),
             child: const Center(child: Text('🌾', style: TextStyle(fontSize: 22))),
           ),
@@ -229,14 +230,22 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
               children: [
                 Text(
                   p.namaProduk,
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primaryDark),
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Stok Tersedia: ${p.stokTersedia} ${p.satuan} &bull; Harga Listing: ${p.hargaFormatted}',
-                  style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textMedium, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textMedium,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -247,28 +256,36 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   }
 
   Widget _buildTransactionDetailsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final labelColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final summaryBoxBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPaleGreen;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Detail Komoditas & Volume',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor),
           ),
           const SizedBox(height: 14),
 
           // Nama Produk / Snapshot
-          const Text('Nama Produk / Komoditas *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          Text('Nama Produk / Komoditas *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
           const SizedBox(height: 6),
           TextFormField(
             controller: _namaProdukController,
-            decoration: _inputDecoration(hint: 'Nama produk hasil panen'),
+            style: TextStyle(color: titleColor),
+            decoration: _inputDecoration(hint: 'Nama produk hasil panen', isDark: isDark),
             validator: (v) => v == null || v.trim().isEmpty ? 'Nama produk wajib diisi' : null,
           ),
           const SizedBox(height: 14),
@@ -281,12 +298,13 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Volume (${widget.sourceProduct?.satuan ?? 'Kg'}) *',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _volumeController,
+                      style: TextStyle(color: titleColor),
                       keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(hint: '0'),
+                      decoration: _inputDecoration(hint: '0', isDark: isDark),
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
                         final val = double.tryParse(v ?? '');
@@ -302,14 +320,15 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Harga Aktual (Rp) *',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+                    Text('Harga Aktual (Rp) *',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _hargaSatuanController,
+                      style: TextStyle(color: titleColor),
                       keyboardType: TextInputType.number,
                       inputFormatters: [CurrencyInputFormatter()],
-                      decoration: _inputDecoration(hint: '0', prefixText: 'Rp '),
+                      decoration: _inputDecoration(hint: '0', prefixText: 'Rp ', isDark: isDark),
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
                         final val = CurrencyInputFormatter.parse(v ?? '');
@@ -328,20 +347,24 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen,
+              color: summaryBoxBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: WarnaAplikasi.border),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Total Nilai Transaksi:',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: titleColor),
                 ),
                 Text(
                   _formatRupiah(_totalHarga),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: WarnaAplikasi.primary),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
+                  ),
                 ),
               ],
             ),
@@ -352,19 +375,25 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   }
 
   Widget _buildPaymentSectionCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final labelColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Skema Pembayaran',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor),
           ),
           const SizedBox(height: 12),
 
@@ -379,10 +408,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: _tipePembayaran == 'lunas' ? WarnaAplikasi.statusLunasBg : Colors.transparent,
+                      color: _tipePembayaran == 'lunas'
+                          ? (isDark ? const Color(0xFF283A2E) : WarnaAplikasi.statusLunasBg)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _tipePembayaran == 'lunas' ? WarnaAplikasi.statusLunasText : WarnaAplikasi.border,
+                        color: _tipePembayaran == 'lunas'
+                            ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.statusLunasText)
+                            : borderColor,
                       ),
                     ),
                     child: Text(
@@ -390,7 +423,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: _tipePembayaran == 'lunas' ? FontWeight.w700 : FontWeight.w500,
-                        color: _tipePembayaran == 'lunas' ? WarnaAplikasi.statusLunasText : WarnaAplikasi.textGray,
+                        color: _tipePembayaran == 'lunas'
+                            ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.statusLunasText)
+                            : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
                       ),
                     ),
                   ),
@@ -405,10 +440,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: _tipePembayaran == 'dp' ? WarnaAplikasi.statusUangMukaBg : Colors.transparent,
+                      color: _tipePembayaran == 'dp'
+                          ? (isDark ? const Color(0xFF332B1A) : WarnaAplikasi.statusUangMukaBg)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _tipePembayaran == 'dp' ? WarnaAplikasi.statusUangMukaText : WarnaAplikasi.border,
+                        color: _tipePembayaran == 'dp'
+                            ? (isDark ? Colors.amberAccent : WarnaAplikasi.statusUangMukaText)
+                            : borderColor,
                       ),
                     ),
                     child: Text(
@@ -416,7 +455,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: _tipePembayaran == 'dp' ? FontWeight.w700 : FontWeight.w500,
-                        color: _tipePembayaran == 'dp' ? WarnaAplikasi.statusUangMukaText : WarnaAplikasi.textGray,
+                        color: _tipePembayaran == 'dp'
+                            ? (isDark ? Colors.amberAccent : WarnaAplikasi.statusUangMukaText)
+                            : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
                       ),
                     ),
                   ),
@@ -427,13 +468,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
           const SizedBox(height: 14),
 
           if (_tipePembayaran == 'dp') ...[
-            const Text('Nominal DP Diterima (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+            Text('Nominal DP Diterima (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
             const SizedBox(height: 6),
             TextFormField(
               controller: _nominalDpController,
+              style: TextStyle(color: titleColor),
               keyboardType: TextInputType.number,
               inputFormatters: [CurrencyInputFormatter()],
-              decoration: _inputDecoration(hint: 'Misal: 500.000', prefixText: 'Rp '),
+              decoration: _inputDecoration(hint: 'Misal: 500.000', prefixText: 'Rp ', isDark: isDark),
               onChanged: (_) => setState(() {}),
               validator: (v) {
                 if (_tipePembayaran == 'dp') {
@@ -449,15 +491,15 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: WarnaAplikasi.warningOrangeBg,
+                color: isDark ? const Color(0xFF332515) : WarnaAplikasi.warningOrangeBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: WarnaAplikasi.warningOrange.withValues(alpha: 0.3)),
+                border: Border.all(color: (isDark ? Colors.orangeAccent : WarnaAplikasi.warningOrange).withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Sisa Tagihan Pelunasan:', style: TextStyle(fontSize: 12, color: WarnaAplikasi.warningOrange, fontWeight: FontWeight.w600)),
-                  Text(_formatRupiah(_sisaDp > 0 ? _sisaDp : 0), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: WarnaAplikasi.warningOrange)),
+                  Text('Sisa Tagihan Pelunasan:', style: TextStyle(fontSize: 12, color: isDark ? Colors.orangeAccent : WarnaAplikasi.warningOrange, fontWeight: FontWeight.w600)),
+                  Text(_formatRupiah(_sisaDp > 0 ? _sisaDp : 0), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isDark ? Colors.orangeAccent : WarnaAplikasi.warningOrange)),
                 ],
               ),
             ),
@@ -465,11 +507,13 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
           ],
 
           // Metode Pembayaran
-          const Text('Metode Penerimaan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          Text('Metode Penerimaan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             value: _metodePembayaran,
-            decoration: _inputDecoration(hint: 'Metode'),
+            dropdownColor: isDark ? const Color(0xFF1D2420) : Colors.white,
+            style: TextStyle(color: titleColor, fontSize: 13),
+            decoration: _inputDecoration(hint: 'Metode', isDark: isDark),
             items: const [
               DropdownMenuItem(value: 'transfer_bri', child: Text('Transfer Bank BRI')),
               DropdownMenuItem(value: 'transfer_bank_lain', child: Text('Transfer Bank Lain')),
@@ -486,46 +530,55 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   }
 
   Widget _buildBuyerDetailsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final labelColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Informasi Pembeli & Catatan',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor),
           ),
           const SizedBox(height: 14),
 
-          const Text('Nama Pembeli / Mitra *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          Text('Nama Pembeli / Mitra *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
           const SizedBox(height: 6),
           TextFormField(
             controller: _namaPembeliController,
-            decoration: _inputDecoration(hint: 'Nama pembeli / pedagang / koperasi'),
+            style: TextStyle(color: titleColor),
+            decoration: _inputDecoration(hint: 'Nama pembeli / pedagang / koperasi', isDark: isDark),
             validator: (v) => v == null || v.trim().isEmpty ? 'Nama pembeli wajib diisi' : null,
           ),
           const SizedBox(height: 12),
 
-          const Text('No. WhatsApp Pembeli (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          Text('No. WhatsApp Pembeli (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
           const SizedBox(height: 6),
           TextFormField(
             controller: _teleponPembeliController,
+            style: TextStyle(color: titleColor),
             keyboardType: TextInputType.phone,
-            decoration: _inputDecoration(hint: '0812xxxxxxxx'),
+            decoration: _inputDecoration(hint: '0812xxxxxxxx', isDark: isDark),
           ),
           const SizedBox(height: 12),
 
-          const Text('Catatan Transaksi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
+          Text('Catatan Transaksi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: labelColor)),
           const SizedBox(height: 6),
           TextFormField(
             controller: _catatanController,
+            style: TextStyle(color: titleColor),
             maxLines: 2,
-            decoration: _inputDecoration(hint: 'Contoh: Diambil hari Rabu, timbangan petak B...'),
+            decoration: _inputDecoration(hint: 'Contoh: Diambil hari Rabu, timbangan petak B...', isDark: isDark),
           ),
         ],
       ),
@@ -559,25 +612,27 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, String? prefixText}) {
+  InputDecoration _inputDecoration({required String hint, String? prefixText, bool isDark = false}) {
+    final borderSide = BorderSide(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.border);
     return InputDecoration(
       hintText: hint,
       prefixText: prefixText,
-      hintStyle: const TextStyle(fontSize: 13, color: WarnaAplikasi.textGrayLight),
+      prefixStyle: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark, fontWeight: FontWeight.w600),
+      hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF6B7F73) : WarnaAplikasi.textGrayLight),
       filled: true,
-      fillColor: WarnaAplikasi.bgInput,
+      fillColor: isDark ? const Color(0xFF141916) : WarnaAplikasi.bgInput,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: WarnaAplikasi.border),
+        borderSide: borderSide,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: WarnaAplikasi.border),
+        borderSide: borderSide,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5),
+        borderSide: BorderSide(color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

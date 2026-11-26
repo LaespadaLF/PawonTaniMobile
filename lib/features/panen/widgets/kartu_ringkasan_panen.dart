@@ -25,6 +25,7 @@ class HarvestSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final totalText = formatTon(totalTon, decimals: 1);
     final badgeText =
         seasonName.trim().isEmpty ? 'Musim Tanam Berjalan' : seasonName.trim();
@@ -33,13 +34,16 @@ class HarvestSummaryCard extends StatelessWidget {
         .where((e) => e.value > 0)
         .toList();
 
+    final cardBg = isDark ? const Color(0xFF1D2420) : WarnaAplikasi.bgSuccessPale;
+    final cardBorder = isDark ? const Color(0xFF28332C) : WarnaAplikasi.greenPill;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: WarnaAplikasi.bgSuccessPale,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: WarnaAplikasi.greenPill,
+          color: cardBorder,
           width: 1,
         ),
       ),
@@ -52,7 +56,7 @@ class HarvestSummaryCard extends StatelessWidget {
             bottom: 24,
             width: 90,
             child: Opacity(
-              opacity: 0.6,
+              opacity: isDark ? 0.25 : 0.6,
               child: CustomPaint(
                 painter: DecorativeLeavesPainter(),
               ),
@@ -66,7 +70,7 @@ class HarvestSummaryCard extends StatelessWidget {
                 // Top row: Title and Season Badge
                 Row(
                   children: [
-                    const Flexible(
+                    Flexible(
                       child: Text(
                         'Total Hasil Panen',
                         maxLines: 1,
@@ -74,7 +78,7 @@ class HarvestSummaryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: WarnaAplikasi.textGrayGreenMedium,
+                          color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreenMedium,
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -87,20 +91,20 @@ class HarvestSummaryCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: WarnaAplikasi.seasonBadgeBg,
+                          color: isDark ? const Color(0xFF243328) : WarnaAplikasi.seasonBadgeBg,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: WarnaAplikasi.seasonBadgeBorder,
+                            color: isDark ? const Color(0xFF2E4033) : WarnaAplikasi.seasonBadgeBorder,
                             width: 0.8,
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.calendar_month_outlined,
                               size: 13,
-                              color: WarnaAplikasi.primary,
+                              color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                             ),
                             const SizedBox(width: 5),
                             Flexible(
@@ -108,10 +112,10 @@ class HarvestSummaryCard extends StatelessWidget {
                                 badgeText,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: WarnaAplikasi.primary,
+                                  color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                                 ),
                               ),
                             ),
@@ -129,20 +133,20 @@ class HarvestSummaryCard extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: totalText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.w800,
-                          color: WarnaAplikasi.primaryDark,
+                          color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
                           letterSpacing: -1.0,
                           height: 1.1,
                         ),
                       ),
-                      const TextSpan(
+                      TextSpan(
                         text: ' Ton',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.primaryDark,
+                          color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
                         ),
                       ),
                     ],
@@ -163,14 +167,14 @@ class HarvestSummaryCard extends StatelessWidget {
                       final isPadi = cName.toLowerCase().contains('padi');
 
                       IconData icon = Icons.eco_rounded;
-                      Color iconColor = WarnaAplikasi.primaryDark;
+                      Color iconColor = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primaryDark;
 
                       if (isJagung) {
                         icon = Icons.bolt_rounded;
                         iconColor = WarnaAplikasi.jagungAmber;
                       } else if (isPadi) {
                         icon = Icons.grass_rounded;
-                        iconColor = WarnaAplikasi.padiGreenIcon;
+                        iconColor = isDark ? const Color(0xFF81C784) : WarnaAplikasi.padiGreenIcon;
                       }
 
                       return Row(
@@ -183,18 +187,18 @@ class HarvestSummaryCard extends StatelessWidget {
                               children: [
                                 TextSpan(
                                   text: '$cName: ',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: WarnaAplikasi.textGray,
+                                    color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 TextSpan(
                                   text: '$cTon Ton',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: WarnaAplikasi.textDarkGreenMuted,
+                                    color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreenMuted,
                                   ),
                                 ),
                               ],

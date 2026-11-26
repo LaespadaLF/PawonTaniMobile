@@ -284,8 +284,16 @@ class _AddLandScreenState extends State<AddLandScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final hintColor = isDark ? const Color(0xFF627B6C) : WarnaAplikasi.textGrayLight;
+    final bannerBg = isDark ? const Color(0xFF1B261F) : WarnaAplikasi.greenLight;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       appBar: const PawonFormHeader(
         title: 'Tambah Lahan',
         subtitle: 'Daftarkan petak garapanmu untuk pemantauan',
@@ -297,33 +305,37 @@ class _AddLandScreenState extends State<AddLandScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               
-              const Text('Informasi Lahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+              Text('Informasi Lahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleColor)),
               const SizedBox(height: 16),
               
               // Name
-              RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Nama / Penamaan Petak ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+              RichText(text: TextSpan(children: [
+                TextSpan(text: 'Nama / Penamaan Petak ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+                const TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
               TextField(
                 controller: _nameController,
+                style: TextStyle(fontSize: 13, color: titleColor),
                 decoration: InputDecoration(
                   hintText: 'Contoh: Petak Sawah Barat',
-                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  hintStyle: TextStyle(fontSize: 12, color: hintColor),
+                  filled: true,
+                  fillColor: cardBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
               const SizedBox(height: 4),
-              const Text('Gunakan nama yang mudah dibedakan.', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+              Text('Gunakan nama yang mudah dibedakan.', style: TextStyle(fontSize: 11, color: hintColor)),
               const SizedBox(height: 16),
 
               // Area
-              RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Luas Lahan ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+              RichText(text: TextSpan(children: [
+                TextSpan(text: 'Luas Lahan ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+                const TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
               Row(
@@ -333,11 +345,15 @@ class _AddLandScreenState extends State<AddLandScreen> {
                     child: TextField(
                       controller: _areaController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(fontSize: 13, color: titleColor),
                       decoration: InputDecoration(
                         hintText: 'Contoh: 0.8',
-                        hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                        hintStyle: TextStyle(fontSize: 12, color: hintColor),
+                        filled: true,
+                        fillColor: cardBg,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                     ),
@@ -348,14 +364,17 @@ class _AddLandScreenState extends State<AddLandScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: WarnaAplikasi.border),
+                        color: cardBg,
+                        border: Border.all(color: borderColor),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _selectedAreaUnit,
                           isExpanded: true,
-                          items: ['Hektar (Ha)', 'Meter Persegi (m²)'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          dropdownColor: cardBg,
+                          style: TextStyle(color: titleColor, fontSize: 13, fontWeight: FontWeight.w600),
+                          items: ['Hektar (Ha)', 'Meter Persegi (m²)'].map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: titleColor)))).toList(),
                           onChanged: _onAreaUnitChanged,
                         ),
                       ),
@@ -365,25 +384,28 @@ class _AddLandScreenState extends State<AddLandScreen> {
               ),
               if (_areaEquivalentText.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                Text(_areaEquivalentText, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
+                Text(_areaEquivalentText, style: TextStyle(fontSize: 11, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
               ],
               const SizedBox(height: 16),
 
               // Location / Address Field
-              RichText(text: const TextSpan(children: [
-                TextSpan(text: 'Alamat & Lokasi Lahan ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+              RichText(text: TextSpan(children: [
+                TextSpan(text: 'Alamat & Lokasi Lahan ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+                const TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
               ])),
               const SizedBox(height: 8),
               TextField(
                 controller: _addressController,
                 maxLines: 2,
+                style: TextStyle(fontSize: 13, color: titleColor),
                 decoration: InputDecoration(
                   hintText: 'Contoh: Dusun Krajan RT 02 / RW 01, Desa Sukamaju',
-                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
-                  prefixIcon: const Icon(Icons.location_on_outlined, color: WarnaAplikasi.textGray, size: 20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  hintStyle: TextStyle(fontSize: 12, color: hintColor),
+                  prefixIcon: Icon(Icons.location_on_outlined, color: subtitleColor, size: 20),
+                  filled: true,
+                  fillColor: cardBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -545,13 +567,18 @@ class _AddLandScreenState extends State<AddLandScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Latitude', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGray)),
+                                Text('Latitude', style: TextStyle(fontSize: 10, color: subtitleColor)),
+                                const SizedBox(height: 4),
                                 TextField(
                                   controller: _latitudeController,
+                                  style: TextStyle(fontSize: 12, color: titleColor),
                                   decoration: InputDecoration(
                                     isDense: true,
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF141916) : Colors.white,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                   ),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -564,13 +591,18 @@ class _AddLandScreenState extends State<AddLandScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Longitude', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGray)),
+                                Text('Longitude', style: TextStyle(fontSize: 10, color: subtitleColor)),
+                                const SizedBox(height: 4),
                                 TextField(
                                   controller: _longitudeController,
+                                  style: TextStyle(fontSize: 12, color: titleColor),
                                   decoration: InputDecoration(
                                     isDense: true,
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF141916) : Colors.white,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                   ),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -605,8 +637,8 @@ class _AddLandScreenState extends State<AddLandScreen> {
                               });
                             }
                           },
-                          icon: const Icon(Icons.edit, size: 14, color: WarnaAplikasi.primary),
-                          label: const Text('Ubah Titik Lokasi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                          icon: Icon(Icons.edit, size: 14, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary),
+                          label: Text('Ubah Titik Lokasi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryDark)),
                         ),
                       ),
                     ),
@@ -614,13 +646,13 @@ class _AddLandScreenState extends State<AddLandScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12).copyWith(bottom: 12),
                       child: SizedBox(
                         width: double.infinity,
-                        height: 36,
+                        height: 38,
                         child: OutlinedButton.icon(
                           onPressed: _useCurrentLocation,
-                          icon: const Icon(Icons.gps_fixed, size: 14, color: WarnaAplikasi.primary),
-                          label: const Text('Gunakan Lokasi GPS Saat Ini', style: TextStyle(color: WarnaAplikasi.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                          icon: Icon(Icons.gps_fixed, size: 14, color: isDark ? Colors.white : WarnaAplikasi.primary),
+                          label: Text('Gunakan Lokasi GPS Saat Ini', style: TextStyle(color: isDark ? Colors.white : WarnaAplikasi.primary, fontSize: 12, fontWeight: FontWeight.bold)),
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: WarnaAplikasi.greenLight,
+                            backgroundColor: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
                             side: BorderSide.none,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -636,19 +668,19 @@ class _AddLandScreenState extends State<AddLandScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.greenLight.withValues(alpha: 0.5),
+                  color: bannerBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: WarnaAplikasi.greenPill),
+                  border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.greenPill),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Icon(Icons.info_outline, color: WarnaAplikasi.primary, size: 18),
-                    SizedBox(width: 8),
+                  children: [
+                    Icon(Icons.info_outline, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary, size: 18),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Komoditas, varietas, dan musim tanam akan dicatat saat Anda memulai Siklus Tanam setelah lahan terdaftar.',
-                        style: TextStyle(fontSize: 11, color: WarnaAplikasi.primaryDark, height: 1.3),
+                        style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFD4E0D7) : WarnaAplikasi.primaryDark, height: 1.3),
                       ),
                     ),
                   ],
@@ -660,8 +692,8 @@ class _AddLandScreenState extends State<AddLandScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Dokumentasi Petak (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                  Text('${_selectedImageBytesList.length} Foto Terpilih', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight)),
+                  Text('Dokumentasi Petak (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+                  Text('${_selectedImageBytesList.length} Foto Terpilih', style: TextStyle(fontSize: 11, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryLight)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -715,17 +747,18 @@ class _AddLandScreenState extends State<AddLandScreen> {
                   height: 65,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.none),
+                    color: cardBg,
+                    border: Border.all(color: borderColor, style: BorderStyle.none),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: CustomPaint(
-                    painter: _DashedRectPainter(color: WarnaAplikasi.borderField),
-                    child: const Row(
+                    painter: _DashedRectPainter(color: borderColor),
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_a_photo_outlined, color: WarnaAplikasi.primaryLight, size: 20),
-                        SizedBox(width: 8),
-                        Text('Ambil Foto / Pilih dari Galeri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                        Icon(Icons.add_a_photo_outlined, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryLight, size: 20),
+                        const SizedBox(width: 8),
+                        Text('Ambil Foto / Pilih dari Galeri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor)),
                       ],
                     ),
                   ),
@@ -737,18 +770,23 @@ class _AddLandScreenState extends State<AddLandScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Keterangan Tambahan (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primaryDark)),
-                  const Text('0/200', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                  Text('Keterangan Tambahan (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+                  Text('${_notesController.text.length}/200', style: TextStyle(fontSize: 11, color: hintColor)),
                 ],
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _notesController,
                 maxLines: 4,
+                style: TextStyle(fontSize: 13, color: titleColor),
                 decoration: InputDecoration(
                   hintText: 'Tambahkan informasi lahan bila diperlukan...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  hintStyle: TextStyle(fontSize: 12, color: hintColor),
+                  filled: true,
+                  fillColor: cardBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
@@ -757,13 +795,13 @@ class _AddLandScreenState extends State<AddLandScreen> {
               // Info Alert
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: WarnaAplikasi.greenLight, borderRadius: BorderRadius.circular(12)),
-                child: const Row(
+                decoration: BoxDecoration(color: bannerBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
+                child: Row(
                   children: [
-                    Icon(Icons.info, color: WarnaAplikasi.primary, size: 20),
-                    SizedBox(width: 12),
+                    Icon(Icons.info, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary, size: 20),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text('Data akan diverifikasi oleh PPL dan dicatat pada sistem ROCKK untuk validasi petak.', style: TextStyle(fontSize: 11, color: WarnaAplikasi.primary)),
+                      child: Text('Data akan diverifikasi oleh PPL dan dicatat pada sistem ROCKK untuk validasi petak.', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFD4E0D7) : WarnaAplikasi.primary)),
                     ),
                   ],
                 ),
@@ -780,9 +818,9 @@ class _AddLandScreenState extends State<AddLandScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        side: const BorderSide(color: WarnaAplikasi.border),
+                        side: BorderSide(color: borderColor),
                       ),
-                      child: const Text('Batal', style: TextStyle(color: WarnaAplikasi.primaryDark, fontWeight: FontWeight.bold)),
+                      child: Text('Batal', style: TextStyle(color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryDark, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(width: 12),

@@ -16,6 +16,7 @@ import 'package:pawon_mobile/features/lahan/screens/layar_tambah_lahan.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_catat_panen.dart';
 import 'package:pawon_mobile/features/notifikasi/repositories/notifikasi_repository.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_daftar_notifikasi.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 
 class HomeScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -78,9 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final currentUser = AuthRepository().currentUser;
     final userName = _data?.user.nama ?? currentUser?.nama ?? 'Petani';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121A15) : WarnaAplikasi.primaryBackground;
 
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadBerandaData,
@@ -194,6 +197,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopHeader(BuildContext context, String name) {
     final firstName = name.trim().split(' ').first;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textGreeting = isDark ? Colors.grey.shade400 : WarnaAplikasi.textGray;
+    final textName = isDark ? Colors.white : WarnaAplikasi.primaryDark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -204,19 +210,19 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               _getGreeting(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w500,
-                color: WarnaAplikasi.textGray,
+                color: textGreeting,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               'Pak $firstName 👋',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: WarnaAplikasi.primaryDark,
+                color: textName,
                 letterSpacing: -0.4,
               ),
             ),
@@ -237,13 +243,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgPaleGreen2,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF283A2E)
+                          : WarnaAplikasi.bgPaleGreen2,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.notifications_outlined,
                       size: 20,
-                      color: WarnaAplikasi.primaryDark,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : WarnaAplikasi.primaryDark,
                     ),
                   ),
                   ValueListenableBuilder<int>(
@@ -296,17 +306,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: WarnaAplikasi.primary,
                   borderRadius: BorderRadius.circular(12),
+                  image: (AuthRepository().currentUser?.fotoProfil != null &&
+                          AuthRepository().currentUser!.fotoProfil!.isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(AuthRepository().currentUser!.fotoProfil!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Center(
-                  child: Text(
-                    firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                child: (AuthRepository().currentUser?.fotoProfil == null ||
+                        AuthRepository().currentUser!.fotoProfil!.isEmpty)
+                    ? Center(
+                        child: Text(
+                          firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
             ),
           ],
@@ -499,62 +519,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showProfileModal(BuildContext context) {
-    final user = AuthRepository().currentUser;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const LayarProfil(),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: WarnaAplikasi.primary,
-                child: Text(
-                  (user?.nama.isNotEmpty == true) ? user!.nama[0].toUpperCase() : 'P',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(user?.nama ?? 'Petani', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-              Text(user?.role ?? 'Anggota Kelompok Tani', style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await AuthRepository().logout();
-                  },
-                  icon: const Icon(Icons.logout_rounded, size: 18, color: WarnaAplikasi.errorRed),
-                  label: const Text('Keluar dari Akun', style: TextStyle(color: WarnaAplikasi.errorRed, fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: WarnaAplikasi.errorRed),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 

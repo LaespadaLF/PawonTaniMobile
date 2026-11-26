@@ -21,12 +21,16 @@ class PawonBottomNav extends StatelessWidget {
       _NavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded, label: 'Penjualan'),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? const Color(0xFF1B2820) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF2C3E32) : const Color(0xFFEBF0EC);
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: navBg,
         border: Border(
           top: BorderSide(
-            color: Color(0xFFEBF0EC),
+            color: borderColor,
             width: 1,
           ),
         ),

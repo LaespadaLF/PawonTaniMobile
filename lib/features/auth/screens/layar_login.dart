@@ -74,8 +74,17 @@ class _LayarLoginState extends State<LayarLogin> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDark ? const Color(0xFF141916) : Colors.white;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : Colors.grey.shade600;
+    final inputFill = isDark ? const Color(0xFF1D2420) : Colors.grey.shade50;
+    final inputBorderColor = isDark ? const Color(0xFF28332C) : Colors.grey.shade300;
+    final inputTextColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final hintColor = isDark ? const Color(0xFFA0B3A6) : Colors.grey.shade400;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: scaffoldBg,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -102,13 +111,13 @@ class _LayarLoginState extends State<LayarLogin> {
                   const SizedBox(height: 24),
 
                   // Heading
-                  const Text(
+                  Text(
                     'Selamat Datang',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -117,7 +126,7 @@ class _LayarLoginState extends State<LayarLogin> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade600,
+                      color: subtitleColor,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -127,20 +136,20 @@ class _LayarLoginState extends State<LayarLogin> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: isDark ? const Color(0xFF2E1C1C) : Colors.red.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(color: isDark ? const Color(0xFF7F1D1D) : Colors.red.shade200),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline_rounded, color: Colors.red.shade700, size: 22),
+                          Icon(Icons.error_outline_rounded, color: isDark ? const Color(0xFFF87171) : Colors.red.shade700, size: 22),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _errorMessage!,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.red.shade900,
+                                color: isDark ? const Color(0xFFFCA5A5) : Colors.red.shade900,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -152,12 +161,12 @@ class _LayarLoginState extends State<LayarLogin> {
                   ],
 
                   // Input Username atau Email
-                  const Text(
+                  Text(
                     'Username atau Email',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -165,19 +174,20 @@ class _LayarLoginState extends State<LayarLogin> {
                     controller: _identifierController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    style: TextStyle(color: inputTextColor, fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Masukkan username atau email Anda',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                      hintStyle: TextStyle(color: hintColor, fontSize: 14),
                       prefixIcon: const Icon(Icons.person_outline_rounded, color: WarnaAplikasi.primary),
                       filled: true,
-                      fillColor: Colors.grey.shade50,
+                      fillColor: inputFill,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+                        borderSide: BorderSide(color: inputBorderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: inputBorderColor),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -195,12 +205,12 @@ class _LayarLoginState extends State<LayarLogin> {
                   const SizedBox(height: 20),
 
                   // Input Password
-                  const Text(
+                  Text(
                     'Kata Sandi',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -209,14 +219,15 @@ class _LayarLoginState extends State<LayarLogin> {
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleLogin(),
+                    style: TextStyle(color: inputTextColor, fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Masukkan kata sandi',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                      hintStyle: TextStyle(color: hintColor, fontSize: 14),
                       prefixIcon: const Icon(Icons.lock_outline_rounded, color: WarnaAplikasi.primary),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: Colors.grey.shade600,
+                          color: isDark ? const Color(0xFFA0B3A6) : Colors.grey.shade600,
                         ),
                         onPressed: () {
                           setState(() {
@@ -225,14 +236,14 @@ class _LayarLoginState extends State<LayarLogin> {
                         },
                       ),
                       filled: true,
-                      fillColor: Colors.grey.shade50,
+                      fillColor: inputFill,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+                        borderSide: BorderSide(color: inputBorderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: inputBorderColor),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

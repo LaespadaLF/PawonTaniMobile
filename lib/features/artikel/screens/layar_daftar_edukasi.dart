@@ -76,8 +76,15 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final topBarBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final searchBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPage;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final textColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final hintColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       appBar: PawonFormHeader(
         title: 'Edukasi Pertanian',
         subtitle: 'Tips, panduan & artikel dari penyuluh pertanian',
@@ -87,7 +94,7 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
         children: [
           // Search & Filter Section
           Container(
-            color: Colors.white,
+            color: topBarBg,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Column(
               children: [
@@ -95,20 +102,21 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
                 Container(
                   height: 44,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.bgPage,
+                    color: searchBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: WarnaAplikasi.borderField),
+                    border: Border.all(color: borderColor),
                   ),
                   child: TextField(
                     controller: _searchController,
+                    style: TextStyle(fontSize: 13, color: textColor),
                     onSubmitted: (_) => _fetchEdukasi(),
                     decoration: InputDecoration(
                       hintText: 'Cari tips, panduan, atau artikel...',
-                      hintStyle: const TextStyle(fontSize: 12.5, color: WarnaAplikasi.textGray),
-                      prefixIcon: const Icon(Icons.search, size: 20, color: WarnaAplikasi.textGray),
+                      hintStyle: TextStyle(fontSize: 12.5, color: hintColor),
+                      prefixIcon: Icon(Icons.search, size: 20, color: hintColor),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
+                              icon: Icon(Icons.clear, size: 18, color: hintColor),
                               onPressed: () {
                                 _searchController.clear();
                                 _fetchEdukasi();
@@ -140,16 +148,18 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
                             }
                           },
                           selectedColor: WarnaAplikasi.primary,
-                          backgroundColor: Colors.white,
+                          backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
                           labelStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: isSelected ? Colors.white : WarnaAplikasi.textDarkGreen,
+                            color: isSelected
+                                ? Colors.white
+                                : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textDarkGreen),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
-                              color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
+                              color: isSelected ? WarnaAplikasi.primary : borderColor,
                             ),
                           ),
                         ),
@@ -189,6 +199,12 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
   }
 
   Widget _buildArticleCard(ArticleItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     Color badgeBg;
     Color badgeTextColor;
 
@@ -220,12 +236,12 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: WarnaAplikasi.borderField),
+          border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -270,15 +286,15 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
                       const SizedBox(width: 8),
                       Text(
                         item.readTime,
-                        style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
+                        style: TextStyle(fontSize: 11, color: subtitleColor),
                       ),
                       if (item.date != null && item.date!.isNotEmpty) ...[
                         const SizedBox(width: 8),
-                        const Text('•', style: TextStyle(color: WarnaAplikasi.textGrayLight)),
+                        Text('•', style: TextStyle(color: subtitleColor)),
                         const SizedBox(width: 8),
                         Text(
                           item.date!,
-                          style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
+                          style: TextStyle(fontSize: 11, color: subtitleColor),
                         ),
                       ],
                     ],
@@ -288,10 +304,10 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
                     item.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                       height: 1.3,
                     ),
                   ),
@@ -301,9 +317,9 @@ class _LayarDaftarEdukasiState extends State<LayarDaftarEdukasi> {
                       item.summary!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
-                        color: WarnaAplikasi.textGray,
+                        color: subtitleColor,
                         height: 1.4,
                       ),
                     ),
