@@ -33,10 +33,46 @@ class AuthApiService {
     );
   }
 
+  /// Mengirim pembaruan data profil anggota ke `PUT /api/v1/auth/profile`.
+  Future<ApiResponse<AuthUserModel>> updateProfile({
+    String? nama,
+    String? noTelepon,
+    String? email,
+    String? alamat,
+    String? password,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (nama != null && nama.trim().isNotEmpty) payload['nama'] = nama.trim();
+    if (noTelepon != null) payload['no_telepon'] = noTelepon.trim();
+    if (email != null && email.trim().isNotEmpty) payload['email'] = email.trim();
+    if (alamat != null) payload['alamat'] = alamat.trim();
+    if (password != null && password.trim().isNotEmpty) payload['password'] = password.trim();
+
+    return await _client.put<AuthUserModel>(
+      ApiConstants.profileUpdateEndpoint,
+      data: payload,
+      fromJson: (data) => AuthUserModel.fromJson(Map<String, dynamic>.from(data)),
+    );
+  }
+
   /// Mengirim permintaan pencabutan token ke `POST /api/v1/auth/logout`.
   Future<ApiResponse<void>> logout() async {
     return await _client.post<void>(
       ApiConstants.logoutEndpoint,
+    );
+  }
+
+  /// Mengirim permintaan penghapusan akun mandiri ke `DELETE /api/v1/auth/account`.
+  Future<ApiResponse<void>> deleteAccount({
+    required String password,
+    String confirmation = 'HAPUS AKUN',
+  }) async {
+    return await _client.delete<void>(
+      ApiConstants.accountEndpoint,
+      data: {
+        'password': password,
+        'confirmation': confirmation,
+      },
     );
   }
 }

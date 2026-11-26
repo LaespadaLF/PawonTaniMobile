@@ -6,8 +6,9 @@ import 'package:pawon_mobile/features/penjualan/models/item_produk_saya.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_catat_penjualan.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_detail_penjualan.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_form_produk.dart';
-import 'package:pawon_mobile/features/penjualan/screens/layar_tambah_penjualan.dart';
 import 'package:pawon_mobile/features/penjualan/services/marketplace_penjualan_api_service.dart';
+import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class PenjualanScreen extends StatefulWidget {
   const PenjualanScreen({super.key});
@@ -287,7 +288,17 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildHeader() {
-    return const PawonFixedHeader(title: 'Penjualan');
+    return PawonFixedHeader(
+      title: 'Penjualan',
+      onProfileTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+      ),
+      onNotificationTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LayarNotifikasi()),
+      ),
+    );
   }
 
   /// Segmented control navigasi utama menu Penjualan (Sesuai Bagian 8)

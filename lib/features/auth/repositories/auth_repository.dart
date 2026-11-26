@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/storage/secure_storage_service.dart';
@@ -162,5 +163,48 @@ class AuthRepository {
       _currentUser = null;
       _authStatus.value = AuthStatus.unauthenticated;
     }
+  }
+
+  /// Memperbarui data profil pengguna aktif dari server.
+  Future<ApiResponse<AuthUserModel>> refreshProfile() async {
+    final response = await _apiService.getProfile();
+    if (response.success && response.data != null) {
+      _currentUser = response.data;
+      await _storageService.saveUserData(jsonEncode(response.data!.toJson()));
+    }
+    return response;
+  }
+
+  /// Memperbarui data profil pengguna aktif dan menyimpannya ke cache lokal.
+  Future<ApiResponse<AuthUserModel>> updateProfile({
+    String? nama,
+    String? noTelepon,
+    String? email,
+    String? alamat,
+    String? password,
+  }) async {
+    final response = await _apiService.updateProfile(
+      nama: nama,
+      noTelepon: noTelepon,
+      email: email,
+      alamat: alamat,
+      password: password,
+    );
+    if (response.success && response.data != null) {
+      _currentUser = response.data;
+      await _storageService.saveUserData(jsonEncode(response.data!.toJson()));
+    }
+    return response;
+  }
+
+  /// Menghapus akun mandiri oleh anggota.
+  Future<ApiResponse<void>> deleteAccount({required String password}) async {
+    final response = await _apiService.deleteAccount(password: password);
+    if (response.success) {
+      await _storageService.deleteToken();
+      _currentUser = null;
+      _authStatus.value = AuthStatus.unauthenticated;
+    }
+    return response;
   }
 }

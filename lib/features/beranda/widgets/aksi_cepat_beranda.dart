@@ -26,14 +26,19 @@ class HomeQuickActionsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Aksi Cepat',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: WarnaAplikasi.primaryDark,
+            const Expanded(
+              child: Text(
+                'Aksi Cepat',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: WarnaAplikasi.primaryDark,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             InkWell(
               onTap: onAllTap,
               borderRadius: BorderRadius.circular(8),

@@ -5,6 +5,8 @@ import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.da
 import 'package:pawon_mobile/features/aktivitas/screens/layar_edit_aktivitas.dart';
 import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
 import 'package:pawon_mobile/features/aktivitas/widgets/dialog_hapus_aktivitas.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
+import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
 
 class ActivityScreen extends StatefulWidget {
   final VoidCallback? onBackToHome;
@@ -227,23 +229,71 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           ),
                         ],
                       ),
-                      InkWell(
-                        onTap: _loadActivities,
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: WarnaAplikasi.borderField),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: _loadActivities,
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: WarnaAplikasi.borderField),
+                              ),
+                              child: const Icon(
+                                Icons.refresh_rounded,
+                                color: WarnaAplikasi.primaryDark,
+                                size: 18,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.refresh_rounded,
-                            color: WarnaAplikasi.primaryDark,
-                            size: 18,
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const LayarNotifikasi()),
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: WarnaAplikasi.borderField),
+                              ),
+                              child: const Icon(
+                                Icons.notifications_outlined,
+                                color: WarnaAplikasi.primaryDark,
+                                size: 18,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: WarnaAplikasi.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

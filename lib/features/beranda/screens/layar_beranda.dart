@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/artikel/models/item_artikel.dart';
@@ -11,7 +12,11 @@ import 'package:pawon_mobile/features/beranda/widgets/bagian_panen_terbaru_beran
 import 'package:pawon_mobile/features/beranda/widgets/kartu_banner_petani.dart';
 import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_tambah_lahan.dart';
+import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_catat_panen.dart';
+import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
+import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
+import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,8 +33,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final BerandaApiService _apiService = BerandaApiService();
+  final PanenApiService _panenApiService = PanenApiService();
   BerandaRingkasanModel? _data;
+  HarvestItem? _latestHarvest;
   bool _isLoading = true;
+  bool _isLoadingHarvest = true;
   String? _errorMessage;
 
   @override
@@ -41,24 +49,34 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadBerandaData() async {
     setState(() {
       _isLoading = true;
+      _isLoadingHarvest = true;
       _errorMessage = null;
     });
 
-    final res = await _apiService.getRingkasan();
+    final berandaFuture = _apiService.getRingkasan();
+    final panenFuture = _panenApiService.getPanenList();
+
+    final results = await Future.wait([berandaFuture, panenFuture]);
+    final res = results[0] as ApiResponse<BerandaRingkasanModel>;
+    final panenRes = results[1] as ApiResponse<List<HarvestItem>>;
 
     if (!mounted) return;
 
-    if (res.success && res.data != null) {
-      setState(() {
+    setState(() {
+      if (res.success && res.data != null) {
         _data = res.data;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
+      } else {
         _errorMessage = res.message;
-        _isLoading = false;
-      });
-    }
+      }
+      _isLoading = false;
+
+      if (panenRes.success && panenRes.data != null && panenRes.data!.isNotEmpty) {
+        _latestHarvest = panenRes.data!.first;
+      } else {
+        _latestHarvest = null;
+      }
+      _isLoadingHarvest = false;
+    });
   }
 
   String _getGreeting() {
@@ -170,8 +188,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // 6. Hasil Panen Terbaru
                 HomeLatestHarvestSection(
+                  item: _latestHarvest,
+                  isLoading: _isLoadingHarvest,
                   onAllTap: () => widget.onNavigateTab?.call(3),
-                  onItemTap: () => _showLatestHarvestDetail(context),
+                  onItemTap: (harvest) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HarvestDetailScreen(
+                          item: harvest,
+                          onUpdate: (_) => _loadBerandaData(),
+                          onDelete: () => _loadBerandaData(),
+                        ),
+                      ),
+                    );
+                  },
+                  onAddTap: () async {
+                    final newItem = await Navigator.push<HarvestItem>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RecordHarvestScreen(),
+                      ),
+                    );
+                    if (newItem != null) {
+                      _loadBerandaData();
+                    }
+                  },
                 ),
                 const SizedBox(height: 24),
               ],
@@ -189,32 +231,38 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Greeting & Name
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _getGreeting(),
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w500,
-                color: WarnaAplikasi.textGray,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _getGreeting(),
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                  color: WarnaAplikasi.textGray,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Pak $firstName 👋',
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: WarnaAplikasi.primaryDark,
-                letterSpacing: -0.4,
+              const SizedBox(height: 2),
+              Text(
+                'Pak $firstName 👋',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: WarnaAplikasi.primaryDark,
+                  letterSpacing: -0.4,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
 
         // Action Icons
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Notification Button with Badge
             InkWell(
@@ -527,56 +575,84 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = AuthRepository().currentUser;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: WarnaAplikasi.borderPale,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: WarnaAplikasi.primary,
-                child: Text(
-                  (user?.nama.isNotEmpty == true) ? user!.nama[0].toUpperCase() : 'P',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(user?.nama ?? 'Petani', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-              Text(user?.role ?? 'Anggota Kelompok Tani', style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await AuthRepository().logout();
-                  },
-                  icon: const Icon(Icons.logout_rounded, size: 18, color: WarnaAplikasi.errorRed),
-                  label: const Text('Keluar dari Akun', style: TextStyle(color: WarnaAplikasi.errorRed, fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: WarnaAplikasi.errorRed),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(height: 16),
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: WarnaAplikasi.primary,
+                    child: Text(
+                      (user?.nama.isNotEmpty == true) ? user!.nama[0].toUpperCase() : 'P',
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  Text(user?.nama ?? 'Petani', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                  Text(user?.role ?? 'Anggota Kelompok Tani', style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProfileScreen(),
+                          ),
+                        ).then((_) => _loadBerandaData());
+                      },
+                      icon: const Icon(Icons.person_rounded, size: 18, color: Colors.white),
+                      label: const Text('Lihat Profil Lengkap', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: WarnaAplikasi.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await AuthRepository().logout();
+                      },
+                      icon: const Icon(Icons.logout_rounded, size: 18, color: WarnaAplikasi.errorRed),
+                      label: const Text('Keluar dari Akun', style: TextStyle(color: WarnaAplikasi.errorRed, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: WarnaAplikasi.errorRed),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

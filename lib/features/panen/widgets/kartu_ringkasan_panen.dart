@@ -209,9 +209,13 @@ class HarvestSummaryCard extends StatelessWidget {
                     children: [
                       Icon(Icons.eco_rounded, size: 14, color: WarnaAplikasi.grayGreenMuted),
                       SizedBox(width: 5),
-                      Text(
-                        'Belum ada rincian komoditas',
-                        style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
+                      Expanded(
+                        child: Text(
+                          'Belum ada rincian komoditas',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
+                        ),
                       ),
                     ],
                   ),

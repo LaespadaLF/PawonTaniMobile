@@ -7,7 +7,7 @@ class ApiConstants {
 
   /// IP manual untuk pengujian menggunakan HP/perangkat fisik dalam satu jaringan Wi-Fi/LAN.
   /// Set ke IP Wi-Fi PC saat ini.
-  static String? customDeviceIp = '192.168.1.4';
+  static String? customDeviceIp = '192.168.110.52';
 
   /// Port development server Laravel.
   static const int port = 8000;
@@ -18,9 +18,14 @@ class ApiConstants {
   /// Mendapatkan Base URL secara dinamis tanpa menggunakan `dart:io`
   /// agar kompatibel secara multiplatform (Android, iOS, Web, Desktop).
   static String get baseUrl {
-    // 1. Web atau Desktop — selalu pakai localhost (tidak berlaku customDeviceIp)
-    if (kIsWeb ||
-        defaultTargetPlatform == TargetPlatform.windows ||
+    // 1. Web — ikuti hostname browser (localhost / 127.0.0.1) agar sejalan dengan origin browser
+    if (kIsWeb) {
+      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
+      return 'http://$host:$port$apiPrefix';
+    }
+
+    // 2. Desktop OS (Windows, macOS, Linux)
+    if (defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.linux) {
       return 'http://127.0.0.1:$port$apiPrefix';
@@ -51,7 +56,9 @@ class ApiConstants {
   // --- Endpoint Rute Autentikasi ---
   static const String loginEndpoint = '/auth/login';
   static const String meEndpoint = '/auth/me';
+  static const String profileUpdateEndpoint = '/auth/profile';
   static const String logoutEndpoint = '/auth/logout';
+  static const String accountEndpoint = '/auth/account';
 
   // --- Endpoint Rute Lahan ---
   static const String lahanEndpoint = '/lahan';

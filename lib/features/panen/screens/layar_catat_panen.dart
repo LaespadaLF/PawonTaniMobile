@@ -11,6 +11,7 @@ import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
 import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
 import 'package:pawon_mobile/features/panen/services/panen_multipart.dart';
+import 'package:pawon_mobile/features/panen/services/panen_pdf_service.dart';
 
 class RecordHarvestScreen extends StatefulWidget {
   final Function(HarvestItem)? onSave;
@@ -309,13 +310,19 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               ),
             );
           },
-          onDownloadPdf: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Bukti panen tercatat resmi di sistem PawonTani.'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+          onDownloadPdf: () async {
+            try {
+              await PanenPdfService.printPanenPdf(newItem);
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal mencetak bukti PDF: $e'),
+                    backgroundColor: WarnaAplikasi.errorRedDark,
+                  ),
+                );
+              }
+            }
           },
           onBackToList: () {
             Navigator.pop(context); // pop dialog

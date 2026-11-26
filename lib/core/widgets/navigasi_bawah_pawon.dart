@@ -43,46 +43,50 @@ class PawonBottomNav extends StatelessWidget {
           final item = navItems[index];
           final isSelected = currentIndex == index;
 
-          return InkWell(
-            onTap: () => onTap(index),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 4,
+          return Expanded(
+            child: InkWell(
+              onTap: () => onTap(index),
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? WarnaAplikasi.greenPill
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        isSelected ? item.activeIcon : item.icon,
+                        size: 20,
+                        color: isSelected
+                            ? WarnaAplikasi.greenText
+                            : const Color(0xFF869E90),
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? WarnaAplikasi.greenPill
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? WarnaAplikasi.greenText
+                            : const Color(0xFF869E90),
+                      ),
                     ),
-                    child: Icon(
-                      isSelected ? item.activeIcon : item.icon,
-                      size: 20,
-                      color: isSelected
-                          ? WarnaAplikasi.greenText
-                          : const Color(0xFF869E90),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected
-                          ? WarnaAplikasi.greenText
-                          : const Color(0xFF869E90),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/widgets/dialog_hapus_panen.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_edit_panen.dart';
+import 'package:pawon_mobile/features/panen/services/panen_pdf_service.dart';
 
 class HarvestDetailScreen extends StatefulWidget {
   final HarvestItem item;
@@ -78,6 +79,152 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
       onConfirmDelete: () {
         widget.onDelete();
         Navigator.pop(context); // pop detail screen
+      },
+    );
+  }
+
+  void _handleCetakPdf() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: WarnaAplikasi.borderPale,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Cetak Bukti Hasil Panen',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: WarnaAplikasi.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Dokumen resmi #${_currentItem.harvestCode} - ${_currentItem.title}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: WarnaAplikasi.textGray,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: WarnaAplikasi.greenLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.print_rounded, color: WarnaAplikasi.primary),
+                  ),
+                  title: const Text('Cetak / Pratinjau Dokumen PDF', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  subtitle: const Text('Kirim ke printer atau simpan berkas PDF ke perangkat', style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: WarnaAplikasi.textGray),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await PanenPdfService.printPanenPdf(_currentItem);
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal menyiapkan cetak PDF: $e'),
+                            backgroundColor: WarnaAplikasi.errorRedDark,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+                const Divider(height: 16, color: WarnaAplikasi.borderPale),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: WarnaAplikasi.hppAmberBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.share_rounded, color: WarnaAplikasi.primary),
+                  ),
+                  title: const Text('Bagikan Dokumen PDF', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  subtitle: const Text('Kirimkan bukti panen resmi via WhatsApp atau email', style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: WarnaAplikasi.textGray),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await PanenPdfService.sharePanenPdf(_currentItem);
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal membagikan PDF: $e'),
+                            backgroundColor: WarnaAplikasi.errorRedDark,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+                const Divider(height: 16, color: WarnaAplikasi.borderPale),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.download_rounded, color: Color(0xFF1976D2)),
+                  ),
+                  title: const Text('Unduh Berkas PDF Langsung', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  subtitle: const Text('Simpan berkas PDF bukti panen ke memori perangkat / folder download', style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: WarnaAplikasi.textGray),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await PanenPdfService.downloadPanenPdf(_currentItem);
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal mengunduh PDF: $e'),
+                            backgroundColor: WarnaAplikasi.errorRedDark,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          ),
+        );
       },
     );
   }
@@ -302,58 +449,69 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0x33FFFFFF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.grass_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'KOMODITAS UTAMA',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w600,
-                          color: WarnaAplikasi.successPaleGreen,
-                          letterSpacing: 0.5,
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0x33FFFFFF),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      Text(
-                        _currentItem.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
+                      child: const Icon(
+                        Icons.grass_rounded,
+                        color: Colors.white,
+                        size: 18,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0x33FFFFFF),
-                  borderRadius: BorderRadius.circular(16),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'KOMODITAS UTAMA',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w600,
+                              color: WarnaAplikasi.successPaleGreen,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            _currentItem.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0x33FFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -366,62 +524,75 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Total Berat Bersih',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: WarnaAplikasi.successPaleGreen,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Berat Bersih',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: WarnaAplikasi.successPaleGreen,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: _formatCurrency(_currentItem.weightKg),
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: _formatCurrency(_currentItem.weightKg),
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: ' Kg',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                        const TextSpan(
-                          text: ' Kg',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    'Konversi Bobot',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: WarnaAplikasi.successPaleGreen,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      'Konversi Bobot',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: WarnaAplikasi.successPaleGreen,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${_currentItem.weightTon.toStringAsFixed(2).replaceAll('.', ',')} Ton • ${_currentItem.weightKuintal.toStringAsFixed(1).replaceAll('.', ',')} Kw',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '${_currentItem.weightTon.toStringAsFixed(2).replaceAll('.', ',')} Ton • ${_currentItem.weightKuintal.toStringAsFixed(1).replaceAll('.', ',')} Kw',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -514,20 +685,27 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.agriculture_rounded, size: 18, color: WarnaAplikasi.primary),
-                  SizedBox(width: 8),
-                  Text(
-                    'Informasi Lahan & Panen',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.agriculture_rounded, size: 18, color: WarnaAplikasi.primary),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Informasi Lahan & Panen',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: WarnaAplikasi.textDarkGreen,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -623,16 +801,21 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: WarnaAplikasi.borderPale2),
-                  ),
-                  child: Text(
-                    _currentItem.costWorkers,
-                    style: const TextStyle(fontSize: 10, color: WarnaAplikasi.grayGreenDark),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: WarnaAplikasi.borderPale2),
+                    ),
+                    child: Text(
+                      _currentItem.costWorkers,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 10, color: WarnaAplikasi.grayGreenDark),
+                    ),
                   ),
                 ),
               ],
@@ -656,12 +839,16 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   children: [
                     Icon(Icons.notes_rounded, size: 14, color: WarnaAplikasi.grayGreenDark),
                     SizedBox(width: 6),
-                    Text(
-                      'Catatan Lapangan (Mandor)',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.textDarkGreen,
+                    Expanded(
+                      child: Text(
+                        'Catatan Lapangan (Mandor)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: WarnaAplikasi.textDarkGreen,
+                        ),
                       ),
                     ),
                   ],
@@ -739,20 +926,27 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.photo_library_outlined, size: 16, color: WarnaAplikasi.primary),
-                  SizedBox(width: 8),
-                  Text(
-                    'Dokumentasi Bukti Fisik',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.photo_library_outlined, size: 16, color: WarnaAplikasi.primary),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Dokumentasi Bukti Fisik',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: WarnaAplikasi.textDarkGreen,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${photoList.length} Berkas',
                 style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
@@ -960,14 +1154,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             child: SizedBox(
               height: 46,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Menyiapkan berkas Cetak Bukti PDF...'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
+                onPressed: _handleCetakPdf,
                 icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
                 label: const Text(
                   'Cetak Bukti PDF',

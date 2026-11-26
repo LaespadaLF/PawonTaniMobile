@@ -42,14 +42,19 @@ class HomeFarmSummarySection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Ringkasan Pertanian',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: WarnaAplikasi.primaryDark,
+            const Expanded(
+              child: Text(
+                'Ringkasan Pertanian',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: WarnaAplikasi.primaryDark,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             InkWell(
               onTap: onDetailTap,
               borderRadius: BorderRadius.circular(8),

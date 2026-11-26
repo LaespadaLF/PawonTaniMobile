@@ -7,6 +7,8 @@ import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
 import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
 import 'package:pawon_mobile/features/panen/widgets/kartu_panen.dart';
 import 'package:pawon_mobile/features/panen/widgets/kartu_ringkasan_panen.dart';
+import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class HarvestScreen extends StatefulWidget {
   const HarvestScreen({super.key});
@@ -168,7 +170,17 @@ class _HarvestScreenState extends State<HarvestScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const PawonFixedHeader(title: 'Panen'),
+            PawonFixedHeader(
+              title: 'Panen',
+              onProfileTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              onNotificationTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LayarNotifikasi()),
+              ),
+            ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _fetchHarvestData,
@@ -292,15 +304,20 @@ class _HarvestScreenState extends State<HarvestScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Daftar Panen',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: WarnaAplikasi.primaryDark,
-                                  letterSpacing: -0.3,
+                              const Expanded(
+                                child: Text(
+                                  'Daftar Panen',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: WarnaAplikasi.primaryDark,
+                                    letterSpacing: -0.3,
+                                  ),
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               PopupMenuButton<String>(
                                 initialValue: _selectedSort,
                                 onSelected: (val) {

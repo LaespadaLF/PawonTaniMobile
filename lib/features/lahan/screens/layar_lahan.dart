@@ -8,6 +8,8 @@ import 'package:pawon_mobile/features/lahan/screens/layar_edit_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_detail_lahan.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/core/widgets/ikon_tanaman_kustom.dart';
+import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class LandScreen extends StatefulWidget {
   final VoidCallback? onBackToHome;
@@ -349,7 +351,17 @@ class _LandScreenState extends State<LandScreen> {
         child: Column(
           children: [
             // Fixed Top Header (Style Penjualan)
-            const PawonFixedHeader(title: 'Lahan'),
+            PawonFixedHeader(
+              title: 'Lahan',
+              onProfileTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              onNotificationTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LayarNotifikasi()),
+              ),
+            ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _loadLahanList,
