@@ -73,6 +73,9 @@ class HarvestItem {
   final String validatedAt;
   final String? validatedNotes;
   final List<String> photos;
+  final String? idSiklus;
+
+  bool get isLegacy => idSiklus == null || idSiklus!.isEmpty;
 
   const HarvestItem({
     required this.id,
@@ -82,6 +85,7 @@ class HarvestItem {
     required this.cropType,
     required this.status,
     this.idLahan = '',
+    this.idSiklus,
     required this.location,
     required this.blockArea,
     required this.date,
@@ -173,6 +177,7 @@ class HarvestItem {
       validatedAt: (json['tanggal_verifikasi'] ?? json['validatedAt'] ?? '').toString(),
       validatedNotes: json['catatan_verifikasi']?.toString(),
       photos: photoList,
+      idSiklus: (json['id_siklus'] ?? json['siklus_id'] ?? json['siklus']?['id_siklus'])?.toString(),
     );
   }
 
@@ -182,6 +187,7 @@ class HarvestItem {
       'id_panen': id,
       'kode_panen': harvestCode,
       'id_lahan': idLahan,
+      'id_siklus': idSiklus,
       'nama_lahan': location,
       'blok_luas': blockArea,
       'varietas': title,
@@ -235,6 +241,7 @@ class HarvestItem {
     String? validatedAt,
     String? validatedNotes,
     List<String>? photos,
+    String? idSiklus,
   }) {
     return HarvestItem(
       id: id ?? this.id,
@@ -244,6 +251,7 @@ class HarvestItem {
       cropType: cropType ?? this.cropType,
       status: status ?? this.status,
       idLahan: idLahan ?? this.idLahan,
+      idSiklus: idSiklus ?? this.idSiklus,
       location: location ?? this.location,
       blockArea: blockArea ?? this.blockArea,
       date: date ?? this.date,

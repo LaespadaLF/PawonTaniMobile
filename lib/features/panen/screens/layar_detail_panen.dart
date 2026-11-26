@@ -231,8 +231,10 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: isDark ? const Color(0xFF141916) : WarnaAplikasi.primaryBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -280,12 +282,21 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+    final iconBoxBg = isDark ? const Color(0xFF243328) : WarnaAplikasi.greenLight;
+    final iconColor = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary;
+    final actionIconColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark;
+    final borderBottomColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.surfaceLight;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: headerBg,
         border: Border(
-          bottom: BorderSide(color: WarnaAplikasi.surfaceLight, width: 1),
+          bottom: BorderSide(color: borderBottomColor, width: 1),
         ),
       ),
       child: Row(
@@ -297,12 +308,12 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: WarnaAplikasi.greenLight,
+                color: iconBoxBg,
                 borderRadius: BorderRadius.circular(19),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_rounded,
-                color: WarnaAplikasi.primary,
+                color: iconColor,
                 size: 20,
               ),
             ),
@@ -312,21 +323,21 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Detail Panen',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: WarnaAplikasi.textDarkGreen,
+                    color: titleColor,
                     letterSpacing: -0.3,
                   ),
                 ),
                 const SizedBox(height: 1),
                 Text(
                   'ID: ${_currentItem.harvestCode}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.textGrayGreen,
+                    color: subtitleColor,
                   ),
                 ),
               ],
@@ -341,11 +352,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.share_outlined, size: 20, color: WarnaAplikasi.grayGreenDark),
+            icon: Icon(Icons.share_outlined, size: 20, color: actionIconColor),
           ),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded, size: 22, color: WarnaAplikasi.grayGreenDark),
+            icon: Icon(Icons.notifications_none_rounded, size: 22, color: actionIconColor),
           ),
         ],
       ),
@@ -353,12 +364,161 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildVerificationAlert() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (_currentItem.status == HarvestStatus.disetujui) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1B2B20) : WarnaAplikasi.bgPaleGreen2,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? const Color(0xFF285438) : WarnaAplikasi.greenPill),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF285438) : WarnaAplikasi.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF243B2A) : WarnaAplikasi.greenPill,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'Telah Diverifikasi',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.greenText,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _currentItem.validatedAt,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Divalidasi oleh: ${_currentItem.validatedBy.isNotEmpty ? _currentItem.validatedBy : "Pengurus Poktan"}.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFFD4E3D7) : WarnaAplikasi.grayGreenDark,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_currentItem.status == HarvestStatus.ditolak) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: isDark ? 0.15 : 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.red.withValues(alpha: isDark ? 0.4 : 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Perlu Perbaikan / Ditolak',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _currentItem.validatedAt,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark ? const Color(0xFFFF8A80) : Colors.red.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _currentItem.validatedNotes != null && _currentItem.validatedNotes!.isNotEmpty
+                        ? 'Catatan Pengurus: "${_currentItem.validatedNotes}". Silakan ketuk tombol edit untuk mengajukan revisi.'
+                        : 'Catatan panen ini ditolak pengurus poktan. Silakan periksa kembali dan ajukan perbaikan.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFFFFCDD2) : Colors.red.shade900,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Status Menunggu
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: WarnaAplikasi.bgPaleGreen2,
+        color: WarnaAplikasi.warningOrange.withValues(alpha: isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: WarnaAplikasi.greenPill),
+        border: Border.all(color: WarnaAplikasi.warningOrange.withValues(alpha: isDark ? 0.4 : 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,11 +526,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(
-              color: WarnaAplikasi.primary,
+              color: WarnaAplikasi.warningOrange,
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.check_rounded,
+              Icons.hourglass_top_rounded,
               size: 13,
               color: Colors.white,
             ),
@@ -380,39 +540,27 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.greenPill,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'Telah Diverifikasi',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.greenText,
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: WarnaAplikasi.warningOrange.withValues(alpha: isDark ? 0.25 : 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Menunggu Verifikasi',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: WarnaAplikasi.warningOrange,
                     ),
-                    Text(
-                      _currentItem.validatedAt,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: WarnaAplikasi.textGrayGreen,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Divalidasi oleh: ${_currentItem.validatedBy} langsung di timbangan panen.',
-                  style: const TextStyle(
+                  'Catatan panen ini telah diajukan dan sedang menunggu verifikasi dari pengurus poktan.',
+                  style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.grayGreenDark,
+                    color: isDark ? const Color(0xFFD4E3D7) : WarnaAplikasi.textDarkGreen,
                     height: 1.3,
                   ),
                 ),
@@ -496,24 +644,50 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0x33FFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_currentItem.isLegacy) ...[
+                    Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amberAccent),
+                      ),
+                      child: const Text(
+                        'Legacy',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amberAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0x33FFFFFF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        _currentItem.subtitle.isNotEmpty ? _currentItem.subtitle : 'Panen Segar',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
+              ),
+                ],
               ),
             ],
           ),
@@ -602,12 +776,18 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildStatsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderField),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -618,12 +798,12 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.bgSuccessLight2,
+                  color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgSuccessLight2,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.monetization_on_outlined,
-                  color: WarnaAplikasi.primary,
+                  color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                   size: 20,
                 ),
               ),
@@ -632,16 +812,16 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Estimasi Nilai Panen',
-                      style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
+                      style: TextStyle(fontSize: 11, color: subtitleColor),
                     ),
                     Text(
                       'Rp ${_formatCurrency(_currentItem.estimatedValue)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: WarnaAplikasi.primaryDark,
+                        color: titleColor,
                       ),
                     ),
                   ],
@@ -650,16 +830,16 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Text(
+                  Text(
                     'Harga Jual / Kg',
-                    style: TextStyle(fontSize: 10.5, color: WarnaAplikasi.textGray),
+                    style: TextStyle(fontSize: 10.5, color: subtitleColor),
                   ),
                   Text(
                     'Rp ${_formatCurrency(_currentItem.pricePerKg)} / kg',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.textDarkGreen,
+                      color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.textDarkGreen,
                     ),
                   ),
                 ],
@@ -672,12 +852,19 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildLahanPanenInfoCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+    final subContainerBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPaleGreen3;
+    final textMuted = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderField),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,11 +872,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.agriculture_rounded, size: 18, color: WarnaAplikasi.primary),
-                    SizedBox(width: 8),
+                    Icon(Icons.agriculture_rounded, size: 18, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Informasi Lahan & Panen',
@@ -698,10 +885,13 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.textDarkGreen,
+                          color: titleColor,
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
                   ],
                 ),
               ),
@@ -709,16 +899,16 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.bgPaleGreen2,
+                  color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgPaleGreen2,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: WarnaAplikasi.greenPill),
+                  border: Border.all(color: isDark ? const Color(0xFF2E4033) : WarnaAplikasi.greenPill),
                 ),
-                child: const Text(
+                child: Text(
                   'Musim MT-1 2023/2024',
                   style: TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w600,
-                    color: WarnaAplikasi.primary,
+                    color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                   ),
                 ),
               ),
@@ -735,6 +925,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   icon: Icons.location_on_outlined,
                   label: _currentItem.location,
                   sublabel: 'Luas efektif: ${_currentItem.blockArea}',
+                  isDark: isDark,
                 ),
               ),
               const SizedBox(width: 10),
@@ -743,6 +934,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   icon: Icons.groups_outlined,
                   label: _currentItem.poktan,
                   sublabel: 'Desa Sukamaju, Subang',
+                  isDark: isDark,
                 ),
               ),
             ],
@@ -756,6 +948,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   icon: Icons.calendar_today_outlined,
                   label: _currentItem.date,
                   sublabel: '${_currentItem.harvestTime} (Pagi Cerah)',
+                  isDark: isDark,
                 ),
               ),
               const SizedBox(width: 10),
@@ -764,6 +957,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   icon: Icons.precision_manufacturing_outlined,
                   label: _currentItem.harvestMethod,
                   sublabel: 'Minim susut rontok (<1,5%)',
+                  isDark: isDark,
                 ),
               ),
             ],
@@ -774,28 +968,28 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
+              color: subContainerBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: WarnaAplikasi.borderField),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               children: [
-                const Icon(Icons.receipt_long_outlined, size: 16, color: WarnaAplikasi.grayGreenDark),
+                Icon(Icons.receipt_long_outlined, size: 16, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Biaya Petik / Tebas',
-                        style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGray),
+                        style: TextStyle(fontSize: 10, color: textMuted),
                       ),
                       Text(
                         'Rp ${_formatCurrency(_currentItem.harvestCost)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.textDarkGreen,
+                          color: titleColor,
                         ),
                       ),
                     ],
@@ -806,17 +1000,18 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1D2420) : Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: WarnaAplikasi.borderPale2),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Text(
                       _currentItem.costWorkers,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10, color: WarnaAplikasi.grayGreenDark),
+                      style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark),
                     ),
                   ),
+                ),
                 ),
               ],
             ),
@@ -828,17 +1023,17 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: WarnaAplikasi.bgPaleGreen3,
+              color: subContainerBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: WarnaAplikasi.borderField),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.notes_rounded, size: 14, color: WarnaAplikasi.grayGreenDark),
-                    SizedBox(width: 6),
+                    Icon(Icons.notes_rounded, size: 14, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'Catatan Lapangan (Mandor)',
@@ -847,18 +1042,19 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.textDarkGreen,
+                          color: titleColor,
                         ),
                       ),
+                    ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '"${_currentItem.fieldNotes}"',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.grayGreenDark,
+                    color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark,
                     height: 1.35,
                     fontStyle: FontStyle.italic,
                   ),
@@ -875,11 +1071,12 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
     required IconData icon,
     required String label,
     required String sublabel,
+    bool isDark = false,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 15, color: WarnaAplikasi.primary),
+        Icon(icon, size: 15, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
         const SizedBox(width: 6),
         Expanded(
           child: Column(
@@ -887,10 +1084,10 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: WarnaAplikasi.textDarkGreen,
+                  color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -898,7 +1095,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               const SizedBox(height: 1),
               Text(
                 sublabel,
-                style: const TextStyle(fontSize: 10, color: WarnaAplikasi.textGray),
+                style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -910,15 +1107,21 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildDokumentasiCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+
     final photoList = _currentItem.photos.where((p) => p.trim().isNotEmpty).toList();
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderField),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -926,11 +1129,11 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.photo_library_outlined, size: 16, color: WarnaAplikasi.primary),
-                    SizedBox(width: 8),
+                    Icon(Icons.photo_library_outlined, size: 16, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Dokumentasi Bukti Fisik',
@@ -939,17 +1142,20 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.textDarkGreen,
+                          color: titleColor,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 8),
               Text(
                 '${photoList.length} Berkas',
-                style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
+                style: TextStyle(fontSize: 11, color: subtitleColor),
               ),
             ],
           ),
@@ -1004,7 +1210,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                       width: 140,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        color: WarnaAplikasi.dividerGray,
+                        color: isDark ? const Color(0xFF141916) : WarnaAplikasi.dividerGray,
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: Image.network(
@@ -1012,18 +1218,18 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         fit: BoxFit.cover,
                         loadingBuilder: (ctx, child, progress) {
                           if (progress == null) return child;
-                          return const Center(
+                          return Center(
                             child: SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
                             ),
                           );
                         },
                         errorBuilder: (errCtx, errObj, errTrace) => Container(
-                          color: WarnaAplikasi.bgPaleGreen3,
+                          color: isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPaleGreen3,
                           alignment: Alignment.center,
-                          child: const Icon(Icons.broken_image_rounded, color: WarnaAplikasi.primary, size: 28),
+                          child: Icon(Icons.broken_image_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 28),
                         ),
                       ),
                     ),
@@ -1036,18 +1242,18 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               decoration: BoxDecoration(
-                color: WarnaAplikasi.bgPaleGreen3,
+                color: isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPaleGreen3,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: WarnaAplikasi.borderField),
+                border: Border.all(color: borderColor),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.photo_camera_outlined, color: WarnaAplikasi.grayGreenMuted, size: 28),
-                  SizedBox(height: 6),
+                  Icon(Icons.photo_camera_outlined, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenMuted, size: 28),
+                  const SizedBox(height: 6),
                   Text(
                     'Belum ada foto bukti fisik yang dilampirkan.',
-                    style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
+                    style: TextStyle(fontSize: 11.5, color: subtitleColor),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -1062,18 +1268,18 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.bgPaleGreen2,
+                    color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgPaleGreen2,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: WarnaAplikasi.greenPill),
+                    border: Border.all(color: isDark ? const Color(0xFF2E4033) : WarnaAplikasi.greenPill),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.check_circle_outline_rounded, size: 15, color: WarnaAplikasi.primary),
-                      SizedBox(width: 8),
+                      Icon(Icons.check_circle_outline_rounded, size: 15, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Hasil panen telah terverifikasi oleh kelompok tani.',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDarkGreen),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen),
                         ),
                       ),
                     ],
@@ -1083,20 +1289,20 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: isDark ? const Color(0xFF3B1F23) : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.red.shade200),
+                    border: Border.all(color: isDark ? const Color(0xFF6B2D35) : Colors.red.shade200),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.cancel_outlined, size: 15, color: Colors.red.shade700),
+                      Icon(Icons.cancel_outlined, size: 15, color: Colors.redAccent),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _currentItem.validatedNotes?.isNotEmpty == true
                               ? 'Catatan Penolakan: ${_currentItem.validatedNotes}'
                               : 'Catatan hasil panen ini ditolak saat verifikasi lapangan.',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.red.shade800),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFFF8A80) : Colors.red.shade800),
                         ),
                       ),
                     ],
@@ -1106,18 +1312,18 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
+                    color: isDark ? const Color(0xFF332714) : Colors.amber.shade50,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amber.shade200),
+                    border: Border.all(color: isDark ? const Color(0xFF5E4520) : Colors.amber.shade200),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.hourglass_top_rounded, size: 15, color: Colors.amber.shade800),
+                      Icon(Icons.hourglass_top_rounded, size: 15, color: WarnaAplikasi.warningOrange),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Menunggu verifikasi lapangan oleh pengurus kelompok tani.',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.amber.shade900),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFFFB74D) : Colors.amber.shade900),
                         ),
                       ),
                     ],
@@ -1132,6 +1338,10 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
   }
 
   Widget _buildBottomActionBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final barBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderTopColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.surfaceLight;
+
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -1141,58 +1351,146 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
             ? MediaQuery.of(context).padding.bottom
             : 12,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: barBg,
         border: Border(
-          top: BorderSide(color: WarnaAplikasi.surfaceLight, width: 1),
+          top: BorderSide(color: borderTopColor, width: 1),
         ),
       ),
       child: Row(
         children: [
-          // Cetak Bukti PDF
-          Expanded(
-            child: SizedBox(
-              height: 46,
-              child: ElevatedButton.icon(
-                onPressed: _handleCetakPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
-                label: const Text(
-                  'Cetak Bukti PDF',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+          if (_currentItem.status == HarvestStatus.ditolak) ...[
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: _openEditScreen,
+                  icon: const Icon(Icons.replay_rounded, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Ajukan Revisi Panen',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: WarnaAplikasi.warningOrange,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: WarnaAplikasi.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  elevation: 0,
+              ),
+            ),
+          ] else ...[
+            // Cetak Bukti PDF
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: _handleCetakPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Cetak Bukti PDF',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: WarnaAplikasi.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-
-          // Edit Button (pencil)
-          InkWell(
-            onTap: _openEditScreen,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.bgPaleGreen2,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: WarnaAplikasi.greenPill),
-              ),
-              child: const Icon(
-                Icons.edit_outlined,
-                color: WarnaAplikasi.primary,
-                size: 20,
+          ],
+                ),
               ),
             ),
-          ),
+          ] else ...[
+            // Cetak Bukti PDF
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Menyiapkan berkas Cetak Bukti PDF...'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
+                  label: const Text(
+                    'Cetak Bukti PDF',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: WarnaAplikasi.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(width: 10),
+
+          // Edit Button
+          if (_currentItem.status == HarvestStatus.disetujui)
+            InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Catatan panen yang telah disetujui Poktan telah terkunci dan tidak dapat diedit.'),
+                    backgroundColor: WarnaAplikasi.primaryDark,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF243328) : Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? const Color(0xFF2E4033) : Colors.grey.shade300),
+                ),
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  color: isDark ? const Color(0xFFA0B3A6) : Colors.grey,
+                  size: 20,
+                ),
+              ),
+            )
+          else
+            InkWell(
+              onTap: _openEditScreen,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgPaleGreen2,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? const Color(0xFF2E4033) : WarnaAplikasi.greenPill),
+                ),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
+                  size: 20,
+                ),
+              ),
+            ),
           const SizedBox(width: 8),
 
           // Delete Button (trash)
@@ -1203,9 +1501,9 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: WarnaAplikasi.errorRedBg,
+                color: isDark ? const Color(0xFF3B1F23) : WarnaAplikasi.errorRedBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: WarnaAplikasi.errorRedBg),
+                border: Border.all(color: isDark ? const Color(0xFF6B2D35) : WarnaAplikasi.errorRedBg),
               ),
               child: const Icon(
                 Icons.delete_outline_rounded,

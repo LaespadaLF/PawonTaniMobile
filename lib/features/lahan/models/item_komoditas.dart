@@ -10,6 +10,9 @@ class ItemKomoditas {
     required this.kategori,
   });
 
+  String get id => idKomoditas;
+  String get nama => namaKomoditas;
+
   factory ItemKomoditas.fromJson(Map<String, dynamic> json) {
     return ItemKomoditas(
       idKomoditas: (json['id_komoditas'] ?? '').toString(),

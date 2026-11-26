@@ -6,9 +6,74 @@ class WarnaAplikasi {
   static const Color primaryDark = Color(0xFF142419);
   static const Color primaryMedium = Color(0xFF24573A);
   static const Color primaryLight = Color(0xFF3B6B4F);
+  
+  /// Helper warna background yang dinamis mengikuti mode gelap / terang
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF141916)
+        : const Color(0xFFF9FAF9);
+  }
+
+  /// Warna background halaman umum
+  static Color get bgPageAdaptive => const Color(0xFFF4F7F5);
+
+  /// Helper warna kartu/container yang dinamis mengikuti mode gelap / terang
+  static Color getCardColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF1D2420)
+        : Colors.white;
+  }
+
+  /// Helper warna teks judul yang dinamis mengikuti mode gelap / terang
+  static Color getTitleColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFF1F5F2)
+        : primaryDark;
+  }
+
+  /// Helper warna teks sekunder yang dinamis mengikuti mode gelap / terang
+  static Color getSubtitleColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFA0B3A6)
+        : textGray;
+  }
+
+  /// Helper warna border yang dinamis mengikuti mode gelap / terang
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF28332C)
+        : borderPale;
+  }
+
   static const Color primaryBackground = Color(0xFFF9FAF9);
   
-  static const Color greenLight = Color(0xFFEAF5E8); // Hijau Muda Sekunder
+  /// Helper warna background info banner yang dinamis mengikuti mode gelap / terang
+  static Color getInfoBannerBg(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF1B261F)
+        : greenLight;
+  }
+
+  /// Helper warna teks info banner yang dinamis mengikuti mode gelap / terang
+  static Color getInfoBannerText(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF86EFAC)
+        : primary;
+  }
+
+  /// Helper warna banner error/peringatan yang dinamis mengikuti mode gelap / terang
+  static Color getErrorBannerBg(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF2E1C1C)
+        : bgErrorLight;
+  }
+
+  /// Helper warna teks error/peringatan yang dinamis mengikuti mode gelap / terang
+  static Color getErrorBannerText(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFF87171)
+        : errorRedDark;
+  }
   static const Color greenPill = Color(0xFFD6EADB);
   static const Color greenText = Color(0xFF1E5334);
   
@@ -159,11 +224,14 @@ class WarnaAplikasi {
   static const Color bgPaleGreen4 = Color(0xFFEBF5EE);
   static const Color borderPale3 = Color(0xFFD3E7D9);
   static const Color cardBodyText = Color(0xFF5E7567);
-  static const Color greenLight2 = Color(0xFFD4EBD9);
+  static const Color greenLight = Color(0xFFEAF5E8); // Hijau Muda Sekunder
   static const Color warningOrangeBorder = Color(0xFFFED7AA);
   static const Color statusBadgeBlueBg = Color(0xFFE0F2FE);
   static const Color statusBadgeBlueText = Color(0xFF0284C7);
   static const Color textGrayDark = Color(0xFF374151);
+  static const Color bgGray = Color(0xFFF1F5F9);
+  static const Color bgErrorLight = Color(0xFFFEF2F2);
+  static const Color errorBorder = Color(0xFFFECACA);
   static const Color bannerIconBg = Color(0xFFD3E8D8);
   static const Color textDarkGrayGreen = Color(0xFF4B6653);
   static const Color errorRedLight = Color(0xFFFEE2E2);

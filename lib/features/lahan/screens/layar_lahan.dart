@@ -22,6 +22,7 @@ class LandScreen extends StatefulWidget {
 
 class _LandScreenState extends State<LandScreen> {
   int _selectedFilterIndex = 0;
+  bool _isSortNewest = true;
   List<ItemLahan> _ItemLahans = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
@@ -30,6 +31,33 @@ class _LandScreenState extends State<LandScreen> {
   int? _totalPlots;
   final ScrollController _scrollController = ScrollController();
   String? _errorMessage;
+
+  List<ItemLahan> get _displayedLahans {
+    List<ItemLahan> list = List.from(_ItemLahans);
+
+    // Filter berdasarkan status operasional (Semua, Aktif, Persiapan, Istirahat)
+    if (_selectedFilterIndex == 1) {
+      // Aktif
+      list = list.where((item) => item.status == StatusLahan.aktif).toList();
+    } else if (_selectedFilterIndex == 2) {
+      // Persiapan
+      list = list.where((item) => item.status == StatusLahan.persiapan).toList();
+    } else if (_selectedFilterIndex == 3) {
+      // Istirahat
+      list = list.where((item) => item.status == StatusLahan.istirahat).toList();
+    }
+
+    // Sorting (Terbaru vs Terlama)
+    list.sort((a, b) {
+      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final cmp = _isSortNewest ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
+      if (cmp != 0) return cmp;
+      return _isSortNewest ? b.id.compareTo(a.id) : a.id.compareTo(b.id);
+    });
+
+    return list;
+  }
 
   @override
   void initState() {
@@ -220,13 +248,20 @@ class _LandScreenState extends State<LandScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final sheetBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final itemCardBg = isDark ? const Color(0xFF141916) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+        final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
         return Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -236,21 +271,21 @@ class _LandScreenState extends State<LandScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.border,
+                  color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
                   'Sebaran Lokasi Lahan',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleColor),
                 ),
               ),
               if (_ItemLahans.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                  child: Text('Belum ada data lahan.', style: TextStyle(color: WarnaAplikasi.textGray)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  child: Text('Belum ada data lahan.', style: TextStyle(color: subtitleColor)),
                 )
               else
                 Expanded(
@@ -266,7 +301,8 @@ class _LandScreenState extends State<LandScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          border: Border.all(color: WarnaAplikasi.border),
+                          color: itemCardBg,
+                          border: Border.all(color: borderColor),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -274,17 +310,17 @@ class _LandScreenState extends State<LandScreen> {
                           children: [
                             Text(
                               item.nama,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               item.lokasi,
-                              style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
+                              style: TextStyle(fontSize: 12, color: subtitleColor),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Lat: ${lat.toStringAsFixed(6)}, Long: ${lng.toStringAsFixed(6)}',
-                              style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
+                              style: TextStyle(fontSize: 11, color: subtitleColor),
                             ),
                             const SizedBox(height: 8),
                             Container(
@@ -292,7 +328,7 @@ class _LandScreenState extends State<LandScreen> {
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: WarnaAplikasi.border),
+                                border: Border.all(color: borderColor),
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
@@ -340,13 +376,20 @@ class _LandScreenState extends State<LandScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filterChips = ['Semua', 'Aktif Ditanami', 'Masa Olah Tanah'];
+    final filterChips = ['Semua', 'Aktif', 'Persiapan', 'Istirahat'];
+    final displayed = _displayedLahans;
 
     double totalArea = _ItemLahans.fold(0.0, (sum, item) => sum + item.luas);
     int totalPlots = _totalPlots ?? _ItemLahans.length;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -374,12 +417,12 @@ class _LandScreenState extends State<LandScreen> {
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                         // Header Texts
-                        const Text(
+                        Text(
                           'Data Lahan',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
-                            color: WarnaAplikasi.primaryDark,
+                            color: titleColor,
                             letterSpacing: -0.5,
                           ),
                         ),
@@ -400,15 +443,16 @@ class _LandScreenState extends State<LandScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: WarnaAplikasi.greenLight,
+                                  color: isDark ? const Color(0xFF1D2420) : WarnaAplikasi.greenLight,
                                   borderRadius: BorderRadius.circular(16),
+                                  border: isDark ? Border.all(color: const Color(0xFF28332C)) : null,
                                 ),
                                 child: Row(
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: WarnaAplikasi.greenPill,
+                                        color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenPill,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(Icons.architecture, color: WarnaAplikasi.primary, size: 20),
@@ -417,8 +461,8 @@ class _LandScreenState extends State<LandScreen> {
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Total Luas', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
-                                        Text('${totalArea.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                                        Text('Total Luas', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray)),
+                                        Text('${totalArea.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark)),
                                       ],
                                     ),
                                   ],
@@ -430,15 +474,16 @@ class _LandScreenState extends State<LandScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: WarnaAplikasi.greenLight,
+                                  color: isDark ? const Color(0xFF1D2420) : WarnaAplikasi.greenLight,
                                   borderRadius: BorderRadius.circular(16),
+                                  border: isDark ? Border.all(color: const Color(0xFF28332C)) : null,
                                 ),
                                 child: Row(
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: WarnaAplikasi.greenPill,
+                                        color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenPill,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(Icons.eco_outlined, color: WarnaAplikasi.primary, size: 20),
@@ -447,8 +492,8 @@ class _LandScreenState extends State<LandScreen> {
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Total Petak', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
-                                        Text('$totalPlots', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                                        Text('Total Petak', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray)),
+                                        Text('$totalPlots', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark)),
                                       ],
                                     ),
                                   ],
@@ -496,10 +541,14 @@ class _LandScreenState extends State<LandScreen> {
                                                     duration: const Duration(milliseconds: 200),
                                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                                     decoration: BoxDecoration(
-                                                      color: isSelected ? WarnaAplikasi.primary : Colors.transparent,
+                                                      color: isSelected
+                                                          ? WarnaAplikasi.primary
+                                                          : (isDark ? const Color(0xFF1D2420) : Colors.transparent),
                                                       borderRadius: BorderRadius.circular(20),
                                                       border: Border.all(
-                                                        color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.border,
+                                                        color: isSelected
+                                                            ? WarnaAplikasi.primary
+                                                            : (isDark ? const Color(0xFF28332C) : WarnaAplikasi.border),
                                                         width: 1,
                                                       ),
                                                     ),
@@ -508,7 +557,9 @@ class _LandScreenState extends State<LandScreen> {
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                        color: isSelected ? Colors.white : WarnaAplikasi.textGray,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
                                       ),
                                     ),
                                   ),
@@ -523,15 +574,34 @@ class _LandScreenState extends State<LandScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Lahan Saya',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleColor),
                             ),
-                            Row(
-                              children: [
-                                Text('Terbaru', style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
-                                const Icon(Icons.keyboard_arrow_down, size: 16, color: WarnaAplikasi.textGray),
-                              ],
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _isSortNewest = !_isSortNewest;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      _isSortNewest ? 'Terbaru' : 'Terlama',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      _isSortNewest ? Icons.arrow_downward : Icons.arrow_upward,
+                                      size: 14,
+                                      color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -597,18 +667,49 @@ class _LandScreenState extends State<LandScreen> {
                         ),
                       ),
                     )
+                  else if (displayed.isEmpty)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Column(
+                              children: [
+                                const Icon(Icons.filter_list_off_rounded, size: 40, color: WarnaAplikasi.textGray),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Tidak ada lahan dengan filter "${filterChips[_selectedFilterIndex]}".',
+                                  style: const TextStyle(color: WarnaAplikasi.textGray),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
                   else
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
-                            final item = _ItemLahans[index];
+                            final item = displayed[index];
+                            final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
                             final isAktif = item.status == StatusLahan.aktif;
-                            final tagColor = isAktif ? WarnaAplikasi.greenLight : WarnaAplikasi.warningOrangeBg;
-                            final tagTextColor = isAktif ? WarnaAplikasi.primary : WarnaAplikasi.warningOrange;
-                            final tagText = isAktif ? 'Aktif Ditanami' : (item.status == StatusLahan.persiapan ? 'Dalam Proses' : 'Masa Olah Tanah');
-                            final dotColor = isAktif ? WarnaAplikasi.successGreen : WarnaAplikasi.hppAmberBg;
+                            final isPersiapan = item.status == StatusLahan.persiapan;
+                            final tagColor = isAktif
+                                ? WarnaAplikasi.greenLight
+                                : (isPersiapan ? WarnaAplikasi.warningOrangeBg : WarnaAplikasi.bgInput);
+                            final tagTextColor = isAktif
+                                ? WarnaAplikasi.primary
+                                : (isPersiapan ? WarnaAplikasi.warningOrange : WarnaAplikasi.textGray);
+                            final tagText = isAktif
+                                ? 'Aktif Ditanami'
+                                : (isPersiapan ? 'Dalam Persiapan' : 'Masa Istirahat');
+                            final dotColor = isAktif
+                                ? WarnaAplikasi.successGreen
+                                : (isPersiapan ? WarnaAplikasi.hppAmberBg : WarnaAplikasi.textGrayLight);
 
                             return InkWell(
                               onTap: () {
@@ -621,11 +722,15 @@ class _LandScreenState extends State<LandScreen> {
                                 margin: const EdgeInsets.only(bottom: 16),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardBg,
                                   borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale,
+                                    width: 1,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.02),
+                                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                                       blurRadius: 10,
                                       offset: const Offset(0, 2),
                                     ),
@@ -645,14 +750,14 @@ class _LandScreenState extends State<LandScreen> {
                                               errorBuilder: (_, __, ___) => Container(
                                                 width: 80,
                                                 height: 80,
-                                                color: WarnaAplikasi.greenLight,
+                                                color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
                                                 child: const Icon(Icons.agriculture_rounded, color: WarnaAplikasi.primary, size: 30),
                                               ),
                                             )
                                           : Container(
                                               width: 80,
                                               height: 80,
-                                              color: WarnaAplikasi.greenLight,
+                                              color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
                                               child: const Icon(Icons.agriculture_rounded, color: WarnaAplikasi.primary, size: 30),
                                             ),
                                     ),
@@ -677,25 +782,25 @@ class _LandScreenState extends State<LandScreen> {
                                             ),
                                           ),
                                           const SizedBox(height: 6),
-                                          Text(item.nama, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark)),
+                                          Text(item.nama, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark)),
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              const Icon(Icons.location_on_outlined, size: 12, color: WarnaAplikasi.textGrayLight),
+                                              Icon(Icons.location_on_outlined, size: 12, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayLight),
                                               const SizedBox(width: 4),
-                                              Expanded(child: Text(item.lokasi, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.primaryLight), overflow: TextOverflow.ellipsis)),
+                                              Expanded(child: Text(item.lokasi, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryLight), overflow: TextOverflow.ellipsis)),
                                             ],
                                           ),
                                           const SizedBox(height: 6),
                                           Row(
                                             children: [
-                                              const Icon(Icons.wb_sunny_outlined, size: 12, color: WarnaAplikasi.primaryLight),
+                                              Icon(Icons.wb_sunny_outlined, size: 12, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryLight),
                                               const SizedBox(width: 4),
-                                              Text('${item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textDarkGreen)),
+                                              Text('${item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.textDarkGreen)),
                                               const SizedBox(width: 12),
-                                              const Icon(Icons.eco_outlined, size: 12, color: WarnaAplikasi.primaryLight),
+                                              Icon(Icons.eco_outlined, size: 12, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryLight),
                                               const SizedBox(width: 4),
-                                              Text(item.komoditas, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textDarkGreen)),
+                                              Text(item.komoditas, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.textDarkGreen)),
                                             ],
                                           ),
                                           const SizedBox(height: 12),
@@ -706,7 +811,7 @@ class _LandScreenState extends State<LandScreen> {
                                                 children: [
                                                   InkWell(
                                                     onTap: () => _navigateToEditLand(item),
-                                                    child: const Icon(Icons.edit_outlined, size: 18, color: WarnaAplikasi.textGrayLight),
+                                                    child: Icon(Icons.edit_outlined, size: 18, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayLight),
                                                   ),
                                                   const SizedBox(width: 16),
                                                   InkWell(
@@ -725,7 +830,7 @@ class _LandScreenState extends State<LandScreen> {
                               ),
                             );
                           },
-                          childCount: _ItemLahans.length,
+                          childCount: displayed.length,
                         ),
                       ),
                     ),
@@ -749,11 +854,12 @@ class _LandScreenState extends State<LandScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardBg,
                           borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: borderColor),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
+                              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
@@ -764,14 +870,14 @@ class _LandScreenState extends State<LandScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Row(
+                                Row(
                                   children: [
-                                    Icon(Icons.map_outlined, color: WarnaAplikasi.primary, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('Sebaran Lokasi Lahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                    const Icon(Icons.map_outlined, color: WarnaAplikasi.primary, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text('Sebaran Lokasi Lahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor)),
                                   ],
                                 ),
-                                Text('${_ItemLahans.length} Petak', style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
+                                Text('${_ItemLahans.length} Petak', style: TextStyle(fontSize: 12, color: subtitleColor)),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -780,8 +886,9 @@ class _LandScreenState extends State<LandScreen> {
                               child: Container(
                                 height: 80,
                                 decoration: BoxDecoration(
-                                  color: WarnaAplikasi.greenPill,
+                                  color: isDark ? const Color(0xFF141916) : WarnaAplikasi.greenPill,
                                   borderRadius: BorderRadius.circular(12),
+                                  border: isDark ? Border.all(color: borderColor) : null,
                                 ),
                                 child: Stack(
                                   children: [
@@ -808,10 +915,25 @@ class _LandScreenState extends State<LandScreen> {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: isDark ? const Color(0xFF1D2420) : Colors.white,
                                           borderRadius: BorderRadius.circular(16),
+                                          border: isDark ? Border.all(color: borderColor) : null,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
-                                        child: const Text('Lihat Peta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: WarnaAplikasi.primary)),
+                                        child: Text(
+                                          'Lihat Peta',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],

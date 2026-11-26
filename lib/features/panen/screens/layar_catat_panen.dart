@@ -6,6 +6,7 @@ import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/dialog_sukses_simpan.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
+import 'package:pawon_mobile/features/lahan/models/item_siklus_tanam.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
@@ -17,12 +18,14 @@ class RecordHarvestScreen extends StatefulWidget {
   final Function(HarvestItem)? onSave;
   final String? initialLahanId;
   final String? initialLahanName;
+  final ItemSiklusTanam? initialSiklus;
 
   const RecordHarvestScreen({
     super.key,
     this.onSave,
     this.initialLahanId,
     this.initialLahanName,
+    this.initialSiklus,
   });
 
   @override
@@ -36,7 +39,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   // Lahan Garapan selection
   List<ItemLahan> _lahanList = [];
   ItemLahan? _selectedItemLahan;
+  ItemSiklusTanam? _activeSiklus;
   bool _isLoadingLahan = true;
+  bool _isLoadingSiklus = false;
   bool _isSaving = false;
 
   final String _musimTanam = 'Musim Rendeng';
@@ -63,11 +68,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
 
   // Metode Pemanenan (0: Mesin Combine Harvester, 1: Manual)
   int _selectedHarvestMethod = 0;
-
-  // Biaya Petik / Tebas & Harga
-  final TextEditingController _costController = TextEditingController();
-  final TextEditingController _workersController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
 
   // Catatan Lapangan
   final TextEditingController _notesController = TextEditingController();
@@ -99,9 +99,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     _moistureController.dispose();
     _wholeGrainController.dispose();
     _wasteController.dispose();
-    _costController.dispose();
-    _workersController.dispose();
-    _priceController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -112,20 +109,23 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     if (!mounted) return;
 
     if (response.success && response.data != null && response.data!.isNotEmpty) {
-      final list = response.data!;
+      final allList = response.data!;
+      final list = allList.where((l) => l.status == StatusLahan.aktif || l.status == StatusLahan.persiapan || l.siklusBerjalan != null).toList();
       ItemLahan? preselected;
-      if (widget.initialLahanId != null) {
-        final targetId = widget.initialLahanId!.trim().toLowerCase();
-        final targetName = widget.initialLahanName?.trim().toLowerCase();
-        preselected = list.cast<ItemLahan?>().firstWhere(
-          (l) => l != null && (
-            l.id.trim().toLowerCase() == targetId ||
-            (targetName != null && targetName.isNotEmpty && l.nama.trim().toLowerCase() == targetName)
-          ),
-          orElse: () => _selectedItemLahan ?? list.first,
-        );
-      } else {
-        preselected = _selectedItemLahan ?? list.first;
+      if (list.isNotEmpty) {
+        if (widget.initialLahanId != null) {
+          final targetId = widget.initialLahanId!.trim().toLowerCase();
+          final targetName = widget.initialLahanName?.trim().toLowerCase();
+          preselected = list.cast<ItemLahan?>().firstWhere(
+            (l) => l != null && (
+              l.id.trim().toLowerCase() == targetId ||
+              (targetName != null && targetName.isNotEmpty && l.nama.trim().toLowerCase() == targetName)
+            ),
+            orElse: () => _selectedItemLahan ?? list.first,
+          );
+        } else {
+          preselected = _selectedItemLahan ?? list.first;
+        }
       }
 
       setState(() {
@@ -134,10 +134,50 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
         _isLoadingLahan = false;
         _syncCommodityFromLahan(preselected);
       });
+
+      if (widget.initialSiklus != null && preselected?.id == widget.initialLahanId) {
+        setState(() {
+          _activeSiklus = widget.initialSiklus;
+          _syncFromSiklus(_activeSiklus!);
+        });
+      } else if (preselected != null) {
+        _fetchSiklusForSelectedLahan(preselected.id);
+      }
     } else {
       setState(() {
         _isLoadingLahan = false;
       });
+    }
+  }
+
+  void _syncFromSiklus(ItemSiklusTanam siklus) {
+    final kom = siklus.komoditasNama.toLowerCase().trim();
+    if (kom.contains('jagung')) {
+      _cropType = CropType.jagung;
+      _commodityName = 'Jagung Pipil Kering (JPK)';
+    } else {
+      _cropType = CropType.padi;
+      _commodityName = 'Gabah Kering Panen (GKP)';
+    }
+    if (siklus.varietas != null && siklus.varietas!.isNotEmpty) {
+      _varietasName = siklus.varietas!;
+    }
+  }
+
+  Future<void> _fetchSiklusForSelectedLahan(String lahanId) async {
+    setState(() => _isLoadingSiklus = true);
+    try {
+      final res = await _lahanService.getSiklusBerjalan(lahanId);
+      if (!mounted) return;
+      setState(() {
+        _activeSiklus = res.data;
+        _isLoadingSiklus = false;
+        if (_activeSiklus != null) {
+          _syncFromSiklus(_activeSiklus!);
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSiklus = false);
     }
   }
 
@@ -232,6 +272,28 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
       return;
     }
 
+    if (_activeSiklus == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lahan ini tidak memiliki siklus tanam aktif. Panen wajib terhubung dengan siklus berjalan.'),
+          backgroundColor: WarnaAplikasi.warningOrange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (!_activeSiklus!.isAktif) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Siklus tanam sedang ${_activeSiklus!.statusLabel} dan tidak dapat menerima catatan panen baru.'),
+          backgroundColor: WarnaAplikasi.warningOrange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_currentWeightKg <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Berat hasil panen harus lebih dari 0.'), backgroundColor: WarnaAplikasi.errorRedDark),
@@ -246,11 +308,10 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     final harvestMethod = _selectedHarvestMethod == 0 ? 'Mesin Combine Harvester' : 'Manual / Sabit & Thresher';
 
     final dateIso = '${_harvestDate.year}-${_harvestDate.month.toString().padLeft(2, '0')}-${_harvestDate.day.toString().padLeft(2, '0')}';
-    final rawCost = _costController.text.replaceAll('.', '').replaceAll(',', '.').trim();
-    final rawPrice = _priceController.text.replaceAll('.', '').replaceAll(',', '.').trim();
 
     final payload = <String, dynamic>{
       'id_lahan': _selectedItemLahan!.id,
+      'id_siklus': _activeSiklus!.idSiklus,
       'komoditas_nama': _cropType.displayName,
       'varietas': _varietasName,
       'jenis_panen': _commodityName,
@@ -263,9 +324,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
       'persen_butir_utuh': double.tryParse(_wholeGrainController.text) ?? 95.0,
       'persen_hampa_kotoran': double.tryParse(_wasteController.text) ?? 2.0,
       'metode_panen': harvestMethod,
-      'biaya_panen': double.tryParse(rawCost) ?? 0.0,
-      'keterangan_tenaga_kerja': _workersController.text.trim(),
-      'harga_per_kg': double.tryParse(rawPrice) ?? 7000.0,
+      'biaya_panen': 0.0,
+      'keterangan_tenaga_kerja': '',
+      'harga_per_kg': 0.0,
       'catatan': _notesController.text.trim(),
     };
 
@@ -349,8 +410,10 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: isDark ? const Color(0xFF141916) : WarnaAplikasi.primaryBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -369,13 +432,13 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     const SizedBox(height: 16),
                     _buildLahanGarapanSection(),
                     const SizedBox(height: 18),
+                    _buildLuasLahanSection(),
+                    const SizedBox(height: 18),
                     _buildTanggalPanenSection(),
                     const SizedBox(height: 18),
                     _buildJumlahPanenSection(),
                     const SizedBox(height: 18),
                     _buildMetodePemanenanSection(),
-                    const SizedBox(height: 18),
-                    _buildBiayaPetikSection(),
                     const SizedBox(height: 18),
                     _buildCatatanSection(),
                     const SizedBox(height: 18),
@@ -396,15 +459,16 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildSectionHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'DETAIL HASIL PANEN',
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w700,
-            color: WarnaAplikasi.primary,
+            color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
             letterSpacing: 0.6,
           ),
         ),
@@ -413,7 +477,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           'Masukkan hasil panen nyata dari petak lahan binaan Anda.',
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: isDark ? const Color(0xFFA0B3A6) : Colors.grey.shade600,
           ),
         ),
       ],
@@ -421,14 +485,15 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildFieldLabel(String label, {bool isRequired = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: WarnaAplikasi.nearBlack,
+            color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.nearBlack,
           ),
         ),
         if (isRequired)
@@ -438,27 +503,39 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: WarnaAplikasi.errorRedDark,
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
+      ],
+    );
+  }
+
+  Widget _buildLuasLahanSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         _buildFieldLabel('Luas Lahan yang Dipanen (Hektar)', isRequired: true),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: WarnaAplikasi.borderField),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             children: [
-              const Icon(Icons.square_foot_rounded, color: WarnaAplikasi.primary, size: 20),
+              Icon(Icons.square_foot_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: _harvestedAreaController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen),
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: titleColor),
                   decoration: const InputDecoration(
                     hintText: 'Contoh: 0.85',
                     hintStyle: TextStyle(fontSize: 13, color: WarnaAplikasi.textGray),
@@ -470,10 +547,10 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.greenLight,
+                  color: isDark ? const Color(0xFF243328) : WarnaAplikasi.greenLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text('Ha', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primary)),
+                child: Text('Ha', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)),
               ),
             ],
           ),
@@ -483,6 +560,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildLahanGarapanSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -493,40 +576,66 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             if (_lahanList.isEmpty) return;
             showModalBottomSheet(
               context: context,
-              backgroundColor: Colors.white,
+              backgroundColor: cardBg,
+              isScrollControlled: true,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              builder: (ctx) => Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pilih Lahan Garapan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.textDarkGreen,
+              builder: (ctx) => ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.75,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    ..._lahanList.map((lhn) {
-                      return ListTile(
-                        leading: const Icon(Icons.eco_rounded, color: WarnaAplikasi.primary),
-                        title: Text(lhn.nama),
-                        subtitle: Text('${lhn.luas.toStringAsFixed(2)} Ha • ${lhn.komoditas.isNotEmpty ? lhn.komoditas : 'Pertanian'}'),
-                        onTap: () {
-                          setState(() {
-                            _selectedItemLahan = lhn;
-                            _syncCommodityFromLahan(lhn);
-                          });
-                          Navigator.pop(ctx);
-                        },
-                      );
-                    }),
-                  ],
+                      Text(
+                        'Pilih Lahan Garapan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _lahanList.length,
+                          itemBuilder: (context, idx) {
+                            final lhn = _lahanList[idx];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              leading: Icon(Icons.eco_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
+                              title: Text(lhn.nama, style: TextStyle(color: titleColor, fontWeight: FontWeight.w600)),
+                              subtitle: Text('${lhn.luas.toStringAsFixed(2)} Ha • ${lhn.komoditas.isNotEmpty ? lhn.komoditas : 'Pertanian'}', style: TextStyle(color: subtitleColor)),
+                              onTap: () {
+                                setState(() {
+                                  _selectedItemLahan = lhn;
+                                  _syncCommodityFromLahan(lhn);
+                                });
+                                Navigator.pop(ctx);
+                                _fetchSiklusForSelectedLahan(lhn.id);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -535,9 +644,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: WarnaAplikasi.borderField),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               children: [
@@ -545,12 +654,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.bgSuccessLight2,
+                    color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgSuccessLight2,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.eco_rounded,
-                    color: WarnaAplikasi.primaryDark,
+                    color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primaryDark,
                     size: 20,
                   ),
                 ),
@@ -561,10 +670,10 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     children: [
                       Text(
                         _selectedItemLahan?.nama ?? (widget.initialLahanName ?? 'Pilih Petak Lahan'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.textDarkGreen,
+                          color: titleColor,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -572,31 +681,134 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                         _selectedItemLahan != null && _selectedItemLahan!.luas > 0
                             ? '${_selectedItemLahan!.luas.toStringAsFixed(2)} Ha • ${_selectedItemLahan!.komoditas.isNotEmpty ? _selectedItemLahan!.komoditas : _cropType.displayName}'
                             : (_isLoadingLahan ? 'Memuat daftar lahan...' : 'Ketuk untuk memilih petak lahan'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: WarnaAplikasi.textGray,
+                          color: subtitleColor,
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (_isLoadingLahan)
-                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary))
+                  SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary))
                 else
-                  const Icon(
+                  Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    color: WarnaAplikasi.textGrayGreen,
+                    color: subtitleColor,
                     size: 22,
                   ),
               ],
             ),
           ),
         ),
+        if (_isLoadingSiklus) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)),
+              const SizedBox(width: 8),
+              Text('Memeriksa siklus tanam berjalan...', style: TextStyle(fontSize: 11, color: subtitleColor)),
+            ],
+          ),
+        ] else if (_activeSiklus != null) ...[
+          const SizedBox(height: 8),
+          _buildSiklusBanner(),
+        ] else if (_selectedItemLahan != null && !_isLoadingLahan) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: isDark ? 0.15 : 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.withValues(alpha: isDark ? 0.4 : 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Lahan ini tidak memiliki siklus tanam aktif. Panen hanya dapat dicatat jika lahan memiliki siklus tanam berjalan.',
+                    style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFFF8A80) : Colors.red, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 
+  Widget _buildSiklusBanner() {
+    if (_activeSiklus == null) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : WarnaAplikasi.primaryBackground;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.primary.withValues(alpha: 0.3);
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF243328) : WarnaAplikasi.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.autorenew_rounded, size: 16, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primaryDark),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      _activeSiklus!.musimTanam,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF243328) : WarnaAplikasi.greenLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _activeSiklus!.statusLabel,
+                        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primaryDark),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_activeSiklus!.komoditasNama}${_activeSiklus!.varietas != null && _activeSiklus!.varietas!.isNotEmpty ? ' • ${_activeSiklus!.varietas}' : ''}',
+                  style: TextStyle(fontSize: 11, color: subtitleColor),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTanggalPanenSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+
     final months = [
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -624,21 +836,21 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: WarnaAplikasi.borderField),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, color: WarnaAplikasi.primary, size: 18),
+                Icon(Icons.calendar_today_outlined, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 18),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     dateStr,
-                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDarkGreen),
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: titleColor),
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: WarnaAplikasi.textGrayGreen, size: 22),
+                Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen, size: 22),
               ],
             ),
           ),
@@ -648,6 +860,12 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildJumlahPanenSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+
     final unitLabels = ['Kg', 'Ton', 'Kuintal'];
 
     return Column(
@@ -658,9 +876,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: WarnaAplikasi.borderField),
+            border: Border.all(color: borderColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,19 +891,19 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                       controller: _weightController,
                       keyboardType: TextInputType.number,
                       onChanged: (val) => setState(() {}),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
-                        color: WarnaAplikasi.primaryDark,
+                        color: titleColor,
                         letterSpacing: -0.5,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: '0',
                         hintStyle: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
-                          color: WarnaAplikasi.grayGreenMuted,
+                          color: isDark ? const Color(0xFF4A5E51) : WarnaAplikasi.grayGreenMuted,
                           letterSpacing: -0.5,
                         ),
                         isDense: true,
@@ -696,13 +914,13 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgPaleGreen3,
+                      color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgPaleGreen3,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: WarnaAplikasi.borderPale2),
+                      border: Border.all(color: isDark ? const Color(0xFF2E4033) : WarnaAplikasi.borderPale2),
                     ),
                     child: Text(
                       unitLabels[_selectedUnitIndex],
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.grayGreenDark),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.grayGreenDark),
                     ),
                   ),
                 ],
@@ -711,7 +929,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.borderField,
+                  color: isDark ? const Color(0xFF141916) : WarnaAplikasi.borderField,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -726,7 +944,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: isSelected ? WarnaAplikasi.primary : Colors.transparent,
+                            color: isSelected ? (isDark ? const Color(0xFF285438) : WarnaAplikasi.primary) : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -734,7 +952,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : WarnaAplikasi.grayGreenDark,
+                              color: isSelected ? Colors.white : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark),
                             ),
                           ),
                         ),
@@ -746,11 +964,11 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.balance_outlined, size: 13, color: WarnaAplikasi.textGrayGreen),
+                  Icon(Icons.balance_outlined, size: 13, color: subtitleColor),
                   const SizedBox(width: 5),
                   Text(
                     'Setara dengan ${_currentTon.toStringAsFixed(2)} Ton (${_currentKuintal.toStringAsFixed(1)} Kuintal)',
-                    style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen),
+                    style: TextStyle(fontSize: 11, color: subtitleColor),
                   ),
                 ],
               ),
@@ -762,6 +980,11 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildMetodePemanenanSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -777,21 +1000,27 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _selectedHarvestMethod == 0 ? WarnaAplikasi.primary : Colors.white,
+                    color: _selectedHarvestMethod == 0
+                        ? (isDark ? const Color(0xFF285438) : WarnaAplikasi.primary)
+                        : cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _selectedHarvestMethod == 0 ? WarnaAplikasi.primary : WarnaAplikasi.borderField),
+                    border: Border.all(
+                      color: _selectedHarvestMethod == 0
+                          ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                          : borderColor,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.agriculture_rounded, color: _selectedHarvestMethod == 0 ? Colors.white : WarnaAplikasi.primary, size: 22),
+                      Icon(Icons.agriculture_rounded, color: _selectedHarvestMethod == 0 ? Colors.white : (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary), size: 22),
                       const SizedBox(height: 8),
                       Text(
                         'Mesin Combine\nHarvester',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: _selectedHarvestMethod == 0 ? Colors.white : WarnaAplikasi.textDarkGreen,
+                          color: _selectedHarvestMethod == 0 ? Colors.white : titleColor,
                         ),
                       ),
                     ],
@@ -808,21 +1037,27 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _selectedHarvestMethod == 1 ? WarnaAplikasi.primary : Colors.white,
+                    color: _selectedHarvestMethod == 1
+                        ? (isDark ? const Color(0xFF285438) : WarnaAplikasi.primary)
+                        : cardBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _selectedHarvestMethod == 1 ? WarnaAplikasi.primary : WarnaAplikasi.borderField),
+                    border: Border.all(
+                      color: _selectedHarvestMethod == 1
+                          ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                          : borderColor,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.content_cut_rounded, color: _selectedHarvestMethod == 1 ? Colors.white : WarnaAplikasi.primary, size: 22),
+                      Icon(Icons.content_cut_rounded, color: _selectedHarvestMethod == 1 ? Colors.white : (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary), size: 22),
                       const SizedBox(height: 8),
                       Text(
                         'Manual / Sabit &\nThresher',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: _selectedHarvestMethod == 1 ? Colors.white : WarnaAplikasi.textDarkGreen,
+                          color: _selectedHarvestMethod == 1 ? Colors.white : titleColor,
                         ),
                       ),
                     ],
@@ -836,68 +1071,13 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     );
   }
 
-  Widget _buildBiayaPetikSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFieldLabel('Estimasi Harga Jual & Biaya Petik'),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: WarnaAplikasi.borderField),
-                ),
-                child: TextField(
-                  controller: _priceController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.textDarkGreen),
-                  decoration: const InputDecoration(
-                    labelText: 'Harga / Kg (Rp)',
-                    hintText: 'Contoh: 7000',
-                    hintStyle: TextStyle(fontSize: 12, color: WarnaAplikasi.grayGreenMuted),
-                    labelStyle: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: WarnaAplikasi.borderField),
-                ),
-                child: TextField(
-                  controller: _costController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.textDarkGreen),
-                  decoration: const InputDecoration(
-                    labelText: 'Biaya Panen (Rp)',
-                    hintText: 'Contoh: 1200000',
-                    hintStyle: TextStyle(fontSize: 12, color: WarnaAplikasi.grayGreenMuted),
-                    labelStyle: TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildCatatanSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+    final hintColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenMuted;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -906,17 +1086,17 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: WarnaAplikasi.borderField),
+            border: Border.all(color: borderColor),
           ),
           child: TextField(
             controller: _notesController,
             maxLines: 3,
-            style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textDarkGreen, height: 1.4),
-            decoration: const InputDecoration(
+            style: TextStyle(fontSize: 12, color: titleColor, height: 1.4),
+            decoration: InputDecoration(
               hintText: 'Tulis catatan kondisi cuaca, kendala timbangan, dll.',
-              hintStyle: TextStyle(fontSize: 11, color: WarnaAplikasi.grayGreenMuted),
+              hintStyle: TextStyle(fontSize: 11, color: hintColor),
               border: InputBorder.none,
               isDense: true,
               contentPadding: EdgeInsets.zero,
@@ -928,6 +1108,10 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildFotoBuktiSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -938,7 +1122,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             if (_selectedPhotoBytesList.isNotEmpty)
               Text(
                 '${_selectedPhotoBytesList.length} Foto Terpilih',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WarnaAplikasi.primary),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
               ),
           ],
         ),
@@ -962,7 +1146,7 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                       height: 90,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: WarnaAplikasi.borderField),
+                        border: Border.all(color: borderColor),
                         image: DecorationImage(
                           image: MemoryImage(_selectedPhotoBytesList[index]),
                           fit: BoxFit.cover,
@@ -1003,21 +1187,21 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             width: double.infinity,
             height: 70,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: WarnaAplikasi.successPaleGreen, style: BorderStyle.solid),
+              border: Border.all(color: isDark ? const Color(0xFF384D3E) : WarnaAplikasi.successPaleGreen, style: BorderStyle.solid),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add_a_photo_outlined, color: WarnaAplikasi.primary, size: 22),
-                SizedBox(width: 10),
+                Icon(Icons.add_a_photo_outlined, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 22),
+                const SizedBox(width: 10),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tambah Foto Dokumentasi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: WarnaAplikasi.primary)),
-                    Text('Bisa ambil dari kamera atau pilih banyak foto dari galeri', style: TextStyle(fontSize: 10, color: WarnaAplikasi.grayGreenMuted)),
+                    Text('Tambah Foto Dokumentasi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)),
+                    Text('Bisa ambil dari kamera atau pilih banyak foto dari galeri', style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenMuted)),
                   ],
                 ),
               ],
@@ -1029,33 +1213,38 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildStatusPreviewCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : WarnaAplikasi.bgPaleGreen2;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.greenPill;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: WarnaAplikasi.bgPaleGreen2,
+        color: cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: WarnaAplikasi.greenPill),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
-          const Icon(Icons.shield_outlined, color: WarnaAplikasi.primary, size: 20),
+          Icon(Icons.shield_outlined, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 20),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Status setelah disimpan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDarkGreen)),
-                SizedBox(height: 1),
-                Text('Menunggu verifikasi pengurus kelompok tani.', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGray)),
+                Text('Status setelah disimpan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: titleColor)),
+                const SizedBox(height: 1),
+                Text('Menunggu verifikasi pengurus kelompok tani.', style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray)),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: WarnaAplikasi.commodityJagungBg,
+              color: isDark ? const Color(0xFF332714) : WarnaAplikasi.commodityJagungBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: WarnaAplikasi.hppAmberBorder),
+              border: Border.all(color: isDark ? const Color(0xFF5E4520) : WarnaAplikasi.hppAmberBorder),
             ),
             child: const Text('Menunggu Verifikasi', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.warningOrange)),
           ),
@@ -1065,6 +1254,11 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   }
 
   Widget _buildActionButtons() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final btnCancelBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final btnCancelBorder = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final btnCancelText = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
+
     return Column(
       children: [
         SizedBox(
@@ -1092,9 +1286,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
           child: OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              foregroundColor: WarnaAplikasi.textDarkGreen,
-              backgroundColor: Colors.white,
-              side: BorderSide(color: WarnaAplikasi.borderField),
+              foregroundColor: btnCancelText,
+              backgroundColor: btnCancelBg,
+              side: BorderSide(color: btnCancelBorder),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             ),
             child: const Text('Batal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),

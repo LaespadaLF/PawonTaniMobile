@@ -358,6 +358,92 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
   }
 
   Widget _buildModeEditBanner() {
+    if (widget.item.status == HarvestStatus.disetujui) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: WarnaAplikasi.bgPaleGreen2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: WarnaAplikasi.greenPill),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: WarnaAplikasi.primary, size: 22),
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PANEN TELAH DISETUJUI (TERKUNCI)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: WarnaAplikasi.greenText,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Catatan panen yang telah disetujui Poktan telah terkunci dan tidak dapat diubah.',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: WarnaAplikasi.grayGreenDark,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (widget.item.status == HarvestStatus.ditolak) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.replay_rounded, color: Colors.red, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'REVISI CATATAN PANEN',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.red,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.item.validatedNotes != null && widget.item.validatedNotes!.isNotEmpty
+                        ? 'Catatan Pengurus: "${widget.item.validatedNotes}". Silakan perbaiki data lalu simpan untuk mengajukan ulang.'
+                        : 'Catatan ditolak. Perbaiki data lalu simpan untuk mengajukan verifikasi ulang ke pengurus poktan.',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: Colors.red.shade800,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -427,55 +513,22 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
                   ),
                 ],
               ),
-              if (_lahanList.isNotEmpty)
-                InkWell(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.white,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                      builder: (ctx) => Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Ganti Petak Lahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.textDarkGreen)),
-                            const SizedBox(height: 12),
-                            ..._lahanList.map((lhn) => ListTile(
-                                  leading: const Icon(Icons.eco_rounded, color: WarnaAplikasi.primary),
-                                  title: Text(lhn.nama),
-                                  subtitle: Text('${lhn.luas.toStringAsFixed(2)} Ha • ${lhn.komoditas}'),
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedItemLahan = lhn;
-                                      final kom = lhn.komoditas.toLowerCase();
-                                      if (kom.contains('jagung')) {
-                                        _cropType = CropType.jagung;
-                                        _commodity = 'Jagung Pipil Kering (JPK)';
-                                      } else {
-                                        _cropType = CropType.padi;
-                                        _commodity = 'Gabah Kering Panen (GKP)';
-                                      }
-                                      _varietasController.text = lhn.komoditas.isNotEmpty ? lhn.komoditas : (_cropType == CropType.padi ? 'Padi Ciherang' : 'Jagung Hibrida');
-                                    });
-                                    Navigator.pop(ctx);
-                                  },
-                                )),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Ganti Lahan',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.primary,
-                    ),
-                  ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: WarnaAplikasi.bgPaleGreen2,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: WarnaAplikasi.greenPill),
                 ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_outline_rounded, size: 12, color: WarnaAplikasi.primaryDark),
+                    SizedBox(width: 4),
+                    Text('Terkunci pada Siklus', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -970,21 +1023,55 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
   Widget _buildActionButtons() {
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton.icon(
-            onPressed: _isSaving ? null : _saveChanges,
-            icon: _isSaving
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Icon(Icons.check_circle_outline_rounded, size: 18, color: Colors.white),
-            label: Text(_isSaving ? 'Menyimpan...' : 'Simpan Perubahan', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: WarnaAplikasi.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        if (widget.item.status == HarvestStatus.disetujui) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_rounded, size: 16, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  'Data Terkunci (Sudah Disetujui Poktan)',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey),
+                ),
+              ],
             ),
           ),
-        ),
+        ] else ...[
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: _isSaving ? null : _saveChanges,
+              icon: _isSaving
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Icon(
+                      widget.item.status == HarvestStatus.ditolak
+                          ? Icons.replay_rounded
+                          : Icons.check_circle_outline_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+              label: Text(
+                _isSaving
+                    ? 'Menyimpan...'
+                    : (widget.item.status == HarvestStatus.ditolak ? 'Ajukan Ulang Revisi Panen' : 'Simpan Perubahan'),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: widget.item.status == HarvestStatus.ditolak ? WarnaAplikasi.warningOrange : WarnaAplikasi.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         Row(
           children: [

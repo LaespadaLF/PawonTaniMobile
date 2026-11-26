@@ -220,7 +220,7 @@ class _LayarFormProdukState extends State<LayarFormProduk> {
     final isEdit = widget.produkToEdit != null;
 
     return Scaffold(
-      backgroundColor: WarnaAplikasi.bgPage,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -259,92 +259,101 @@ class _LayarFormProdukState extends State<LayarFormProduk> {
   }
 
   Widget _buildImagePickerCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Foto Produk Hasil Panen',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: WarnaAplikasi.textDark,
+    return Builder(builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+      final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+      final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+      final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+      final previewBoxBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgLightGreen;
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Foto Produk Hasil Panen',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Unggah foto produk yang jelas dan menarik untuk calon pembeli.',
-            style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
-          ),
-          const SizedBox(height: 14),
-          GestureDetector(
-            onTap: () => _showImageSourcePicker(),
-            child: Container(
-              height: 180,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.bgLightGreen,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: WarnaAplikasi.border, style: BorderStyle.solid),
-              ),
-              child: _fotoBytes != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.memory(
-                        _fotoBytes!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    )
-                  : widget.produkToEdit?.fotoResolvedUrl != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.network(
-                            widget.produkToEdit!.fotoResolvedUrl!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorBuilder: (_, _, _) => _buildPlaceholder(),
-                          ),
-                        )
-                      : _buildPlaceholder(),
+            const SizedBox(height: 4),
+            Text(
+              'Unggah foto produk yang jelas dan menarik untuk calon pembeli.',
+              style: TextStyle(fontSize: 11.5, color: subtitleColor),
             ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => _pickImage(ImageSource.camera),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: WarnaAplikasi.primary,
-                  side: const BorderSide(color: WarnaAplikasi.border),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 14),
+            GestureDetector(
+              onTap: () => _showImageSourcePicker(),
+              child: Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: previewBoxBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor, style: BorderStyle.solid),
                 ),
-                icon: const Icon(Icons.camera_alt_outlined, size: 16),
-                label: const Text('Kamera', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                child: _fotoBytes != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.memory(
+                          _fotoBytes!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      )
+                    : widget.produkToEdit?.fotoResolvedUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              widget.produkToEdit!.fotoResolvedUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              errorBuilder: (_, _, _) => _buildPlaceholder(),
+                            ),
+                          )
+                        : _buildPlaceholder(),
               ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: () => _pickImage(ImageSource.gallery),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: WarnaAplikasi.primary,
-                  side: const BorderSide(color: WarnaAplikasi.border),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.camera),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary,
+                    side: BorderSide(color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.camera_alt_outlined, size: 16),
+                  label: const Text('Kamera', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
-                icon: const Icon(Icons.photo_library_outlined, size: 16),
-                label: const Text('Galeri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.gallery),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primary,
+                    side: BorderSide(color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.photo_library_outlined, size: 16),
+                  label: const Text('Galeri', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildPlaceholder() {
@@ -532,313 +541,358 @@ class _LayarFormProdukState extends State<LayarFormProduk> {
   }
 
   Widget _buildMainDetailsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Informasi Dasar',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
-          ),
-          const SizedBox(height: 14),
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
 
-          // Nama Produk
-          const Text('Nama Produk *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: _namaController,
-            decoration: _inputDecoration(hint: 'Contoh: Beras Organik Pandanwangi Super'),
-            validator: (v) => v == null || v.trim().isEmpty ? 'Nama produk wajib diisi' : null,
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
           ),
-          const SizedBox(height: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Informasi Dasar',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor),
+              ),
+              const SizedBox(height: 14),
 
-          // Komoditas
-          const Text('Kategori Komoditas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-          const SizedBox(height: 6),
-          _isLoadingKomoditas
-              ? const LinearProgressIndicator()
-              : GestureDetector(
-                  onTap: () => _showKomoditasSearchDialog(),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgInput,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: WarnaAplikasi.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _selectedKomoditasId != null
-                                ? (_komoditasList.firstWhere(
-                                    (k) => k.idKomoditas == _selectedKomoditasId,
-                                    orElse: () => _komoditasList.first,
-                                  ).namaKomoditas)
-                                : 'Pilih jenis komoditas',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _selectedKomoditasId != null
-                                  ? WarnaAplikasi.textDark
-                                  : WarnaAplikasi.textGrayLight,
-                            ),
-                          ),
+              // Nama Produk
+              Text('Nama Produk *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _namaController,
+                style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                decoration: _inputDecoration(hint: 'Contoh: Beras Organik Pandanwangi Super', context: context),
+                validator: (v) => v == null || v.trim().isEmpty ? 'Nama produk wajib diisi' : null,
+              ),
+              const SizedBox(height: 14),
+
+              // Komoditas
+              Text('Kategori Komoditas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+              const SizedBox(height: 6),
+              _isLoadingKomoditas
+                  ? const LinearProgressIndicator()
+                  : GestureDetector(
+                      onTap: () => _showKomoditasSearchDialog(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF141916) : WarnaAplikasi.bgInput,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: borderColor),
                         ),
-                        const Icon(Icons.search_rounded, color: WarnaAplikasi.primary, size: 20),
-                      ],
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _selectedKomoditasId != null
+                                    ? (_komoditasList.firstWhere(
+                                        (k) => k.idKomoditas == _selectedKomoditasId,
+                                        orElse: () => _komoditasList.first,
+                                      ).namaKomoditas)
+                                    : 'Pilih jenis komoditas',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _selectedKomoditasId != null
+                                      ? (isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark)
+                                      : WarnaAplikasi.textGrayLight,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.search_rounded, color: WarnaAplikasi.primary, size: 20),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-          const SizedBox(height: 14),
+              const SizedBox(height: 14),
 
-          // Deskripsi
-          const Text('Deskripsi Produk', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: _deskripsiController,
-            maxLines: 3,
-            decoration: _inputDecoration(hint: 'Jelaskan kualitas, varietas, kadar air, atau cara penyimpanan...'),
+              // Deskripsi
+              Text('Deskripsi Produk', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _deskripsiController,
+                maxLines: 3,
+                style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                decoration: _inputDecoration(hint: 'Jelaskan kualitas, varietas, kadar air, atau cara penyimpanan...', context: context),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildPricingCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Penetapan Harga',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
-          ),
-          const SizedBox(height: 12),
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
 
-          // Toggle Jenis Harga
-          Row(
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => setState(() => _jenisHarga = 'tetap'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _jenisHarga == 'tetap' ? WarnaAplikasi.greenLight : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _jenisHarga == 'tetap' ? WarnaAplikasi.primary : WarnaAplikasi.border,
-                      ),
-                    ),
-                    child: Text(
-                      'Harga Tetap',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: _jenisHarga == 'tetap' ? FontWeight.w700 : FontWeight.w500,
-                        color: _jenisHarga == 'tetap' ? WarnaAplikasi.primary : WarnaAplikasi.textGray,
-                      ),
-                    ),
-                  ),
-                ),
+              Text(
+                'Penetapan Harga',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: InkWell(
-                  onTap: () => setState(() => _jenisHarga = 'rentang'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _jenisHarga == 'rentang' ? WarnaAplikasi.greenLight : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _jenisHarga == 'rentang' ? WarnaAplikasi.primary : WarnaAplikasi.border,
-                      ),
-                    ),
-                    child: Text(
-                      'Rentang Harga',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: _jenisHarga == 'rentang' ? FontWeight.w700 : FontWeight.w500,
-                        color: _jenisHarga == 'rentang' ? WarnaAplikasi.primary : WarnaAplikasi.textGray,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-          if (_jenisHarga == 'tetap') ...[
-            const Text('Harga Tetap (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _hargaController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [CurrencyInputFormatter()],
-              decoration: _inputDecoration(hint: 'Misal: 15.000', prefixText: 'Rp '),
-              validator: (v) {
-                if (_jenisHarga == 'tetap' && (v == null || v.trim().isEmpty)) {
-                  return 'Harga tetap wajib diisi';
-                }
-                return null;
-              },
-            ),
-          ] else ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Harga Min (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _hargaMinController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [CurrencyInputFormatter()],
-                        decoration: _inputDecoration(hint: '12.000', prefixText: 'Rp '),
-                        validator: (v) {
-                          if (_jenisHarga == 'rentang' && (v == null || v.trim().isEmpty)) {
-                            return 'Min wajib diisi';
-                          }
-                          return null;
-                        },
+              // Toggle Jenis Harga
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _jenisHarga = 'tetap'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _jenisHarga == 'tetap'
+                              ? (isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _jenisHarga == 'tetap' ? WarnaAplikasi.primary : borderColor,
+                          ),
+                        ),
+                        child: Text(
+                          'Harga Tetap',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: _jenisHarga == 'tetap' ? FontWeight.w700 : FontWeight.w500,
+                            color: _jenisHarga == 'tetap'
+                                ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                                : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
+                          ),
+                        ),
                       ),
-                    ],
+                    ),
                   ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _jenisHarga = 'rentang'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _jenisHarga == 'rentang'
+                              ? (isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _jenisHarga == 'rentang' ? WarnaAplikasi.primary : borderColor,
+                          ),
+                        ),
+                        child: Text(
+                          'Rentang Harga',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: _jenisHarga == 'rentang' ? FontWeight.w700 : FontWeight.w500,
+                            color: _jenisHarga == 'rentang'
+                                ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                                : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              if (_jenisHarga == 'tetap') ...[
+                Text('Harga Tetap (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: _hargaController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [CurrencyInputFormatter()],
+                  style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                  decoration: _inputDecoration(hint: 'Misal: 15.000', prefixText: 'Rp ', context: context),
+                  validator: (v) {
+                    if (_jenisHarga == 'tetap' && (v == null || v.trim().isEmpty)) {
+                      return 'Harga tetap wajib diisi';
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Harga Max (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _hargaMaxController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [CurrencyInputFormatter()],
-                        decoration: _inputDecoration(hint: '15.000', prefixText: 'Rp '),
-                        validator: (v) {
-                          if (_jenisHarga == 'rentang' && (v == null || v.trim().isEmpty)) {
-                            return 'Max wajib diisi';
-                          }
-                          return null;
-                        },
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Harga Min (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _hargaMinController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [CurrencyInputFormatter()],
+                            style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                            decoration: _inputDecoration(hint: '12.000', prefixText: 'Rp ', context: context),
+                            validator: (v) {
+                              if (_jenisHarga == 'rentang' && (v == null || v.trim().isEmpty)) {
+                                return 'Min wajib diisi';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Harga Max (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _hargaMaxController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [CurrencyInputFormatter()],
+                            style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                            decoration: _inputDecoration(hint: '15.000', prefixText: 'Rp ', context: context),
+                            validator: (v) {
+                              if (_jenisHarga == 'rentang' && (v == null || v.trim().isEmpty)) {
+                                return 'Max wajib diisi';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildStockAndStatusCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Stok & Ketersediaan',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
-          ),
-          const SizedBox(height: 14),
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
 
-          Row(
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Stok Fisik
-              Expanded(
-                flex: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Stok Manual *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _stokController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(hint: 'Misal: 100'),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Stok wajib diisi' : null,
-                    ),
-                  ],
-                ),
+              Text(
+                'Stok & Ketersediaan',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: titleColor),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(height: 14),
 
-              // Satuan
-              Expanded(
-                flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Satuan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      initialValue: _satuan,
-                      decoration: _inputDecoration(hint: 'Satuan'),
-                      items: _satuanOptions.map((s) {
-                        return DropdownMenuItem<String>(
-                          value: s,
-                          child: Text(s),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _satuan = val);
-                      },
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Stok Fisik
+                  Expanded(
+                    flex: 6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Stok Manual *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _stokController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                          decoration: _inputDecoration(hint: 'Misal: 100', context: context),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Stok wajib diisi' : null,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Satuan
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Satuan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<String>(
+                          initialValue: _satuan,
+                          dropdownColor: isDark ? const Color(0xFF1D2420) : Colors.white,
+                          style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                          decoration: _inputDecoration(hint: 'Satuan', context: context),
+                          items: _satuanOptions.map((s) {
+                            return DropdownMenuItem<String>(
+                              value: s,
+                              child: Text(s, style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark)),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setState(() => _satuan = val);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Status Publikasi
+              Text('Status Publikasi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: _status,
+                dropdownColor: isDark ? const Color(0xFF1D2420) : Colors.white,
+                style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark),
+                decoration: _inputDecoration(hint: 'Status', context: context),
+                items: [
+                  DropdownMenuItem(value: 'aktif', child: Text('Aktif (Tampil di Website Customer)', style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark))),
+                  DropdownMenuItem(value: 'tidak_aktif', child: Text('Tidak Aktif (Sembunyikan)', style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark))),
+                  DropdownMenuItem(value: 'stok_habis', child: Text('Stok Habis', style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark))),
+                  DropdownMenuItem(value: 'diarsipkan', child: Text('Diarsipkan', style: TextStyle(color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark))),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _status = val);
+                },
               ),
             ],
           ),
-          const SizedBox(height: 14),
-
-          // Status Publikasi
-          const Text('Status Publikasi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WarnaAplikasi.textDark)),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            initialValue: _status,
-            decoration: _inputDecoration(hint: 'Status'),
-            items: const [
-              DropdownMenuItem(value: 'aktif', child: Text('Aktif (Tampil di Website Customer)')),
-              DropdownMenuItem(value: 'tidak_aktif', child: Text('Tidak Aktif (Sembunyikan)')),
-              DropdownMenuItem(value: 'stok_habis', child: Text('Stok Habis')),
-              DropdownMenuItem(value: 'diarsipkan', child: Text('Diarsipkan')),
-            ],
-            onChanged: (val) {
-              if (val != null) setState(() => _status = val);
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -869,21 +923,22 @@ class _LayarFormProdukState extends State<LayarFormProduk> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, String? prefixText}) {
+  InputDecoration _inputDecoration({required String hint, String? prefixText, BuildContext? context}) {
+    final isDark = context != null ? (Theme.of(context).brightness == Brightness.dark) : false;
     return InputDecoration(
       hintText: hint,
       prefixText: prefixText,
       hintStyle: const TextStyle(fontSize: 13, color: WarnaAplikasi.textGrayLight),
       filled: true,
-      fillColor: WarnaAplikasi.bgInput,
+      fillColor: isDark ? const Color(0xFF141916) : WarnaAplikasi.bgInput,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: WarnaAplikasi.border),
+        borderSide: BorderSide(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: WarnaAplikasi.border),
+        borderSide: BorderSide(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

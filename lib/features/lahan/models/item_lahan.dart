@@ -1,4 +1,5 @@
 import 'package:pawon_mobile/core/constants/api_constants.dart';
+import 'package:pawon_mobile/features/lahan/models/item_siklus_tanam.dart';
 
 enum StatusLahan {
   aktif,
@@ -96,6 +97,7 @@ class ItemLahan {
   final String? statusVerifikasi;
   final String? catatanVerifikasi;
   final DateTime? tanggalVerifikasi;
+  final DateTime? createdAt;
 
   // Atribut Komoditas ID
   final String? idKomoditas;
@@ -112,6 +114,9 @@ class ItemLahan {
   // Riwayat Verifikasi (F-04)
   final List<ItemRiwayatVerifikasiLahan> riwayatVerifikasi;
 
+  // Siklus Tanam Berjalan (Phase 2)
+  final ItemSiklusTanam? siklusBerjalan;
+
   const ItemLahan({
     required this.id,
     required this.nama,
@@ -126,6 +131,7 @@ class ItemLahan {
     this.statusVerifikasi,
     this.catatanVerifikasi,
     this.tanggalVerifikasi,
+    this.createdAt,
     this.idKomoditas,
     this.keterangan,
     this.musimTanam,
@@ -133,6 +139,7 @@ class ItemLahan {
     this.isCanDelete = false,
     this.isCanEdit = false,
     this.riwayatVerifikasi = const [],
+    this.siklusBerjalan,
   });
 
   bool get isTerverifikasi => statusVerifikasi == 'terverifikasi';
@@ -155,6 +162,11 @@ class ItemLahan {
     DateTime? tanggalVerif;
     if (json['tanggal_verifikasi'] != null) {
       tanggalVerif = DateTime.tryParse(json['tanggal_verifikasi'].toString());
+    }
+
+    DateTime? createdAt;
+    if (json['created_at'] != null) {
+      createdAt = DateTime.tryParse(json['created_at'].toString());
     }
 
     String? parsedIdKomoditas;
@@ -203,6 +215,7 @@ class ItemLahan {
       statusVerifikasi: json['status_verifikasi']?.toString(),
       catatanVerifikasi: json['catatan_verifikasi']?.toString(),
       tanggalVerifikasi: tanggalVerif,
+      createdAt: createdAt,
       idKomoditas: parsedIdKomoditas,
       keterangan: json['keterangan']?.toString(),
       musimTanam: json['musim_tanam']?.toString(),
@@ -210,6 +223,9 @@ class ItemLahan {
       isCanDelete: json['is_can_delete'] == true,
       isCanEdit: json['is_can_edit'] == true,
       riwayatVerifikasi: riwayatList,
+      siklusBerjalan: json['siklus_berjalan'] != null && json['siklus_berjalan'] is Map
+          ? ItemSiklusTanam.fromJson(Map<String, dynamic>.from(json['siklus_berjalan'] as Map))
+          : null,
     );
   }
 
@@ -229,6 +245,7 @@ class ItemLahan {
       'status_verifikasi': statusVerifikasi,
       'catatan_verifikasi': catatanVerifikasi,
       'tanggal_verifikasi': tanggalVerifikasi?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'id_komoditas': idKomoditas,
       'keterangan': keterangan,
       'musim_tanam': musimTanam,
@@ -236,6 +253,7 @@ class ItemLahan {
       'is_can_delete': isCanDelete,
       'is_can_edit': isCanEdit,
       'riwayat_verifikasi': riwayatVerifikasi.map((r) => r.toJson()).toList(),
+      'siklus_berjalan': siklusBerjalan?.toJson(),
     };
   }
 
@@ -253,6 +271,7 @@ class ItemLahan {
     String? statusVerifikasi,
     String? catatanVerifikasi,
     DateTime? tanggalVerifikasi,
+    DateTime? createdAt,
     String? idKomoditas,
     String? keterangan,
     String? musimTanam,
@@ -260,6 +279,7 @@ class ItemLahan {
     bool? isCanDelete,
     bool? isCanEdit,
     List<ItemRiwayatVerifikasiLahan>? riwayatVerifikasi,
+    ItemSiklusTanam? siklusBerjalan,
   }) {
     return ItemLahan(
       id: id ?? this.id,
@@ -275,6 +295,7 @@ class ItemLahan {
       statusVerifikasi: statusVerifikasi ?? this.statusVerifikasi,
       catatanVerifikasi: catatanVerifikasi ?? this.catatanVerifikasi,
       tanggalVerifikasi: tanggalVerifikasi ?? this.tanggalVerifikasi,
+      createdAt: createdAt ?? this.createdAt,
       idKomoditas: idKomoditas ?? this.idKomoditas,
       keterangan: keterangan ?? this.keterangan,
       musimTanam: musimTanam ?? this.musimTanam,
@@ -282,6 +303,7 @@ class ItemLahan {
       isCanDelete: isCanDelete ?? this.isCanDelete,
       isCanEdit: isCanEdit ?? this.isCanEdit,
       riwayatVerifikasi: riwayatVerifikasi ?? this.riwayatVerifikasi,
+      siklusBerjalan: siklusBerjalan ?? this.siklusBerjalan,
     );
   }
 }

@@ -158,6 +158,15 @@ class _HarvestScreenState extends State<HarvestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final chipUnselectedBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final chipUnselectedBorder = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final chipUnselectedText = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenDark;
+    final emptyCardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final emptyCardBorder = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+
     final filterChips = [
       'Semua (${_harvestItems.length})',
       'Menunggu ($_countMenunggu)',
@@ -166,7 +175,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: isDark ? const Color(0xFF141916) : WarnaAplikasi.primaryBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -192,21 +201,21 @@ class _HarvestScreenState extends State<HarvestScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          const Text(
+                          Text(
                             'Data Panen',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
-                              color: WarnaAplikasi.primaryDark,
+                              color: titleColor,
                               letterSpacing: -0.5,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Kelola dan pantau hasil panen Anda',
                             style: TextStyle(
                               fontSize: 13,
-                              color: WarnaAplikasi.textGray,
+                              color: subtitleColor,
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -272,12 +281,12 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? WarnaAplikasi.primary
-                                            : Colors.white,
+                                            : chipUnselectedBg,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: isSelected
                                               ? WarnaAplikasi.primary
-                                              : WarnaAplikasi.border,
+                                              : chipUnselectedBorder,
                                           width: 1,
                                         ),
                                       ),
@@ -290,7 +299,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                               : FontWeight.w500,
                                           color: isSelected
                                               ? Colors.white
-                                              : WarnaAplikasi.grayGreenDark,
+                                              : chipUnselectedText,
                                         ),
                                       ),
                                     ),
@@ -304,7 +313,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Daftar Panen',
                                   maxLines: 1,
@@ -312,7 +321,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: WarnaAplikasi.primaryDark,
+                                    color: titleColor,
                                     letterSpacing: -0.3,
                                   ),
                                 ),
@@ -346,16 +355,16 @@ class _HarvestScreenState extends State<HarvestScreen> {
                                   children: [
                                     Text(
                                       _selectedSort,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: WarnaAplikasi.textGrayGreen,
+                                        color: subtitleColor,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    const Icon(
+                                    Icon(
                                       Icons.keyboard_arrow_down_rounded,
                                       size: 16,
-                                      color: WarnaAplikasi.textGrayGreen,
+                                      color: subtitleColor,
                                     ),
                                   ],
                                 ),
@@ -387,7 +396,7 @@ class _HarvestScreenState extends State<HarvestScreen> {
                             children: [
                               const Icon(Icons.error_outline_rounded, color: WarnaAplikasi.errorRedDark, size: 36),
                               const SizedBox(height: 8),
-                              Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textDarkGrayGreen)),
+                              Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: subtitleColor)),
                               const SizedBox(height: 12),
                               ElevatedButton(
                                 onPressed: _fetchHarvestData,
@@ -407,10 +416,10 @@ class _HarvestScreenState extends State<HarvestScreen> {
                             vertical: 30,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: emptyCardBg,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: WarnaAplikasi.border,
+                              color: emptyCardBorder,
                               width: 1,
                             ),
                           ),
@@ -419,24 +428,24 @@ class _HarvestScreenState extends State<HarvestScreen> {
                               Container(
                                 width: 72,
                                 height: 72,
-                                decoration: const BoxDecoration(
-                                  color: WarnaAplikasi.bgSuccessPale,
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF243328) : WarnaAplikasi.bgSuccessPale,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.agriculture_outlined,
                                   size: 34,
-                                  color: WarnaAplikasi.primary,
+                                  color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              const Text(
+                              Text(
                                 'Belum ada data panen yang dicatat. Tekan tombol Tambah Panen untuk mencatat hasil panen Anda.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 13,
                                   height: 1.45,
-                                  color: WarnaAplikasi.textGray,
+                                  color: subtitleColor,
                                 ),
                               ),
                               const SizedBox(height: 18),

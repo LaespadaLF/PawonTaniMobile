@@ -15,20 +15,27 @@ class HarvestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.nearBlack;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreenSoft;
+    final dividerColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.dividerLight;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: WarnaAplikasi.borderPale,
+          color: cardBorder,
           width: 1,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: WarnaAplikasi.shadowSubtle,
+            color: isDark ? Colors.transparent : WarnaAplikasi.shadowSubtle,
             blurRadius: 10,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -57,26 +64,26 @@ class HarvestCard extends StatelessWidget {
                         children: [
                           Text(
                             item.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: WarnaAplikasi.nearBlack,
+                              color: titleColor,
                               letterSpacing: -0.2,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             item.subtitle,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.5,
-                              color: WarnaAplikasi.textGrayGreenSoft,
+                              color: subtitleColor,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    _buildStatusBadge(item.status),
+                    _buildStatusBadge(item.status, isDark),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -85,17 +92,17 @@ class HarvestCard extends StatelessWidget {
                 Stack(
                   alignment: Alignment.centerRight,
                   children: [
-                    const Divider(
+                    Divider(
                       height: 1,
                       thickness: 0.8,
-                      color: WarnaAplikasi.dividerLight,
+                      color: dividerColor,
                     ),
                     Container(
-                      color: Colors.white,
+                      color: cardBg,
                       padding: const EdgeInsets.only(left: 6),
-                      child: const Icon(
+                      child: Icon(
                         Icons.chevron_right_rounded,
-                        color: WarnaAplikasi.grayGreenMuted,
+                        color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenMuted,
                         size: 18,
                       ),
                     ),
@@ -111,9 +118,10 @@ class HarvestCard extends StatelessWidget {
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.location_on_outlined,
-                        iconColor: WarnaAplikasi.iconGrayGreenMid,
+                        iconColor: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.iconGrayGreenMid,
                         title: item.location,
                         subtitle: item.blockArea.replaceAll(RegExp(r'\.0000|\.00'), ''),
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -121,9 +129,10 @@ class HarvestCard extends StatelessWidget {
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.calendar_today_outlined,
-                        iconColor: WarnaAplikasi.iconGrayGreenMid,
+                        iconColor: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.iconGrayGreenMid,
                         title: item.date,
                         subtitle: item.season,
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -137,11 +146,12 @@ class HarvestCard extends StatelessWidget {
                       child: _buildDetailCell(
                         icon: Icons.scale_outlined,
                         iconColor: item.cropType == CropType.padi
-                            ? WarnaAplikasi.padiGreen
+                            ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.padiGreen)
                             : WarnaAplikasi.jagungAmber,
                         title: '${_formatNumber(item.weightKg)} Kg',
                         subtitle: '${item.weightTon.toStringAsFixed(item.weightTon.truncateToDouble() == item.weightTon ? 0 : 2).replaceAll('.', ',')} Ton',
                         isBoldTitle: true,
+                        isDark: isDark,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -149,9 +159,10 @@ class HarvestCard extends StatelessWidget {
                     Expanded(
                       child: _buildDetailCell(
                         icon: Icons.agriculture_outlined,
-                        iconColor: WarnaAplikasi.iconGrayGreenMid,
+                        iconColor: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.iconGrayGreenMid,
                         title: item.harvestMethod,
                         subtitle: item.harvestTime,
+                        isDark: isDark,
                       ),
                     ),
                   ],
@@ -164,16 +175,16 @@ class HarvestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(HarvestStatus status) {
+  Widget _buildStatusBadge(HarvestStatus status, bool isDark) {
     switch (status) {
       case HarvestStatus.menunggu:
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: WarnaAplikasi.warningOrangeBgLight,
+            color: isDark ? const Color(0xFF332714) : WarnaAplikasi.warningOrangeBgLight,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: WarnaAplikasi.warningOrangeBorderLight,
+              color: isDark ? const Color(0xFF5E4520) : WarnaAplikasi.warningOrangeBorderLight,
               width: 0.8,
             ),
           ),
@@ -203,28 +214,28 @@ class HarvestCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: WarnaAplikasi.approvedGreenBg,
+            color: isDark ? const Color(0xFF1E3324) : WarnaAplikasi.approvedGreenBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: WarnaAplikasi.approvedGreenBorder,
+              color: isDark ? const Color(0xFF285438) : WarnaAplikasi.approvedGreenBorder,
               width: 0.8,
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.check_rounded,
                 size: 13,
-                color: WarnaAplikasi.approvedGreen,
+                color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.approvedGreen,
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Text(
                 'Disetujui',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: WarnaAplikasi.approvedGreen,
+                  color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.approvedGreen,
                 ),
               ),
             ],
@@ -234,10 +245,10 @@ class HarvestCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: WarnaAplikasi.rejectedRedBg,
+            color: isDark ? const Color(0xFF3B1F23) : WarnaAplikasi.rejectedRedBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: WarnaAplikasi.rejectedRedBorder,
+              color: isDark ? const Color(0xFF6B2D35) : WarnaAplikasi.rejectedRedBorder,
               width: 0.8,
             ),
           ),
@@ -247,7 +258,7 @@ class HarvestCard extends StatelessWidget {
               Icon(
                 Icons.close_rounded,
                 size: 13,
-                color: WarnaAplikasi.errorRedDark,
+                color: Colors.redAccent,
               ),
               SizedBox(width: 4),
               Text(
@@ -255,7 +266,7 @@ class HarvestCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: WarnaAplikasi.errorRedDark,
+                  color: Colors.redAccent,
                 ),
               ),
             ],
@@ -270,6 +281,7 @@ class HarvestCard extends StatelessWidget {
     required String title,
     required String subtitle,
     bool isBoldTitle = false,
+    bool isDark = false,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +304,7 @@ class HarvestCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: isBoldTitle ? FontWeight.w700 : FontWeight.w600,
-                  color: WarnaAplikasi.textDarkGreenDeep,
+                  color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreenDeep,
                   letterSpacing: -0.2,
                 ),
                 maxLines: 1,
@@ -301,9 +313,9 @@ class HarvestCard extends StatelessWidget {
               const SizedBox(height: 1),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10.5,
-                  color: WarnaAplikasi.textGray,
+                  color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

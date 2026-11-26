@@ -78,6 +78,18 @@ class _LayarPilihTitikPetaState extends State<LayarPilihTitikPeta> {
 
     try {
       final position = await Geolocator.getCurrentPosition();
+      if (position.isMocked) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Peringatan: Terdeteksi Fake GPS / Mock Location. Harap gunakan lokasi asli.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() => _isGpsLoading = false);
+        return;
+      }
       final latLng = LatLng(position.latitude, position.longitude);
       setState(() {
         _selectedPosition = latLng;
@@ -104,15 +116,22 @@ class _LayarPilihTitikPetaState extends State<LayarPilihTitikPeta> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final barBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final panelBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final textColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final iconColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+
     return Scaffold(
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: barBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close, color: WarnaAplikasi.primaryDark),
+          icon: Icon(Icons.close, color: iconColor),
         ),
-        title: Text(widget.judul ?? 'Pilih Titik Lokasi'),
+        title: Text(widget.judul ?? 'Pilih Titik Lokasi', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
         centerTitle: true,
       ),
       body: Stack(
@@ -184,8 +203,9 @@ class _LayarPilihTitikPetaState extends State<LayarPilihTitikPeta> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: panelBg,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
@@ -203,11 +223,11 @@ class _LayarPilihTitikPetaState extends State<LayarPilihTitikPeta> {
                           children: [
                             Text(
                               'Lat: ${_selectedPosition.latitude.toStringAsFixed(6)}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textColor),
                             ),
                             Text(
                               'Long: ${_selectedPosition.longitude.toStringAsFixed(6)}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textColor),
                             ),
                           ],
                         ),

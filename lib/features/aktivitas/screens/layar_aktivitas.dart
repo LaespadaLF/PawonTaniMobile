@@ -164,8 +164,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
       'Pemangkasan',
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToAddActivity,
         backgroundColor: WarnaAplikasi.buttonDark,
@@ -180,6 +182,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadActivities,
@@ -205,25 +208,25 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: isDark ? const Color(0xFF1D2420) : Colors.white,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: WarnaAplikasi.borderField),
+                                  border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.arrow_back_rounded,
-                                  color: WarnaAplikasi.primaryDark,
+                                  color: isDark ? Colors.white : WarnaAplikasi.primaryDark,
                                   size: 18,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 10),
                           ],
-                          const Text(
+                          Text(
                             'Aktivitas Pertanian',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
-                              color: WarnaAplikasi.primaryDark,
+                              color: isDark ? Colors.white : WarnaAplikasi.primaryDark,
                               letterSpacing: -0.4,
                             ),
                           ),
@@ -239,13 +242,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? const Color(0xFF1D2420) : Colors.white,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: WarnaAplikasi.borderField),
+                                border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.refresh_rounded,
-                                color: WarnaAplikasi.primaryDark,
+                                color: isDark ? Colors.white : WarnaAplikasi.primaryDark,
                                 size: 18,
                               ),
                             ),
@@ -261,16 +264,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? const Color(0xFF1D2420) : Colors.white,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: WarnaAplikasi.borderField),
+                                border: Border.all(color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.notifications_outlined,
-                                color: WarnaAplikasi.primaryDark,
+                                color: isDark ? Colors.white : WarnaAplikasi.primaryDark,
                                 size: 18,
                               ),
                             ),
+                          ),
                           ),
                           const SizedBox(width: 8),
                           InkWell(
@@ -329,10 +333,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? WarnaAplikasi.primary : Colors.white,
+                              color: isSelected
+                                  ? WarnaAplikasi.primary
+                                  : (isDark ? const Color(0xFF1D2420) : Colors.white),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.borderField,
+                                color: isSelected
+                                    ? WarnaAplikasi.primary
+                                    : (isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField),
                               ),
                             ),
                             child: Center(
@@ -341,7 +349,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                  color: isSelected ? Colors.white : WarnaAplikasi.dialogText,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.dialogText),
                                 ),
                               ),
                             ),
@@ -356,12 +366,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Aktivitas Terbaru',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.primaryDark,
+                          color: isDark ? Colors.white : WarnaAplikasi.primaryDark,
                         ),
                       ),
                       InkWell(
@@ -641,29 +651,32 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildActivityCard(PlantActivityItem item) {
-    Color iconBg;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+    final iconBoxBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight;
+
+    Color iconBg = iconBoxBg;
     Color iconColor;
     IconData icon;
 
     switch (item.category) {
       case ActivityCategory.pemupukan:
-        iconBg = WarnaAplikasi.greenLight;
         iconColor = WarnaAplikasi.primary;
         icon = Icons.spa_rounded;
         break;
       case ActivityCategory.pengairan:
       case ActivityCategory.penyiraman:
-        iconBg = WarnaAplikasi.statusBadgeBlueBg;
         iconColor = WarnaAplikasi.statusBadgeBlueText;
         icon = Icons.water_drop_outlined;
         break;
       case ActivityCategory.penyemprotan:
-        iconBg = WarnaAplikasi.greenLight;
         iconColor = WarnaAplikasi.primary;
         icon = Icons.shield_outlined;
         break;
       default:
-        iconBg = WarnaAplikasi.greenLight;
         iconColor = WarnaAplikasi.primary;
         icon = Icons.eco_outlined;
     }
@@ -671,14 +684,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderPale),
-        boxShadow: const [
+        border: Border.all(color: borderColor),
+        boxShadow: [
           BoxShadow(
-            color: WarnaAplikasi.shadowCard,
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -706,18 +719,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     children: [
                       Text(
                         item.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
-                          color: WarnaAplikasi.primaryDark,
+                          color: titleColor,
                         ),
                       ),
                       const SizedBox(height: 1),
                       Text(
                         item.cropName.isNotEmpty ? item.cropName : item.location,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
-                          color: WarnaAplikasi.textGrayGreen,
+                          color: subtitleColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -728,8 +741,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: item.condition == PlantCondition.sehat
-                        ? WarnaAplikasi.bgSuccessLight
-                        : WarnaAplikasi.statusTempoBg,
+                        ? (isDark ? const Color(0xFF283A2E) : WarnaAplikasi.bgSuccessLight)
+                        : (isDark ? const Color(0xFF3E2E18) : WarnaAplikasi.statusTempoBg),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -738,8 +751,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
                       color: item.condition == PlantCondition.sehat
-                          ? WarnaAplikasi.primary
-                          : WarnaAplikasi.warningOrange,
+                          ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                          : (isDark ? Colors.amber.shade300 : WarnaAplikasi.warningOrange),
                     ),
                   ),
                 ),
@@ -750,21 +763,21 @@ class _ActivityScreenState extends State<ActivityScreen> {
             // Date & Time Row
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 12, color: WarnaAplikasi.textGrayGreen),
+                Icon(Icons.calendar_today_outlined, size: 12, color: subtitleColor),
                 const SizedBox(width: 4),
                 Text(
                   item.date,
-                  style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: subtitleColor, fontWeight: FontWeight.w500),
                 ),
                 if (item.time.isNotEmpty) ...[
                   const SizedBox(width: 8),
-                  const Text('•', style: TextStyle(color: WarnaAplikasi.iconGray)),
+                  Text('•', style: TextStyle(color: subtitleColor)),
                   const SizedBox(width: 8),
-                  const Icon(Icons.access_time_rounded, size: 12, color: WarnaAplikasi.textGrayGreen),
+                  Icon(Icons.access_time_rounded, size: 12, color: subtitleColor),
                   const SizedBox(width: 4),
                   Text(
                     item.time,
-                    style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 11, color: subtitleColor, fontWeight: FontWeight.w500),
                   ),
                 ],
               ],
@@ -774,12 +787,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
             // Location Row
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 12, color: WarnaAplikasi.textGrayGreen),
+                Icon(Icons.location_on_outlined, size: 12, color: subtitleColor),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     item.location,
-                    style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayGreen, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 11, color: subtitleColor, fontWeight: FontWeight.w500),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -791,30 +804,76 @@ class _ActivityScreenState extends State<ActivityScreen> {
             if (item.notes.isNotEmpty)
               Text(
                 item.notes,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: WarnaAplikasi.textGrayDark,
+                  color: isDark ? const Color(0xFFC8D6CD) : WarnaAplikasi.textGrayDark,
                   height: 1.35,
                 ),
               ),
 
-            // Foto thumbnail if available
-            if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
+            // Foto thumbnail if available (Multi-photo support)
+            if (item.photos.isNotEmpty || (item.imageUrl != null && item.imageUrl!.isNotEmpty)) ...[
               const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  item.imageUrl!,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              if (item.photos.length > 1)
+                SizedBox(
+                  height: 110,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: item.photos.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, idx) {
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              item.photos[idx],
+                              height: 110,
+                              width: 150,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                height: 110,
+                                width: 150,
+                                color: isDark ? const Color(0xFF283A2E) : Colors.grey.shade200,
+                                child: const Icon(Icons.broken_image, size: 28),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${idx + 1}/${item.photos.length}',
+                                style: const TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                )
+              else
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    item.imageUrl ?? item.photos.first,
+                    height: 130,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
                 ),
-              ),
             ],
 
             const SizedBox(height: 12),
-            const Divider(height: 1, color: WarnaAplikasi.dividerLight),
+            Divider(height: 1, color: borderColor),
             const SizedBox(height: 8),
 
             // Footer: Lihat Detail, Edit, Delete
@@ -822,8 +881,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
               children: [
                 InkWell(
                   onTap: () => _showDetailModal(item),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
                       children: [
                         Text(
@@ -831,11 +890,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: WarnaAplikasi.primary,
+                            color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_rounded, size: 14, color: WarnaAplikasi.primary),
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_rounded, size: 14, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
                       ],
                     ),
                   ),
@@ -843,7 +902,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 const Spacer(),
                 IconButton(
                   onPressed: () => _navigateToEditActivity(item),
-                  icon: const Icon(Icons.edit_outlined, size: 18, color: WarnaAplikasi.textGrayGreen),
+                  icon: Icon(Icons.edit_outlined, size: 18, color: subtitleColor),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: 'Edit Aktivitas',
@@ -865,9 +924,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   void _showSortPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -883,15 +943,19 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.outlineGray,
+                    color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.outlineGray,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Urutkan Aktivitas',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
+                ),
               ),
               const SizedBox(height: 8),
               ListTile(
@@ -920,10 +984,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   void _showDetailModal(PlantActivityItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final boxBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgInput;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+    final textColor = isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.textGrayDark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: sheetBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -945,7 +1017,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: WarnaAplikasi.outlineGray,
+                        color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.outlineGray,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -956,18 +1028,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     children: [
                       Text(
                         item.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: WarnaAplikasi.primaryDark,
+                          color: titleColor,
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: item.condition == PlantCondition.sehat
-                              ? WarnaAplikasi.bgSuccessLight
-                              : WarnaAplikasi.statusTempoBg,
+                              ? (isDark ? const Color(0xFF283A2E) : WarnaAplikasi.bgSuccessLight)
+                              : (isDark ? const Color(0xFF3E2E18) : WarnaAplikasi.statusTempoBg),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -976,8 +1048,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: item.condition == PlantCondition.sehat
-                                ? WarnaAplikasi.primary
-                                : WarnaAplikasi.warningOrange,
+                                ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                                : (isDark ? Colors.amber.shade300 : WarnaAplikasi.warningOrange),
                           ),
                         ),
                       ),
@@ -986,9 +1058,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   const SizedBox(height: 4),
                   Text(
                     item.cropName.isNotEmpty ? item.cropName : item.location,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: WarnaAplikasi.textGrayGreen,
+                      color: subtitleColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -997,63 +1069,104 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgInput,
+                      color: boxBg,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: WarnaAplikasi.borderPale),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow(Icons.calendar_today_outlined, 'Tanggal', item.date),
+                        _buildDetailRow(context, Icons.calendar_today_outlined, 'Tanggal', item.date),
                         const SizedBox(height: 10),
-                        _buildDetailRow(Icons.access_time_rounded, 'Waktu Pelaksanaan', item.time),
+                        _buildDetailRow(context, Icons.access_time_rounded, 'Waktu Pelaksanaan', item.time),
                         const SizedBox(height: 10),
-                        _buildDetailRow(Icons.holiday_village_outlined, 'Petak Lahan', item.location),
+                        _buildDetailRow(context, Icons.holiday_village_outlined, 'Petak Lahan', item.location),
                         if (item.blockArea.isNotEmpty) ...[
                           const SizedBox(height: 10),
-                          _buildDetailRow(Icons.crop_free_rounded, 'Luas & Komoditas', item.blockArea),
+                          _buildDetailRow(context, Icons.crop_free_rounded, 'Luas & Komoditas', item.blockArea),
                         ],
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Catatan Kegiatan',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.primaryDark,
+                      color: titleColor,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     item.notes.isNotEmpty ? item.notes : 'Tidak ada catatan tambahan.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: WarnaAplikasi.textGrayDark,
+                      color: textColor,
                       height: 1.4,
                     ),
                   ),
-                  if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
+                  if (item.photos.isNotEmpty || (item.imageUrl != null && item.imageUrl!.isNotEmpty)) ...[
                     const SizedBox(height: 16),
-                    const Text(
-                      'Dokumentasi Foto',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.primaryDark,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Dokumentasi Foto',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: titleColor,
+                          ),
+                        ),
+                        if (item.photos.length > 1)
+                          Text(
+                            '${item.photos.length} Foto',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: subtitleColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.network(
-                        item.imageUrl!,
+                    const SizedBox(height: 10),
+                    if (item.photos.length > 1)
+                      SizedBox(
                         height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image)),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: item.photos.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 10),
+                          itemBuilder: (context, idx) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.network(
+                                item.photos[idx],
+                                height: 180,
+                                width: 240,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  height: 180,
+                                  width: 240,
+                                  color: isDark ? const Color(0xFF283A2E) : Colors.grey.shade200,
+                                  child: const Center(child: Icon(Icons.broken_image, size: 36)),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.network(
+                          item.imageUrl ?? item.photos.first,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image)),
+                        ),
                       ),
-                    ),
                   ],
                   const SizedBox(height: 24),
                   Row(
@@ -1099,19 +1212,27 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Icon(icon, size: 16, color: WarnaAplikasi.primary),
         const SizedBox(width: 10),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayGreen),
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen,
+          ),
         ),
         const Spacer(),
         Text(
           value,
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.primaryDark),
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
+          ),
         ),
       ],
     );

@@ -52,11 +52,16 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     _selectedCategory = widget.item.category;
     _selectedCondition = widget.item.condition;
     _notesController = TextEditingController(text: widget.item.notes);
-    _keptOldPhotos
-      ..clear()
-      ..addAll(widget.item.photos.where((p) => p.trim().isNotEmpty));
-    if (_keptOldPhotos.isEmpty && widget.item.imageUrl != null && widget.item.imageUrl!.trim().isNotEmpty) {
-      _keptOldPhotos.add(widget.item.imageUrl!);
+    _keptOldPhotos.clear();
+    for (final p in widget.item.photos) {
+      if (p.trim().isNotEmpty && !_keptOldPhotos.contains(p)) {
+        _keptOldPhotos.add(p);
+      }
+    }
+    if (widget.item.imageUrl != null && widget.item.imageUrl!.trim().isNotEmpty) {
+      if (!_keptOldPhotos.contains(widget.item.imageUrl!)) {
+        _keptOldPhotos.add(widget.item.imageUrl!);
+      }
     }
 
     // Parse existing date/time or default to now
@@ -78,15 +83,18 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     if (!mounted) return;
 
     if (response.success && response.data != null && response.data!.isNotEmpty) {
-      final list = response.data!;
+      final allList = response.data!;
+      final list = allList.where((l) => l.status == StatusLahan.aktif || l.status == StatusLahan.persiapan || l.siklusBerjalan != null).toList();
       ItemLahan? matched;
-      if (widget.item.lahanId != null) {
-        matched = list.firstWhere((l) => l.id == widget.item.lahanId, orElse: () => list.first);
-      } else {
-        matched = list.firstWhere(
-          (l) => l.nama.toLowerCase() == widget.item.location.toLowerCase(),
-          orElse: () => list.first,
-        );
+      if (list.isNotEmpty) {
+        if (widget.item.lahanId != null) {
+          matched = list.firstWhere((l) => l.id == widget.item.lahanId, orElse: () => list.first);
+        } else {
+          matched = list.firstWhere(
+            (l) => l.nama.toLowerCase() == widget.item.location.toLowerCase(),
+            orElse: () => list.first,
+          );
+        }
       }
 
       setState(() {
@@ -163,9 +171,10 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   }
 
   void _showPhotoOptions() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -180,23 +189,29 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.outlineGray,
+                    color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.outlineGray,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Tambah Foto Aktivitas',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: WarnaAplikasi.primaryDark,
+                    color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark,
                   ),
                 ),
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primary),
-                  title: const Text('Ambil dari Kamera', style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    'Ambil dari Kamera',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickPhoto(ImageSource.camera);
@@ -204,8 +219,20 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
-                  title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Bisa pilih beberapa foto sekaligus', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                  title: Text(
+                    'Pilih dari Galeri',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Bisa pilih beberapa foto sekaligus',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickPhoto(ImageSource.gallery);
@@ -326,8 +353,14 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       appBar: const PawonFormHeader(
         title: 'Edit Aktivitas',
         subtitle: 'Perbarui rincian aktivitas dan catatan lahan',
@@ -345,15 +378,15 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: WarnaAplikasi.borderField),
+                  border: Border.all(color: borderColor),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-                    SizedBox(width: 12),
-                    Text('Memuat data lahan...', style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayGreen)),
+                    const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                    const SizedBox(width: 12),
+                    Text('Memuat data lahan...', style: TextStyle(fontSize: 12, color: subtitleColor)),
                   ],
                 ),
               )
@@ -364,9 +397,9 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: WarnaAplikasi.borderField),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Row(
                     children: [
@@ -374,7 +407,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: WarnaAplikasi.greenLight,
+                          color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
@@ -390,10 +423,10 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                           children: [
                             Text(
                               _selectedItemLahan?.nama ?? widget.item.location,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
-                                color: WarnaAplikasi.primaryDark,
+                                color: titleColor,
                               ),
                             ),
                             const SizedBox(height: 1),
@@ -401,17 +434,17 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                               _selectedItemLahan != null
                                   ? '${_selectedItemLahan!.luas.toStringAsFixed(2)} Ha • ${_selectedItemLahan!.komoditas.isNotEmpty ? _selectedItemLahan!.komoditas : 'Pertanian'}'
                                   : widget.item.blockArea,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: WarnaAplikasi.textGrayGreen,
+                                color: subtitleColor,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        color: WarnaAplikasi.textGrayGreen,
+                        color: subtitleColor,
                         size: 22,
                       ),
                     ],
@@ -443,9 +476,9 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: cardBg,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: WarnaAplikasi.borderField),
+                            border: Border.all(color: borderColor),
                           ),
                           child: Row(
                             children: [
@@ -454,7 +487,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                               Expanded(
                                 child: Text(
                                   _formatDate(_selectedDate),
-                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark),
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: titleColor),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -484,9 +517,9 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: cardBg,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: WarnaAplikasi.borderField),
+                            border: Border.all(color: borderColor),
                           ),
                           child: Row(
                             children: [
@@ -495,7 +528,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                               Expanded(
                                 child: Text(
                                   _formatTime(_selectedTime),
-                                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark),
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: titleColor),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -523,16 +556,16 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                   selected: isSelected,
                   onSelected: (_) => setState(() => _selectedCategory = cat),
                   selectedColor: WarnaAplikasi.primary,
-                  backgroundColor: Colors.white,
+                  backgroundColor: cardBg,
                   labelStyle: TextStyle(
                     fontSize: 12.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : WarnaAplikasi.primaryDark,
+                    color: isSelected ? Colors.white : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryDark),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.outlineGray,
+                      color: isSelected ? WarnaAplikasi.primary : borderColor,
                     ),
                   ),
                   showCheckmark: false,
@@ -577,20 +610,20 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: WarnaAplikasi.borderField),
+                border: Border.all(color: borderColor),
               ),
               child: TextField(
                 controller: _notesController,
                 maxLines: 3,
                 maxLength: 250,
-                style: const TextStyle(fontSize: 13, color: WarnaAplikasi.primaryDark),
-                decoration: const InputDecoration(
+                style: TextStyle(fontSize: 13, color: titleColor),
+                decoration: InputDecoration(
                   counterText: '',
                   hintText: 'Tuliskan catatan detail aktivitas...',
-                  hintStyle: TextStyle(fontSize: 12.5, color: WarnaAplikasi.iconGray),
-                  contentPadding: EdgeInsets.all(14),
+                  hintStyle: TextStyle(fontSize: 12.5, color: subtitleColor),
+                  contentPadding: const EdgeInsets.all(14),
                   border: InputBorder.none,
                 ),
               ),
@@ -769,14 +802,17 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   }
 
   Widget _buildFieldLabel(String label) {
-    return Text(
-      label,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: WarnaAplikasi.primaryDark,
-      ),
-    );
+    return Builder(builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      return Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
+        ),
+      );
+    });
   }
 
   Widget _buildConditionOption({
@@ -789,140 +825,166 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   }) {
     final isSelected = _selectedCondition == condition;
 
-    return InkWell(
-      onTap: () => setState(() => _selectedCondition = condition),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.iconGray,
-            width: isSelected ? 1.5 : 1,
+    return Builder(builder: (context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+      final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.iconGray;
+      final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+      final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+
+      return InkWell(
+        onTap: () => setState(() => _selectedCondition = condition),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? WarnaAplikasi.primary : borderColor,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(10),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isDark ? iconColor.withValues(alpha: 0.2) : iconBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
               ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: WarnaAplikasi.primaryDark,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: WarnaAplikasi.textGrayGreen,
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: subtitleColor,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? WarnaAplikasi.primary : WarnaAplikasi.iconGray,
-                  width: 2,
+                  ],
                 ),
               ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: WarnaAplikasi.primary,
-                          shape: BoxShape.circle,
+              const SizedBox(width: 8),
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? WarnaAplikasi.primary : (isDark ? const Color(0xFF4B6653) : WarnaAplikasi.iconGray),
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: WarnaAplikasi.primary,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
-            ),
-          ],
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   void _showLahanPicker() {
     if (_lahanList.isEmpty) return;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreen;
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: cardBg,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.outlineGray,
-                    borderRadius: BorderRadius.circular(2),
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.outlineGray,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Pilih Petak Lahan',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: WarnaAplikasi.primaryDark),
-              ),
-              const SizedBox(height: 12),
-              ..._lahanList.map((lahan) {
-                final isCurrent = _selectedItemLahan?.id == lahan.id;
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.greenLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.holiday_village_outlined, color: WarnaAplikasi.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Pilih Petak Lahan',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: titleColor),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _lahanList.length,
+                    itemBuilder: (ctx, idx) {
+                      final lahan = _lahanList[idx];
+                      final isCurrent = _selectedItemLahan?.id == lahan.id;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.holiday_village_outlined, color: WarnaAplikasi.primary),
+                        ),
+                        title: Text(lahan.nama, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: titleColor)),
+                        subtitle: Text('${lahan.luas.toStringAsFixed(2)} Ha • ${lahan.komoditas.isNotEmpty ? lahan.komoditas : 'Pertanian'}', style: TextStyle(fontSize: 11.5, color: subtitleColor)),
+                        trailing: isCurrent ? const Icon(Icons.check_circle, color: WarnaAplikasi.primary) : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedItemLahan = lahan;
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
                   ),
-                  title: Text(lahan.nama, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                  subtitle: Text('${lahan.luas.toStringAsFixed(2)} Ha • ${lahan.komoditas.isNotEmpty ? lahan.komoditas : 'Pertanian'}', style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayGreen)),
-                  trailing: isCurrent ? const Icon(Icons.check_circle, color: WarnaAplikasi.primary) : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedItemLahan = lahan;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              }),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },

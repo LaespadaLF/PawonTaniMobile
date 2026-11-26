@@ -166,12 +166,12 @@ class SaveSuccessDialog extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      // Row 1: No. Tiket / ID
+                      // Row 1: Komoditas
                       _buildInfoRow(
-                        icon: Icons.confirmation_number_outlined,
-                        label: 'No. Tiket / ID',
+                        icon: Icons.eco_outlined,
+                        label: 'Komoditas',
                         valueWidget: Text(
-                          harvestCode,
+                          item.cropType.displayName,
                           style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w800,

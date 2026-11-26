@@ -1,6 +1,10 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
+import 'package:pawon_mobile/features/auth/repositories/auth_repository.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_daftar_notifikasi.dart';
+import 'package:pawon_mobile/features/notifikasi/repositories/notifikasi_repository.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 export 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
 
 class CropIconWidget extends StatelessWidget {
@@ -311,8 +315,16 @@ class PawonFixedHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final titleColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final iconBtnBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.bgPaleGreen2;
+    final iconColor = isDark ? Colors.white70 : WarnaAplikasi.primaryDark;
+    final currentUser = AuthRepository().currentUser;
+    final firstName = currentUser?.nama.trim().split(' ').first ?? 'Petani';
+
     return Container(
-      color: Colors.white,
+      color: headerBg,
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
       child: Row(
         children: [
@@ -335,69 +347,121 @@ class PawonFixedHeader extends StatelessWidget {
               ),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: WarnaAplikasi.primaryDark,
+                  color: titleColor,
                   letterSpacing: -0.3,
                 ),
               ),
             ],
           ),
           const Spacer(),
-          // Action Icons: Notifikasi (Style Penjualan)
-          InkWell(
-            onTap: onNotificationTap ?? () {},
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                Container(
+          // Action Icons: Notifikasi & Profile (Sama Persis Seperti Beranda)
+          Row(
+            children: [
+              // Notification Button with Dynamic Badge
+              InkWell(
+                onTap: onNotificationTap ?? () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                  ).then((_) {
+                    NotifikasiRepository.instance.fetchUnreadCount();
+                  });
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: iconBtnBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.notifications_outlined,
+                        size: 20,
+                        color: iconColor,
+                      ),
+                    ),
+                    ValueListenableBuilder<int>(
+                      valueListenable: NotifikasiRepository.instance.unreadCountListenable,
+                      builder: (context, unreadCount, _) {
+                        if (unreadCount <= 0 || !showNotificationBadge) return const SizedBox.shrink();
+
+                        final badgeText = unreadCount > 99 ? '99+' : unreadCount.toString();
+                        return Positioned(
+                          top: -3,
+                          right: -3,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            decoration: BoxDecoration(
+                              color: WarnaAplikasi.errorRed,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: Center(
+                              child: Text(
+                                badgeText,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Profile Avatar Button (Sama persis Beranda)
+              InkWell(
+                onTap: onProfileTap ?? () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LayarProfil()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F7F4),
+                    color: WarnaAplikasi.primary,
                     borderRadius: BorderRadius.circular(12),
+                    image: (currentUser?.fotoProfil != null && currentUser!.fotoProfil!.isNotEmpty)
+                        ? DecorationImage(
+                            image: NetworkImage(currentUser.fotoProfil!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    size: 20,
-                    color: Color(0xFF52685B),
-                  ),
+                  child: (currentUser?.fotoProfil == null || currentUser!.fotoProfil!.isEmpty)
+                      ? Center(
+                          child: Text(
+                            firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : null,
                 ),
-                if (showNotificationBadge)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE53935),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Profile Icon (Style Penjualan)
-          InkWell(
-            onTap: onProfileTap ?? () {},
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F7F4),
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.person_outline_rounded,
-                size: 20,
-                color: Color(0xFF52685B),
-              ),
-            ),
+            ],
           ),
         ],
       ),

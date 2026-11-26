@@ -57,12 +57,19 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
     final keteranganController = TextEditingController(text: 'Pelunasan bertahap');
     final sisa = _item.remainingAmount > 0 ? _item.remainingAmount : (_item.totalValue - _item.totalReceived);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final inputBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgInput;
+
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         return AlertDialog(
+          backgroundColor: dialogBg,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tambah Catatan Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text('Tambah Catatan Pembayaran', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleColor)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,30 +79,39 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 style: const TextStyle(fontSize: 12, color: WarnaAplikasi.warningOrange, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 14),
-              const Text('Nominal Pembayaran (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              Text('Nominal Pembayaran (Rp) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
               const SizedBox(height: 6),
               TextField(
                 controller: nominalController,
+                style: TextStyle(color: titleColor),
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
                 decoration: InputDecoration(
                   hintText: 'Misal: 500.000',
+                  hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF6B7F73) : WarnaAplikasi.textGrayLight),
                   prefixText: 'Rp ',
+                  prefixStyle: TextStyle(color: titleColor, fontWeight: FontWeight.w600),
                   filled: true,
-                  fillColor: WarnaAplikasi.bgInput,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  fillColor: inputBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, width: 1.5)),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Keterangan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              Text('Keterangan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
               const SizedBox(height: 6),
               TextField(
                 controller: keteranganController,
+                style: TextStyle(color: titleColor),
                 decoration: InputDecoration(
                   hintText: 'Misal: DP ke-2, transfer BCA',
+                  hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF6B7F73) : WarnaAplikasi.textGrayLight),
                   filled: true,
-                  fillColor: WarnaAplikasi.bgInput,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  fillColor: inputBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, width: 1.5)),
                 ),
               ),
             ],
@@ -158,14 +174,16 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Future<void> _handleTandaiLunas() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Konfirmasi Pelunasan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: const Text(
+        title: Text('Konfirmasi Pelunasan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark)),
+        content: Text(
           'Pastikan seluruh uang pembayaran telah Anda terima dan diverifikasi secara manual. Setelah dikonfirmasi, transaksi akan berstatus Lunas dan stok fisik akan disesuaikan.',
-          style: TextStyle(fontSize: 13, height: 1.4),
+          style: TextStyle(fontSize: 13, height: 1.4, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textMedium),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
@@ -207,14 +225,16 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Future<void> _handleTandaiDiserahkan() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Konfirmasi Penyerahan Barang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: const Text(
+        title: Text('Konfirmasi Penyerahan Barang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark)),
+        content: Text(
           'Setelah barang ditandai "Sudah Diserahkan", transaksi ini tidak dapat dibatalkan lagi melalui sistem. Lanjutkan?',
-          style: TextStyle(fontSize: 13, height: 1.4),
+          style: TextStyle(fontSize: 13, height: 1.4, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textMedium),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
@@ -256,32 +276,41 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Future<void> _handleBatalkanTransaksi() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final inputBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgInput;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
     final alasanController = TextEditingController();
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Batalkan Transaksi Penjualan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.errorRedDark)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Pembatalan akan melepaskan/mengembalikan alokasi stok ke katalog. Jika customer sudah membayar sebagian, pengembalian dana dilakukan manual di luar aplikasi.',
-              style: TextStyle(fontSize: 12.5, color: WarnaAplikasi.textGray, height: 1.4),
+              style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray, height: 1.4),
             ),
             const SizedBox(height: 12),
-            const Text('Alasan Pembatalan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            Text('Alasan Pembatalan *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
             const SizedBox(height: 6),
             TextField(
               controller: alasanController,
+              style: TextStyle(color: titleColor),
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Misal: Pembeli membatalkan pesanan lewat WhatsApp',
+                hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF6B7F73) : WarnaAplikasi.textGrayLight),
                 filled: true,
-                fillColor: WarnaAplikasi.bgInput,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                fillColor: inputBg,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, width: 1.5)),
               ),
             ),
           ],
@@ -339,7 +368,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WarnaAplikasi.bgPage,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -449,6 +478,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Widget _buildStatusBanners() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final pendingBg = isDark ? const Color(0xFF1D2420) : WarnaAplikasi.bgPaleGreen;
+    final lunasBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.statusLunasBg;
+    final lunasText = isDark ? const Color(0xFF81C784) : WarnaAplikasi.statusLunasText;
+    final pendingText = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -457,16 +493,16 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: _item.isSudahDiserahkan ? WarnaAplikasi.statusLunasBg : WarnaAplikasi.bgPaleGreen,
+              color: _item.isSudahDiserahkan ? lunasBg : pendingBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _item.isSudahDiserahkan ? WarnaAplikasi.statusLunasText.withValues(alpha: 0.3) : WarnaAplikasi.border),
+              border: Border.all(color: _item.isSudahDiserahkan ? lunasText.withValues(alpha: 0.3) : borderColor),
             ),
             child: Row(
               children: [
                 Icon(
                   _item.isSudahDiserahkan ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
                   size: 18,
-                  color: _item.isSudahDiserahkan ? WarnaAplikasi.statusLunasText : WarnaAplikasi.textGray,
+                  color: _item.isSudahDiserahkan ? lunasText : (isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -477,7 +513,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: _item.isSudahDiserahkan ? WarnaAplikasi.statusLunasText : WarnaAplikasi.textDark,
+                      color: _item.isSudahDiserahkan ? lunasText : pendingText,
                     ),
                   ),
                 ),
@@ -490,9 +526,9 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: WarnaAplikasi.errorRedBg,
+                color: isDark ? const Color(0xFF381E1E) : WarnaAplikasi.errorRedBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: WarnaAplikasi.errorRedBorder),
+                border: Border.all(color: isDark ? const Color(0xFF5A2A2A) : WarnaAplikasi.errorRedBorder),
               ),
               child: Row(
                 children: [
@@ -514,13 +550,19 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Widget _buildCommoditySection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,21 +570,21 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_item.commodityName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: WarnaAplikasi.textDark)),
+              Text(_item.commodityName, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: titleColor)),
               if (_item.idProduk != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.greenPill,
+                    color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenPill,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text('Marketplace', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.greenText)),
+                  child: Text('Marketplace', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.greenText)),
                 ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(_item.commoditySubtitle, style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray)),
-          const Divider(height: 24, color: WarnaAplikasi.divider),
+          Text(_item.commoditySubtitle, style: TextStyle(fontSize: 11.5, color: subtitleColor)),
+          Divider(height: 24, color: borderColor),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -557,24 +599,35 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Widget _buildMetricColumn(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
+        Text(label, style: TextStyle(fontSize: 11, color: subtitleColor)),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark)),
+        Text(value, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: titleColor)),
       ],
     );
   }
 
   Widget _buildBuyerSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final badgeBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPage;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
@@ -582,29 +635,29 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: WarnaAplikasi.greenLight,
+              color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.person_rounded, color: WarnaAplikasi.primary, size: 22),
+            child: Icon(Icons.person_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_item.buyerName, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark)),
+                Text(_item.buyerName, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: titleColor)),
                 const SizedBox(height: 2),
                 Text(
                   _item.buyerPhone != null && _item.buyerPhone!.isNotEmpty ? _item.buyerPhone! : 'Kontak via WhatsApp / Langsung',
-                  style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
+                  style: TextStyle(fontSize: 11, color: subtitleColor),
                 ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: WarnaAplikasi.bgPage, borderRadius: BorderRadius.circular(8)),
-            child: Text(_item.paymentMethodLabel, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.textDark)),
+            decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(8)),
+            child: Text(_item.paymentMethodLabel, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: titleColor)),
           ),
         ],
       ),
@@ -612,13 +665,22 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Widget _buildMultiPaymentSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final emptyBoxBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPage;
+    final itemBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPaleGreen;
+    final primaryAccent = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,13 +688,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Riwayat Pembayaran (DP & Pelunasan)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: WarnaAplikasi.textDark)),
+              Text('Riwayat Pembayaran (DP & Pelunasan)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: titleColor)),
               if (!_item.isLunas && !_item.isDibatalkan)
                 InkWell(
                   onTap: _showTambahPembayaranDialog,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    child: Text('+ Catat Bayar', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Text('+ Catat Bayar', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: primaryAccent)),
                   ),
                 ),
             ],
@@ -642,8 +704,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           if (_item.riwayatPembayaran.isEmpty)
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: WarnaAplikasi.bgPage, borderRadius: BorderRadius.circular(12)),
-              child: const Text('Belum ada catatan pembayaran yang diverifikasi.', style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray)),
+              decoration: BoxDecoration(color: emptyBoxBg, borderRadius: BorderRadius.circular(12)),
+              child: Text('Belum ada catatan pembayaran yang diverifikasi.', style: TextStyle(fontSize: 11.5, color: subtitleColor)),
             )
           else
             ...List.generate(_item.riwayatPembayaran.length, (idx) {
@@ -652,9 +714,9 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: WarnaAplikasi.bgPaleGreen,
+                  color: itemBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: WarnaAplikasi.border),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -664,13 +726,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       children: [
                         Text(
                           'Pembayaran #${idx + 1} &bull; ${p.keterangan.isNotEmpty ? p.keterangan : 'DP / Pelunasan'}',
-                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark),
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: titleColor),
                         ),
                         if (p.tanggalPembayaran != null)
-                          Text(_formatDate(p.tanggalPembayaran!), style: const TextStyle(fontSize: 10, color: WarnaAplikasi.textGray)),
+                          Text(_formatDate(p.tanggalPembayaran!), style: TextStyle(fontSize: 10, color: subtitleColor)),
                       ],
                     ),
-                    Text(_formatNum(p.nominal), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: WarnaAplikasi.primary)),
+                    Text(_formatNum(p.nominal), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: primaryAccent)),
                   ],
                 ),
               );
@@ -681,22 +743,28 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   }
 
   Widget _buildFieldNotesSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: WarnaAplikasi.border),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Catatan Transaksi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: WarnaAplikasi.textDark)),
+          Text('Catatan Transaksi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: titleColor)),
           const SizedBox(height: 6),
           Text(
             '"${_item.notes}"',
-            style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray, fontStyle: FontStyle.italic),
+            style: TextStyle(fontSize: 11.5, color: subtitleColor, fontStyle: FontStyle.italic),
           ),
         ],
       ),

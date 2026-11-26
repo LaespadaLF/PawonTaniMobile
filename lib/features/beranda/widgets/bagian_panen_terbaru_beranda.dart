@@ -31,6 +31,9 @@ class HomeLatestHarvestSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -38,7 +41,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Hasil Panen Terbaru',
                 maxLines: 1,
@@ -46,7 +49,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: WarnaAplikasi.primaryDark,
+                  color: headerColor,
                 ),
               ),
             ),
@@ -72,23 +75,26 @@ class HomeLatestHarvestSection extends StatelessWidget {
 
         // Body Content: Loading, Empty, or Actual Harvest Card
         if (isLoading)
-          _buildLoadingSkeleton()
+          _buildLoadingSkeleton(context, isDark)
         else if (item != null)
-          _buildHarvestCard(context, item!)
+          _buildHarvestCard(context, item!, isDark)
         else
-          _buildEmptyState(context),
+          _buildEmptyState(context, isDark),
       ],
     );
   }
 
-  Widget _buildLoadingSkeleton() {
+  Widget _buildLoadingSkeleton(BuildContext context, bool isDark) {
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+
     return Container(
       height: 84,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderPale, width: 1),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         children: [
@@ -96,7 +102,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: WarnaAplikasi.borderPale.withValues(alpha: 0.5),
+              color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.borderPale.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(14),
             ),
           ),
@@ -110,7 +116,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                   width: 120,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale.withValues(alpha: 0.6),
+                    color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.borderPale.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -119,7 +125,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                   width: 80,
                   height: 16,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale.withValues(alpha: 0.6),
+                    color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.borderPale.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -131,25 +137,30 @@ class HomeLatestHarvestSection extends StatelessWidget {
     );
   }
 
-  Widget _buildHarvestCard(BuildContext context, HarvestItem harvest) {
+  Widget _buildHarvestCard(BuildContext context, HarvestItem harvest, bool isDark) {
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     Color statusBg;
     Color statusColor;
     String statusLabel;
 
     switch (harvest.status) {
       case HarvestStatus.disetujui:
-        statusBg = WarnaAplikasi.greenLight;
-        statusColor = WarnaAplikasi.primary;
+        statusBg = isDark ? const Color(0xFF1E3A24) : WarnaAplikasi.greenLight;
+        statusColor = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary;
         statusLabel = 'Disetujui';
         break;
       case HarvestStatus.ditolak:
-        statusBg = WarnaAplikasi.errorRedBg;
-        statusColor = WarnaAplikasi.errorRedDark;
+        statusBg = isDark ? const Color(0xFF3E1D1D) : WarnaAplikasi.errorRedBg;
+        statusColor = isDark ? const Color(0xFFE57373) : WarnaAplikasi.errorRedDark;
         statusLabel = 'Ditolak';
         break;
       case HarvestStatus.menunggu:
-        statusBg = WarnaAplikasi.hppAmberBg;
-        statusColor = const Color(0xFFC05621);
+        statusBg = isDark ? const Color(0xFF3E2D1A) : WarnaAplikasi.hppAmberBg;
+        statusColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFC05621);
         statusLabel = 'Menunggu';
         break;
     }
@@ -159,17 +170,17 @@ class HomeLatestHarvestSection extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: WarnaAplikasi.borderPale,
+          color: borderColor,
           width: 1,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x06000000),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -188,7 +199,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
                   child: Container(
                     width: 58,
                     height: 58,
-                    color: WarnaAplikasi.greenLight,
+                    color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
                     child: photoUrl != null
                         ? Image.network(
                             photoUrl,
@@ -214,10 +225,10 @@ class HomeLatestHarvestSection extends StatelessWidget {
                               harvest.title.isNotEmpty
                                   ? harvest.title
                                   : harvest.cropType.displayName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: WarnaAplikasi.primaryDark,
+                                color: titleColor,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -247,10 +258,10 @@ class HomeLatestHarvestSection extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         '${harvest.cropType.displayName} • ${harvest.location}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500,
-                          color: WarnaAplikasi.textGray,
+                          color: subtitleColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -260,18 +271,18 @@ class HomeLatestHarvestSection extends StatelessWidget {
                         children: [
                           Text(
                             _formatWeight(harvest.weightKg, harvest.weightTon),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: WarnaAplikasi.primary,
+                              color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             harvest.date.isNotEmpty ? harvest.date : harvest.season,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: WarnaAplikasi.textGrayGreen,
+                              color: isDark ? const Color(0xFF869E90) : WarnaAplikasi.textGrayGreen,
                             ),
                           ),
                         ],
@@ -282,10 +293,10 @@ class HomeLatestHarvestSection extends StatelessWidget {
 
                 // Chevron Right
                 const SizedBox(width: 6),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   size: 22,
-                  color: WarnaAplikasi.textGrayGreen,
+                  color: subtitleColor,
                 ),
               ],
             ),
@@ -295,13 +306,18 @@ class HomeLatestHarvestSection extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, bool isDark) {
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.borderPale),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
@@ -309,7 +325,7 @@ class HomeLatestHarvestSection extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: WarnaAplikasi.greenLight,
+              color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -322,21 +338,21 @@ class HomeLatestHarvestSection extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Belum Ada Panen Baru',
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: WarnaAplikasi.primaryDark,
+                    color: titleColor,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   'Catat panen untuk pantau hasil & tonase',
                   style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.textGray,
+                    color: subtitleColor,
                   ),
                 ),
               ],

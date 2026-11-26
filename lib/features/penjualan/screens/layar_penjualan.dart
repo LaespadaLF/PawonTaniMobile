@@ -36,87 +36,34 @@ class _PenjualanScreenState extends State<PenjualanScreen>
 
   final _apiService = MarketplacePenjualanApiService();
 
-  late List<SaleItem> _allItems;
+  List<SaleItem> _allItems = [];
   List<ItemProdukSaya> _myProducts = [];
+  List<Map<String, dynamic>> _marketPrices = [];
   bool _isLoadingProducts = false;
   bool _isLoadingSales = false;
+  bool _isLoadingPrices = false;
 
   @override
   void initState() {
     super.initState();
-    _initData();
     _fetchApiData();
-  }
-
-  void _initData() {
-    _allItems = [
-      SaleItem(
-        id: '1',
-        trxCode: 'TRX-PN-20241115-889',
-        commodityType: CommodityType.gabahKeringPanen,
-        commodityName: 'Gabah Kering Panen (GKP Ciherang)',
-        commoditySubtitle: 'Varietas: Ciherang Super',
-        status: SaleStatus.lunas,
-        transactionDate: DateTime(2024, 11, 12),
-        timeStr: '09.30 WIB',
-        volumeKg: 3500,
-        pricePerKg: 6900,
-        totalValue: 24150000,
-        totalReceived: 24150000,
-        buyerName: 'Koperasi Tani Sumber Makmur',
-        paymentMethod: PaymentMethod.transferBRI,
-        paymentMethodLabel: 'Transfer BRI',
-        bankAccountName: 'Kas Poktan / H. Sukirman',
-        bankAccountNumber: '0129-01-098234-56-1',
-        isVerified: true,
-        notes: 'Berasal dari petak A, kadar air aman (~14%).',
-      ),
-      SaleItem(
-        id: '2',
-        trxCode: 'TRX-JG-20241102-441',
-        commodityType: CommodityType.jagungManisPipil,
-        commodityName: 'Jagung Manis Hibrida Super',
-        commoditySubtitle: 'Kondisi: Pipil Kering Tongkol',
-        status: SaleStatus.lunas,
-        transactionDate: DateTime(2024, 11, 2),
-        timeStr: '14.15 WIB',
-        volumeKg: 1500,
-        pricePerKg: 5400,
-        totalValue: 8100000,
-        totalReceived: 8100000,
-        buyerName: 'Juragan Sayur Pasar Wage',
-        paymentMethod: PaymentMethod.tunaiKasPoktan,
-        paymentMethodLabel: 'Tunai / Kas Poktan',
-        isVerified: true,
-      ),
-      SaleItem(
-        id: '3',
-        trxCode: 'TRX-GG-20241025-221',
-        commodityType: CommodityType.gabahKeringGiling,
-        commodityName: 'Gabah Kering Giling',
-        commoditySubtitle: 'Volume: 2.000 Kg @ Rp 7.200',
-        status: SaleStatus.tempoAktif,
-        transactionDate: DateTime(2024, 10, 25),
-        timeStr: '10.00 WIB',
-        volumeKg: 2000,
-        pricePerKg: 7200,
-        totalValue: 14400000,
-        totalReceived: 10000000,
-        buyerName: 'UD Beras Berkah Tani (Gudang Sidabowa)',
-        paymentMethod: PaymentMethod.tempoMingguan,
-        paymentMethodLabel: 'Tempo 14 Hari',
-        isTempo: true,
-        tempoDays: 14,
-        dpAmount: 10000000,
-        remainingAmount: 4400000,
-        dueDateTempo: DateTime(2024, 12, 8),
-      ),
-    ];
   }
 
   Future<void> _fetchApiData() async {
     _fetchProducts();
     _fetchSales();
+    _fetchMarketPrices();
+  }
+
+  Future<void> _fetchMarketPrices() async {
+    setState(() => _isLoadingPrices = true);
+    try {
+      final res = await _apiService.getHargaPasarList();
+      if (res.success && res.data != null && mounted) {
+        setState(() => _marketPrices = res.data!);
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _isLoadingPrices = false);
   }
 
   Future<void> _fetchProducts() async {
@@ -134,7 +81,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
     setState(() => _isLoadingSales = true);
     try {
       final res = await _apiService.getPenjualanList();
-      if (res.success && res.data != null && res.data!.isNotEmpty && mounted) {
+      if (res.success && res.data != null && mounted) {
         setState(() => _allItems = res.data!);
       }
     } catch (_) {}
@@ -220,11 +167,11 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgPage,
+      backgroundColor: WarnaAplikasi.getBackgroundColor(context),
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            const PawonFixedHeader(title: 'Penjualan'),
             Expanded(
               child: RefreshIndicator(
                 color: _primaryGreen,
@@ -240,12 +187,12 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Penjualan & Marketplace',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
-                                color: WarnaAplikasi.primaryDark,
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : WarnaAplikasi.primaryDark,
                                 letterSpacing: -0.5,
                               ),
                             ),
@@ -303,14 +250,21 @@ class _PenjualanScreenState extends State<PenjualanScreen>
 
   /// Segmented control navigasi utama menu Penjualan (Sesuai Bagian 8)
   Widget _buildMainSegmentedControl() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final containerBg = isDark ? const Color(0xFF1D2420) : WarnaAplikasi.bgPaleGreen;
+    final borderColor = isDark ? const Color(0xFF28332C) : _borderColor;
+    final activeTabBg = isDark ? const Color(0xFF283A2E) : Colors.white;
+    final activeTextColor = isDark ? const Color(0xFF81C784) : _primaryGreen;
+    final inactiveTextColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: WarnaAplikasi.bgPaleGreen,
+          color: containerBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _borderColor),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
@@ -322,10 +276,10 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: _mainSectionIndex == 0 ? Colors.white : Colors.transparent,
+                    color: _mainSectionIndex == 0 ? activeTabBg : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: _mainSectionIndex == 0
-                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                        ? [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 4, offset: const Offset(0, 2))]
                         : null,
                   ),
                   child: Row(
@@ -334,7 +288,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                       Icon(
                         Icons.receipt_long_rounded,
                         size: 16,
-                        color: _mainSectionIndex == 0 ? _primaryGreen : WarnaAplikasi.textGray,
+                        color: _mainSectionIndex == 0 ? activeTextColor : inactiveTextColor,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -342,7 +296,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: _mainSectionIndex == 0 ? FontWeight.w800 : FontWeight.w600,
-                          color: _mainSectionIndex == 0 ? _primaryGreen : WarnaAplikasi.textGray,
+                          color: _mainSectionIndex == 0 ? activeTextColor : inactiveTextColor,
                         ),
                       ),
                     ],
@@ -358,10 +312,10 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: _mainSectionIndex == 1 ? Colors.white : Colors.transparent,
+                    color: _mainSectionIndex == 1 ? activeTabBg : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: _mainSectionIndex == 1
-                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                        ? [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 4, offset: const Offset(0, 2))]
                         : null,
                   ),
                   child: Row(
@@ -370,7 +324,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                       Icon(
                         Icons.storefront_rounded,
                         size: 16,
-                        color: _mainSectionIndex == 1 ? _primaryGreen : WarnaAplikasi.textGray,
+                        color: _mainSectionIndex == 1 ? activeTextColor : inactiveTextColor,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -378,7 +332,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: _mainSectionIndex == 1 ? FontWeight.w800 : FontWeight.w600,
-                          color: _mainSectionIndex == 1 ? _primaryGreen : WarnaAplikasi.textGray,
+                          color: _mainSectionIndex == 1 ? activeTextColor : inactiveTextColor,
                         ),
                       ),
                       if (_myProducts.isNotEmpty) ...[
@@ -386,7 +340,9 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
-                            color: _mainSectionIndex == 1 ? _primaryGreen : WarnaAplikasi.textGray,
+                            color: _mainSectionIndex == 1
+                                ? (isDark ? const Color(0xFF3B6B4F) : _primaryGreen)
+                                : (isDark ? const Color(0xFF28332C) : WarnaAplikasi.textGray),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -422,22 +378,25 @@ class _PenjualanScreenState extends State<PenjualanScreen>
           padding: const EdgeInsets.symmetric(horizontal: 18),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
                 'Daftar Transaksi',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: WarnaAplikasi.primaryDark,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : WarnaAplikasi.primaryDark,
                 ),
               ),
               Row(
                 children: [
                   Text(
                     'Terbaru',
-                    style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : WarnaAplikasi.textGray,
+                    ),
                   ),
-                  Icon(Icons.keyboard_arrow_down, size: 16, color: WarnaAplikasi.textGray),
+                  Icon(Icons.keyboard_arrow_down, size: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : WarnaAplikasi.textGray),
                 ],
               ),
             ],
@@ -449,14 +408,17 @@ class _PenjualanScreenState extends State<PenjualanScreen>
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1D2420) : Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: _borderColor),
+              border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF28332C) : _borderColor),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 'Tidak ada transaksi penjualan pada kategori ini.',
-                style: TextStyle(fontSize: 12.5, color: WarnaAplikasi.textGray),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray,
+                ),
               ),
             ),
           )
@@ -482,9 +444,9 @@ class _PenjualanScreenState extends State<PenjualanScreen>
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1D2420) : Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _borderColor),
+            border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF28332C) : _borderColor),
             boxShadow: [
               BoxShadow(color: _primaryGreen.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
             ],
@@ -495,9 +457,9 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildMarketMetric('Produk Aktif', '$aktifCount Listing', Icons.check_circle_outline, WarnaAplikasi.primary),
-                  Container(width: 1, height: 36, color: _borderColor),
+                  Container(width: 1, height: 36, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF28332C) : _borderColor),
                   _buildMarketMetric('Total Terjual', '${totalTerjualCount.toInt()} Item', Icons.shopping_bag_outlined, Colors.amber.shade800),
-                  Container(width: 1, height: 36, color: _borderColor),
+                  Container(width: 1, height: 36, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF28332C) : _borderColor),
                   _buildMarketMetric('Website Sync', 'Terhubung', Icons.cloud_done_outlined, Colors.blue.shade700),
                 ],
               ),
@@ -576,13 +538,20 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildEmptyProdukState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : _borderColor;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final iconBoxBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _borderColor),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -591,21 +560,21 @@ class _PenjualanScreenState extends State<PenjualanScreen>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: WarnaAplikasi.greenLight,
+              color: iconBoxBg,
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(Icons.storefront_rounded, size: 28, color: _primaryGreen),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Belum Ada Produk di Marketplace',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: WarnaAplikasi.textDark),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: titleColor),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Tambahkan hasil panen Anda ke Marketplace agar pembeli dan konsumen dapat memesan langsung via WhatsApp.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray, height: 1.4),
+            style: TextStyle(fontSize: 12, color: subtitleColor, height: 1.4),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -631,12 +600,19 @@ class _PenjualanScreenState extends State<PenjualanScreen>
 
   /// Kartu Produk Saya di Menu Penjualan (Sesuai Bagian 8 & 9)
   Widget _buildProdukCard(BuildContext context, ItemProdukSaya product) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : _cardBg;
+    final borderColor = isDark ? const Color(0xFF28332C) : _borderColor;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+    final innerBoxBg = isDark ? const Color(0xFF141916) : WarnaAplikasi.bgPaleGreen;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _borderColor),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
             color: _primaryGreen.withValues(alpha: 0.04),
@@ -659,9 +635,9 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                   width: 68,
                   height: 68,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.bgLightGreen,
+                    color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.bgLightGreen,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _borderColor),
+                    border: Border.all(color: borderColor),
                   ),
                   child: product.fotoResolvedUrl != null
                       ? ClipRRect(
@@ -687,7 +663,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                           Expanded(
                             child: Text(
                               product.namaProduk,
-                              style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: WarnaAplikasi.textDark),
+                              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: titleColor),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -698,7 +674,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                       const SizedBox(height: 3),
                       Text(
                         product.namaKomoditas ?? 'Komoditas Hasil Panen',
-                        style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray),
+                        style: TextStyle(fontSize: 11.5, color: subtitleColor),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -710,24 +686,24 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 ),
               ],
             ),
-            const Divider(height: 20, color: WarnaAplikasi.divider),
+            Divider(height: 20, color: borderColor),
 
             // Stock Details Grid: Stok Fisik, Stok Ditahan, Stok Tersedia, Terjual
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: WarnaAplikasi.bgPaleGreen,
+                color: innerBoxBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildStockCol('Fisik', '${product.stokFisik.toInt()}'),
-                  Container(width: 1, height: 24, color: _borderColor),
+                  Container(width: 1, height: 24, color: borderColor),
                   _buildStockCol('Ditahan (DP)', '${product.stokDitahan.toInt()}', isWarning: product.stokDitahan > 0),
-                  Container(width: 1, height: 24, color: _borderColor),
+                  Container(width: 1, height: 24, color: borderColor),
                   _buildStockCol('Tersedia', '${product.stokTersedia.toInt()}', isHighlight: true),
-                  Container(width: 1, height: 24, color: _borderColor),
+                  Container(width: 1, height: 24, color: borderColor),
                   _buildStockCol('Terjual', '${product.totalTerjual.toInt()}'),
                 ],
               ),
@@ -848,14 +824,15 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   // ================= HELPER WIDGETS LAMA (DIPERTAHANKAN) =================
 
   Widget _buildSummaryBanner() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: WarnaAplikasi.bgSuccessPale,
+        color: isDark ? const Color(0xFF1D2420) : WarnaAplikasi.bgSuccessPale,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: WarnaAplikasi.greenPill,
+          color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.greenPill,
           width: 1,
         ),
       ),
@@ -867,7 +844,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
             bottom: 20,
             width: 90,
             child: Opacity(
-              opacity: 0.6,
+              opacity: isDark ? 0.2 : 0.6,
               child: CustomPaint(
                 painter: DecorativeLeavesPainter(),
               ),
@@ -881,12 +858,12 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'TOTAL PENJUALAN TERCATAT',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: WarnaAplikasi.textGrayGreenMedium,
+                        color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayGreenMedium,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -896,10 +873,10 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: WarnaAplikasi.seasonBadgeBg,
+                        color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.seasonBadgeBg,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: WarnaAplikasi.seasonBadgeBorder,
+                          color: isDark ? const Color(0xFF3B6B4F) : WarnaAplikasi.seasonBadgeBorder,
                           width: 0.8,
                         ),
                       ),
@@ -928,19 +905,19 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 const SizedBox(height: 10),
                 Text(
                   _formatNum(_totalPenjualanValue.toInt()),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: WarnaAplikasi.primaryDark,
+                    color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark,
                     letterSpacing: -0.8,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Tercatat dari ${_allItems.length} transaksi ($_lunasCount lunas, $_tempoCount bertahap/DP)',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: WarnaAplikasi.textGray,
+                    color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -991,6 +968,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildTabFilter() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tabs = [
       'Semua (${_allItems.length})',
       'Lunas ($_lunasCount)',
@@ -1012,10 +990,14 @@ class _PenjualanScreenState extends State<PenjualanScreen>
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: selected ? _primaryGreen : Colors.white,
+                color: selected
+                    ? _primaryGreen
+                    : (isDark ? const Color(0xFF1D2420) : Colors.white),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: selected ? _primaryGreen : _borderColor,
+                  color: selected
+                      ? _primaryGreen
+                      : (isDark ? const Color(0xFF28332C) : _borderColor),
                   width: 1.2,
                 ),
               ),
@@ -1024,7 +1006,9 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? Colors.white : _textLight,
+                  color: selected
+                      ? Colors.white
+                      : (isDark ? const Color(0xFFA0B3A6) : _textLight),
                 ),
               ),
             ),
@@ -1035,6 +1019,13 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildTransactionCard(BuildContext context, SaleItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : _cardBg;
+    final borderColor = isDark ? const Color(0xFF28332C) : _borderColor;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : _textDark;
+    final subtitleColor = isDark ? const Color(0xFFA0B3A6) : _textLight;
+    final innerBoxBg = isDark ? const Color(0xFF141916) : _bgPage;
+
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
@@ -1046,12 +1037,12 @@ class _PenjualanScreenState extends State<PenjualanScreen>
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         decoration: BoxDecoration(
-          color: _cardBg,
+          color: cardBg,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _borderColor, width: 1),
+          border: Border.all(color: borderColor, width: 1),
           boxShadow: [
             BoxShadow(
-              color: WarnaAplikasi.primary.withValues(alpha: 0.05),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1064,11 +1055,11 @@ class _PenjualanScreenState extends State<PenjualanScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.access_time_rounded, size: 12, color: _textLight.withValues(alpha: 0.7)),
+                  Icon(Icons.access_time_rounded, size: 12, color: subtitleColor.withValues(alpha: 0.7)),
                   const SizedBox(width: 4),
                   Text(
                     '${_formatDate(item.transactionDate)} \u2022 ${item.timeStr}',
-                    style: const TextStyle(fontSize: 11, color: _textLight, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 11, color: subtitleColor, fontWeight: FontWeight.w500),
                   ),
                   const Spacer(),
                   _buildStatusBadge(item.status),
@@ -1082,7 +1073,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                   Expanded(
                     child: Text(
                       item.commodityName,
-                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: _textDark),
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: titleColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1094,14 +1085,14 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                 padding: const EdgeInsets.only(left: 46),
                 child: Text(
                   item.commoditySubtitle,
-                  style: const TextStyle(fontSize: 11.5, color: _textLight),
+                  style: TextStyle(fontSize: 11.5, color: subtitleColor),
                 ),
               ),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _bgPage,
+                  color: innerBoxBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1110,18 +1101,18 @@ class _PenjualanScreenState extends State<PenjualanScreen>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Volume Penjualan', style: TextStyle(fontSize: 10.5, color: _textLight)),
+                        Text('Volume Penjualan', style: TextStyle(fontSize: 10.5, color: subtitleColor)),
                         const SizedBox(height: 2),
                         Text(
                           '${_formatVol(item.volumeKg)} ${item.satuan}',
-                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _textDark),
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: titleColor),
                         ),
                       ],
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Total Penerimaan', style: TextStyle(fontSize: 10.5, color: _textLight)),
+                        Text('Total Penerimaan', style: TextStyle(fontSize: 10.5, color: subtitleColor)),
                         const SizedBox(height: 2),
                         Text(
                           _formatNum(item.totalValue.toInt()),
@@ -1227,35 +1218,55 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildMarketPriceSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF28332C) : _borderColor;
+    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+
+    // Ambil maksimal 3 item teratas dari data pasar dinamis backend (atau fallback terstruktur)
+    final items = _marketPrices.isNotEmpty
+        ? _marketPrices.take(3).toList()
+        : [
+            {'nama': 'Padi GKG', 'harga': 'Rp 6.800', 'change': '+3.8%'},
+            {'nama': 'Jagung Pipil', 'harga': 'Rp 5.200', 'change': '+2.9%'},
+            {'nama': 'Cabai Rawit', 'harga': 'Rp 38.000', 'change': '-8.4%'},
+          ];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardBg,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _borderColor),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
                 'Referensi Harga Pasar Banyumas',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: titleColor),
               ),
-              Icon(Icons.trending_up, size: 16, color: _primaryGreen),
+              const Icon(Icons.trending_up, size: 16, color: _primaryGreen),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPriceItem('GKP Ciherang', 'Rp 6.900/Kg', '+2.5%'),
-              _buildPriceItem('GKG Super', 'Rp 7.400/Kg', 'Stabil'),
-              _buildPriceItem('Jagung Pipil', 'Rp 5.400/Kg', '+1.8%'),
-            ],
+            children: items.map((item) {
+              final nama = (item['nama'] ?? item['nama_komoditas'] ?? '-').toString();
+              final harga = (item['harga'] ?? '-').toString();
+              final change = (item['change'] ?? 'Stabil').toString();
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: _buildPriceItem(nama, harga, change),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -1263,20 +1274,23 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Widget _buildPriceItem(String name, String price, String change) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final nameColor = isDark ? const Color(0xFFA0B3A6) : _textLight;
+    final priceColor = isDark ? const Color(0xFFF1F5F2) : _textDark;
     final isUp = change.startsWith('+');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(name, style: const TextStyle(fontSize: 11, color: _textLight)),
+        Text(name, style: TextStyle(fontSize: 11, color: nameColor)),
         const SizedBox(height: 2),
-        Text(price, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _textDark)),
+        Text(price, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: priceColor)),
         const SizedBox(height: 2),
         Text(
           change,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.bold,
-            color: isUp ? WarnaAplikasi.statusLunasText : _textLight,
+            color: isUp ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.statusLunasText) : nameColor,
           ),
         ),
       ],

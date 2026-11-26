@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/dio_client.dart';
@@ -33,26 +34,43 @@ class AuthApiService {
     );
   }
 
-  /// Mengirim pembaruan data profil anggota ke `PUT /api/v1/auth/profile`.
+  /// Memperbarui biodata profil anggota (mendukung Multipart file foto dan PUT profile).
   Future<ApiResponse<AuthUserModel>> updateProfile({
     String? nama,
-    String? noTelepon,
+    String? username,
     String? email,
+    String? noTelepon,
     String? alamat,
     String? password,
+    String? passwordBaru,
+    MultipartFile? fotoProfil,
   }) async {
-    final payload = <String, dynamic>{};
-    if (nama != null && nama.trim().isNotEmpty) payload['nama'] = nama.trim();
-    if (noTelepon != null) payload['no_telepon'] = noTelepon.trim();
-    if (email != null && email.trim().isNotEmpty) payload['email'] = email.trim();
-    if (alamat != null) payload['alamat'] = alamat.trim();
-    if (password != null && password.trim().isNotEmpty) payload['password'] = password.trim();
+    final Map<String, dynamic> map = {
+      if (nama != null && nama.trim().isNotEmpty) 'nama': nama.trim(),
+      if (username != null && username.trim().isNotEmpty) 'username': username.trim(),
+      if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+      if (noTelepon != null && noTelepon.trim().isNotEmpty) 'no_telepon': noTelepon.trim(),
+      if (alamat != null && alamat.trim().isNotEmpty) 'alamat': alamat.trim(),
+      if (password != null && password.trim().isNotEmpty) 'password': password.trim(),
+      if (passwordBaru != null && passwordBaru.trim().isNotEmpty) 'password_baru': passwordBaru.trim(),
+      if (fotoProfil != null) 'foto_profil': fotoProfil,
+    };
+
+    if (fotoProfil != null) {
+      final formData = FormData.fromMap(map);
+      return await _client.post<AuthUserModel>(
+        ApiConstants.meEndpoint,
+        data: formData,
+        fromJson: (data) => AuthUserModel.fromJson(Map<String, dynamic>.from(data)),
+      );
+    }
 
     return await _client.put<AuthUserModel>(
       ApiConstants.profileUpdateEndpoint,
-      data: payload,
+      data: map,
       fromJson: (data) => AuthUserModel.fromJson(Map<String, dynamic>.from(data)),
     );
+  }
   }
 
   /// Mengirim permintaan pencabutan token ke `POST /api/v1/auth/logout`.

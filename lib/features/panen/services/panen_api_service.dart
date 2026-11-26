@@ -2,11 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/network/dio_client.dart';
+import 'package:pawon_mobile/core/storage/pawon_database_service.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/services/panen_multipart.dart';
 
 /// Service networking untuk modul Panen memanggil API backend Laravel
-/// dengan fallback data lokal yang aman agar tidak terjadi layar merah / error 404.
+/// dengan dukungan cache SQLite lokal dan fallback data yang tangguh.
 class PanenApiService {
   final DioClient _client;
 
@@ -92,10 +93,12 @@ class PanenApiService {
   PanenApiService({DioClient? client}) : _client = client ?? DioClient();
 
   /// Mengambil daftar panen dengan parameter filter opsional.
+  /// Otomatis menyimpan cache ke SQLite saat online, dan membaca SQLite saat offline.
   Future<ApiResponse<List<HarvestItem>>> getPanenList({
     String? status,
     String? cropType,
     String? lahanId,
+    String? idSiklus,
     String? query,
   }) async {
     final queryParams = <String, dynamic>{};
@@ -108,12 +111,15 @@ class PanenApiService {
     if (lahanId != null && lahanId.isNotEmpty) {
       queryParams['id_lahan'] = lahanId;
     }
+    if (idSiklus != null && idSiklus.isNotEmpty) {
+      queryParams['id_siklus'] = idSiklus;
+    }
     if (query != null && query.isNotEmpty) {
       queryParams['q'] = query;
     }
 
     try {
-      final res = await _client.get<List<HarvestItem>>(
+      final response = await _client.get<List<HarvestItem>>(
         ApiConstants.panenEndpoint,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
         fromJson: (data) {
@@ -124,30 +130,72 @@ class PanenApiService {
         },
       );
 
-      if (res.success && res.data != null) {
+      if (response.success && response.data != null && response.data!.isNotEmpty) {
         _inMemoryItems.clear();
-        _inMemoryItems.addAll(res.data!);
-        return res;
+        _inMemoryItems.addAll(response.data!);
+        final cacheList = response.data!.map((h) => {
+          'id': h.id,
+          'kode_panen': h.harvestCode,
+          'komoditas_nama': h.cropType.displayName,
+          'varietas': h.title,
+          'jumlah_berat': h.weightKg,
+          'satuan_berat': 'kg',
+          'tanggal_panen': h.date,
+          'status': h.status.displayName,
+          'catatan': h.fieldNotes,
+        }).toList();
+        PawonDatabaseService.instance.cachePanenList(cacheList);
+        return response;
       }
-    } catch (_) {}
+      return response;
+    } catch (e) {
+      // Fallback 1: Baca dari SQLite Local Storage jika ada
+      try {
+        final localRows = await PawonDatabaseService.instance.getLocalPanenList();
+        if (localRows.isNotEmpty) {
+          final offlineItems = localRows.map((row) => HarvestItem(
+            id: row['id']?.toString() ?? '',
+            harvestCode: row['kode_panen']?.toString() ?? 'PN-OFFLINE',
+            title: row['varietas']?.toString() ?? 'Panen',
+            subtitle: 'Tersimpan di SQLite Lokal',
+            cropType: CropType.fromString(row['komoditas_nama']?.toString()),
+            status: HarvestStatus.fromString(row['status']?.toString()),
+            location: 'Penyimpanan Offline',
+            blockArea: '',
+            date: row['tanggal_panen']?.toString() ?? '',
+            season: 'Musim Berjalan',
+            weightKg: (row['jumlah_berat'] as num?)?.toDouble() ?? 0.0,
+            qualityGrade: 'A',
+            moistureOrNotes: 'Offline Cache',
+            fieldNotes: row['catatan']?.toString() ?? '',
+          )).toList();
 
-    // Fallback data lokal yang aman jika endpoint backend Laravel belum tersedia / 404
-    List<HarvestItem> filtered = List.from(_inMemoryItems);
-    if (status != null && status.isNotEmpty && status != 'Semua') {
-      filtered = filtered
-          .where((i) => i.status.name.toLowerCase() == status.toLowerCase())
-          .toList();
-    }
-    if (cropType != null && cropType.isNotEmpty && cropType != 'Semua') {
-      filtered = filtered
-          .where((i) => i.cropType.displayName.toLowerCase() == cropType.toLowerCase())
-          .toList();
-    }
+          return ApiResponse<List<HarvestItem>>(
+            success: true,
+            message: 'Menampilkan data offline dari SQLite lokal',
+            data: offlineItems,
+          );
+        }
+      } catch (_) {}
 
-    return ApiResponse.success(
-      data: filtered,
-      message: 'Data panen berhasil dimuat.',
-    );
+      // Fallback 2: Data lokal in-memory yang aman (menghindari crash 404)
+      List<HarvestItem> filtered = List.from(_inMemoryItems);
+      if (status != null && status.isNotEmpty && status != 'Semua') {
+        filtered = filtered
+            .where((i) => i.status.name.toLowerCase() == status.toLowerCase())
+            .toList();
+      }
+      if (cropType != null && cropType.isNotEmpty && cropType != 'Semua') {
+        filtered = filtered
+            .where((i) => i.cropType.displayName.toLowerCase() == cropType.toLowerCase())
+            .toList();
+      }
+
+      return ApiResponse.success(
+        data: filtered,
+        message: 'Data panen berhasil dimuat.',
+      );
+    }
   }
 
   /// Mengambil detail satu hasil panen berdasarkan ID.

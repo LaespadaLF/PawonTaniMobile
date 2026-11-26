@@ -3,6 +3,8 @@ import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/artikel/models/item_artikel.dart';
+import 'package:pawon_mobile/features/artikel/screens/layar_daftar_edukasi.dart';
+import 'package:pawon_mobile/features/artikel/screens/layar_detail_artikel.dart';
 import 'package:pawon_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:pawon_mobile/features/beranda/models/beranda_ringkasan_model.dart';
 import 'package:pawon_mobile/features/beranda/services/beranda_api_service.dart';
@@ -14,10 +16,11 @@ import 'package:pawon_mobile/features/beranda/widgets/kartu_statistik_beranda.da
 import 'package:pawon_mobile/features/lahan/screens/layar_tambah_lahan.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_catat_panen.dart';
+import 'package:pawon_mobile/features/notifikasi/repositories/notifikasi_repository.dart';
+import 'package:pawon_mobile/features/notifikasi/screens/layar_daftar_notifikasi.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
 import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
-import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 
 class HomeScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -44,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadBerandaData();
+    NotifikasiRepository.instance.fetchUnreadCount();
   }
 
   Future<void> _loadBerandaData() async {
@@ -53,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _errorMessage = null;
     });
 
+    NotifikasiRepository.instance.fetchUnreadCount();
     final berandaFuture = _apiService.getRingkasan();
     final panenFuture = _panenApiService.getPanenList();
 
@@ -91,9 +96,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final currentUser = AuthRepository().currentUser;
     final userName = _data?.user.nama ?? currentUser?.nama ?? 'Petani';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF121A15) : WarnaAplikasi.primaryBackground;
 
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadBerandaData,
@@ -181,7 +188,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // 5. Informasi & Panduan Pertanian
                 HomeArticlesSection(
-                  onAllTap: () => widget.onNavigateTab?.call(5),
+                  onAllTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LayarDaftarEdukasi()),
+                    );
+                  },
                   onArticleTap: (article) => _showArticleDetail(context, article),
                 ),
                 const SizedBox(height: 20),
@@ -226,6 +238,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopHeader(BuildContext context, String name) {
     final firstName = name.trim().split(' ').first;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textGreeting = isDark ? Colors.grey.shade400 : WarnaAplikasi.textGray;
+    final textName = isDark ? Colors.white : WarnaAplikasi.primaryDark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,10 +252,10 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 _getGreeting(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w500,
-                  color: WarnaAplikasi.textGray,
+                  color: textGreeting,
                 ),
               ),
               const SizedBox(height: 2),
@@ -248,10 +263,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Pak $firstName 👋',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: WarnaAplikasi.primaryDark,
+                  color: textName,
                   letterSpacing: -0.4,
                 ),
               ),
@@ -264,42 +279,64 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Notification Button with Badge
+            // Notification Button with Dynamic Badge
             InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const LayarNotifikasi(),
-                  ),
-                );
-              },
+              onTap: () => _showNotificationsModal(context),
               borderRadius: BorderRadius.circular(12),
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
                   Container(
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: WarnaAplikasi.bgPaleGreen2,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF283A2E)
+                          : WarnaAplikasi.bgPaleGreen2,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.notifications_outlined,
                       size: 20,
-                      color: WarnaAplikasi.primaryDark,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white70
+                          : WarnaAplikasi.primaryDark,
                     ),
                   ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: WarnaAplikasi.errorRed,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: NotifikasiRepository.instance.unreadCountListenable,
+                    builder: (context, unreadCount, _) {
+                      if (unreadCount <= 0) return const SizedBox.shrink();
+
+                      final badgeText = unreadCount > 99 ? '99+' : unreadCount.toString();
+                      return Positioned(
+                        top: -3,
+                        right: -3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          decoration: BoxDecoration(
+                            color: WarnaAplikasi.errorRed,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          child: Center(
+                            child: Text(
+                              badgeText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -316,17 +353,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: WarnaAplikasi.primary,
                   borderRadius: BorderRadius.circular(12),
+                  image: (AuthRepository().currentUser?.fotoProfil != null &&
+                          AuthRepository().currentUser!.fotoProfil!.isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(AuthRepository().currentUser!.fotoProfil!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Center(
-                  child: Text(
-                    firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                child: (AuthRepository().currentUser?.fotoProfil == null ||
+                        AuthRepository().currentUser!.fotoProfil!.isEmpty)
+                    ? Center(
+                        child: Text(
+                          firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
             ),
           ],
@@ -509,154 +556,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showNotificationsModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const NotificationScreen(),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderPale,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text('Notifikasi Terkini', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-              const SizedBox(height: 14),
-              _buildNotifItem('Lahan Sawah Barat disetujui oleh Pengurus', '10 menit yang lalu'),
-              const SizedBox(height: 10),
-              _buildNotifItem('Peringatan cuaca hujan lebat esok hari', '1 jam yang lalu'),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNotifItem(String title, String time) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: WarnaAplikasi.greenLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: WarnaAplikasi.primary, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark)),
-                const SizedBox(height: 2),
-                Text(time, style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    ).then((_) {
+      NotifikasiRepository.instance.fetchUnreadCount();
+    });
   }
 
   void _showProfileModal(BuildContext context) {
-    final user = AuthRepository().currentUser;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const LayarProfil(),
       ),
-      builder: (context) {
-        return SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.borderPale,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: WarnaAplikasi.primary,
-                    child: Text(
-                      (user?.nama.isNotEmpty == true) ? user!.nama[0].toUpperCase() : 'P',
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(user?.nama ?? 'Petani', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                  Text(user?.role ?? 'Anggota Kelompok Tani', style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray)),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ProfileScreen(),
-                          ),
-                        ).then((_) => _loadBerandaData());
-                      },
-                      icon: const Icon(Icons.person_rounded, size: 18, color: Colors.white),
-                      label: const Text('Lihat Profil Lengkap', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await AuthRepository().logout();
-                      },
-                      icon: const Icon(Icons.logout_rounded, size: 18, color: WarnaAplikasi.errorRed),
-                      label: const Text('Keluar dari Akun', style: TextStyle(color: WarnaAplikasi.errorRed, fontWeight: FontWeight.bold)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: WarnaAplikasi.errorRed),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    ).then((_) => _loadBerandaData());
   }
 
   void _showQuickActionsModal(BuildContext context) {
@@ -697,23 +611,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showArticleDetail(BuildContext context, ArticleItem article) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(article.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-            const SizedBox(height: 8),
-            Text(article.category, style: const TextStyle(fontSize: 12, color: WarnaAplikasi.primary, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            Text(article.summary ?? 'Panduan pertanian praktis untuk petani.', style: const TextStyle(fontSize: 13, color: WarnaAplikasi.textGray)),
-          ],
-        ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LayarDetailArtikel(article: article),
       ),
     );
   }
