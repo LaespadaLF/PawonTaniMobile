@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pawon_mobile/core/storage/pawon_preferences_service.dart';
 
 /// Controller pengelola mode tampilan aplikasi (Terang / Gelap).
+/// Menggunakan SharedPreferences untuk Local Storage preferensi pengguna.
 class TemaController {
   static final TemaController instance = TemaController._internal();
   factory TemaController() => instance;
 
   TemaController._internal();
 
-  static const String _keyThemeMode = 'pawontani_theme_mode';
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
   final ValueNotifier<ThemeMode> _themeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
   ValueNotifier<ThemeMode> get themeMode => _themeMode;
 
   bool get isDarkMode => _themeMode.value == ThemeMode.dark;
 
-  /// Inisialisasi tema saat aplikasi startup
+  /// Inisialisasi tema saat aplikasi startup via SharedPreferences
   Future<void> inisialisasi() async {
     try {
-      final savedMode = await _storage.read(key: _keyThemeMode);
+      final prefs = await PawonPreferencesService.getInstance();
+      final savedMode = prefs.getThemeMode();
       if (savedMode == 'dark') {
         _themeMode.value = ThemeMode.dark;
       } else {
@@ -30,14 +29,12 @@ class TemaController {
     }
   }
 
-  /// Ubah mode tema aplikasi
+  /// Ubah mode tema aplikasi dan simpan ke SharedPreferences
   Future<void> ubahMode(ThemeMode mode) async {
     _themeMode.value = mode;
     try {
-      await _storage.write(
-        key: _keyThemeMode,
-        value: mode == ThemeMode.dark ? 'dark' : 'light',
-      );
+      final prefs = await PawonPreferencesService.getInstance();
+      await prefs.setThemeMode(mode == ThemeMode.dark ? 'dark' : 'light');
     } catch (_) {}
   }
 
