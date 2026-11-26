@@ -70,6 +70,7 @@ class ApiConstants {
 
   // --- Endpoint Rute Komoditas ---
   static const String komoditasEndpoint = '/komoditas';
+  static const String hargaPasarEndpoint = '/komoditas/harga-pasar';
 
   // --- Endpoint Rute Marketplace & Penjualan ---
   static const String marketplaceProdukEndpoint = '/marketplace/produk';

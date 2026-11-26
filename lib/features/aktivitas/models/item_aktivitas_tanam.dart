@@ -134,12 +134,20 @@ class PlantActivityItem {
     final rawImg = (json['image_url'] ?? json['imageUrl'] ?? json['foto_aktivitas'])?.toString();
     final imageUrl = rawImg != null && rawImg.isNotEmpty ? ApiConstants.resolveImageUrl(rawImg) : null;
     final List<String> parsedPhotos = [];
-    final rawList = json['photos'] ?? json['foto_aktivitas_list'];
+    final rawList = json['photos'] ?? json['foto_aktivitas_list'] ?? json['foto_aktivitas'];
     if (rawList is List) {
       for (final p in rawList) {
         if (p != null && p.toString().trim().isNotEmpty) {
           final res = ApiConstants.resolveImageUrl(p.toString());
           parsedPhotos.add(res ?? p.toString());
+        }
+      }
+    } else if (rawList is String && rawList.trim().isNotEmpty) {
+      for (final part in rawList.split(',')) {
+        final p = part.trim();
+        if (p.isNotEmpty) {
+          final res = ApiConstants.resolveImageUrl(p);
+          parsedPhotos.add(res ?? p);
         }
       }
     }

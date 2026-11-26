@@ -180,6 +180,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadActivities,
@@ -759,19 +760,65 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 ),
               ),
 
-            // Foto thumbnail if available
-            if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
+            // Foto thumbnail if available (Multi-photo support)
+            if (item.photos.isNotEmpty || (item.imageUrl != null && item.imageUrl!.isNotEmpty)) ...[
               const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  item.imageUrl!,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              if (item.photos.length > 1)
+                SizedBox(
+                  height: 110,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: item.photos.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, idx) {
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              item.photos[idx],
+                              height: 110,
+                              width: 150,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                height: 110,
+                                width: 150,
+                                color: isDark ? const Color(0xFF283A2E) : Colors.grey.shade200,
+                                child: const Icon(Icons.broken_image, size: 28),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${idx + 1}/${item.photos.length}',
+                                style: const TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                )
+              else
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    item.imageUrl ?? item.photos.first,
+                    height: 130,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
                 ),
-              ),
             ],
 
             const SizedBox(height: 12),
@@ -1007,27 +1054,68 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       height: 1.4,
                     ),
                   ),
-                  if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
+                  if (item.photos.isNotEmpty || (item.imageUrl != null && item.imageUrl!.isNotEmpty)) ...[
                     const SizedBox(height: 16),
-                    Text(
-                      'Dokumentasi Foto',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Dokumentasi Foto',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: titleColor,
+                          ),
+                        ),
+                        if (item.photos.length > 1)
+                          Text(
+                            '${item.photos.length} Foto',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: subtitleColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.network(
-                        item.imageUrl!,
+                    const SizedBox(height: 10),
+                    if (item.photos.length > 1)
+                      SizedBox(
                         height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image)),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: item.photos.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 10),
+                          itemBuilder: (context, idx) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.network(
+                                item.photos[idx],
+                                height: 180,
+                                width: 240,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  height: 180,
+                                  width: 240,
+                                  color: isDark ? const Color(0xFF283A2E) : Colors.grey.shade200,
+                                  child: const Center(child: Icon(Icons.broken_image, size: 36)),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.network(
+                          item.imageUrl ?? item.photos.first,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image)),
+                        ),
                       ),
-                    ),
                   ],
                   const SizedBox(height: 24),
                   Row(

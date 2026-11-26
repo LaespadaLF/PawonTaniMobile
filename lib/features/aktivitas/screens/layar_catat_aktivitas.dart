@@ -106,20 +106,23 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
     if (!mounted) return;
 
     if (response.success && response.data != null && response.data!.isNotEmpty) {
-      final list = response.data!;
+      final allList = response.data!;
+      final list = allList.where((l) => l.status == StatusLahan.aktif || l.status == StatusLahan.persiapan || l.siklusBerjalan != null).toList();
       ItemLahan? preselected;
-      if (widget.initialLahanId != null) {
-        final targetId = widget.initialLahanId!.trim().toLowerCase();
-        final targetName = widget.initialLahanName?.trim().toLowerCase();
-        preselected = list.cast<ItemLahan?>().firstWhere(
-          (l) => l != null && (
-            l.id.trim().toLowerCase() == targetId ||
-            (targetName != null && targetName.isNotEmpty && l.nama.trim().toLowerCase() == targetName)
-          ),
-          orElse: () => _selectedItemLahan ?? list.first,
-        );
-      } else {
-        preselected = _selectedItemLahan ?? list.first;
+      if (list.isNotEmpty) {
+        if (widget.initialLahanId != null) {
+          final targetId = widget.initialLahanId!.trim().toLowerCase();
+          final targetName = widget.initialLahanName?.trim().toLowerCase();
+          preselected = list.cast<ItemLahan?>().firstWhere(
+            (l) => l != null && (
+              l.id.trim().toLowerCase() == targetId ||
+              (targetName != null && targetName.isNotEmpty && l.nama.trim().toLowerCase() == targetName)
+            ),
+            orElse: () => _selectedItemLahan ?? list.first,
+          );
+        } else {
+          preselected = _selectedItemLahan ?? list.first;
+        }
       }
 
       setState(() {
@@ -202,9 +205,10 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
   }
 
   void _showPhotoOptions() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1D2420) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -219,23 +223,29 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.outlineGray,
+                    color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.outlineGray,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Dokumentasi Foto Aktivitas',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: WarnaAplikasi.primaryDark,
+                    color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark,
                   ),
                 ),
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.camera_alt_outlined, color: WarnaAplikasi.primary),
-                  title: const Text('Ambil dari Kamera', style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    'Ambil dari Kamera',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickPhoto(ImageSource.camera);
@@ -243,8 +253,20 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined, color: WarnaAplikasi.primary),
-                  title: const Text('Pilih dari Galeri', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Bisa pilih beberapa foto sekaligus', style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight)),
+                  title: Text(
+                    'Pilih dari Galeri',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Bisa pilih beberapa foto sekaligus',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     _pickPhoto(ImageSource.gallery);
@@ -1100,57 +1122,70 @@ class _RecordActivityScreenState extends State<RecordActivityScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: cardBg,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.outlineGray,
-                    borderRadius: BorderRadius.circular(2),
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF3B4A40) : WarnaAplikasi.outlineGray,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Pilih Petak Lahan',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: titleColor),
-              ),
-              const SizedBox(height: 12),
-              ..._lahanList.map((lahan) {
-                final isCurrent = _selectedItemLahan?.id == lahan.id;
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.holiday_village_outlined, color: WarnaAplikasi.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Pilih Petak Lahan',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: titleColor),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _lahanList.length,
+                    itemBuilder: (ctx, idx) {
+                      final lahan = _lahanList[idx];
+                      final isCurrent = _selectedItemLahan?.id == lahan.id;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.holiday_village_outlined, color: WarnaAplikasi.primary),
+                        ),
+                        title: Text(lahan.nama, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: titleColor)),
+                        subtitle: Text('${lahan.luas.toStringAsFixed(2)} Ha • ${lahan.komoditas.isNotEmpty ? lahan.komoditas : 'Pertanian'}', style: TextStyle(fontSize: 11.5, color: subtitleColor)),
+                        trailing: isCurrent ? const Icon(Icons.check_circle, color: WarnaAplikasi.primary) : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedItemLahan = lahan;
+                          });
+                          Navigator.pop(context);
+                          _fetchSiklusForSelectedLahan(lahan.id);
+                        },
+                      );
+                    },
                   ),
-                  title: Text(lahan.nama, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: titleColor)),
-                  subtitle: Text('${lahan.luas.toStringAsFixed(2)} Ha • ${lahan.komoditas.isNotEmpty ? lahan.komoditas : 'Pertanian'}', style: TextStyle(fontSize: 11.5, color: subtitleColor)),
-                  trailing: isCurrent ? const Icon(Icons.check_circle, color: WarnaAplikasi.primary) : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedItemLahan = lahan;
-                    });
-                    Navigator.pop(context);
-                    _fetchSiklusForSelectedLahan(lahan.id);
-                  },
-                );
-              }),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },

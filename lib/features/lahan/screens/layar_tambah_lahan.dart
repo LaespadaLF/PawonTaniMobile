@@ -261,6 +261,17 @@ class _AddLandScreenState extends State<AddLandScreen> {
           timeLimit: Duration(seconds: 10),
         ),
       );
+      if (position.isMocked) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Peringatan: Terdeteksi Fake GPS / Mock Location. Harap gunakan lokasi asli.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
       final latLng = LatLng(position.latitude, position.longitude);
 
       if (!mounted) return;

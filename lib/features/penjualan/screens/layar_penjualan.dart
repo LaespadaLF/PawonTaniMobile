@@ -35,87 +35,34 @@ class _PenjualanScreenState extends State<PenjualanScreen>
 
   final _apiService = MarketplacePenjualanApiService();
 
-  late List<SaleItem> _allItems;
+  List<SaleItem> _allItems = [];
   List<ItemProdukSaya> _myProducts = [];
+  List<Map<String, dynamic>> _marketPrices = [];
   bool _isLoadingProducts = false;
   bool _isLoadingSales = false;
+  bool _isLoadingPrices = false;
 
   @override
   void initState() {
     super.initState();
-    _initData();
     _fetchApiData();
-  }
-
-  void _initData() {
-    _allItems = [
-      SaleItem(
-        id: '1',
-        trxCode: 'TRX-PN-20241115-889',
-        commodityType: CommodityType.gabahKeringPanen,
-        commodityName: 'Gabah Kering Panen (GKP Ciherang)',
-        commoditySubtitle: 'Varietas: Ciherang Super',
-        status: SaleStatus.lunas,
-        transactionDate: DateTime(2024, 11, 12),
-        timeStr: '09.30 WIB',
-        volumeKg: 3500,
-        pricePerKg: 6900,
-        totalValue: 24150000,
-        totalReceived: 24150000,
-        buyerName: 'Koperasi Tani Sumber Makmur',
-        paymentMethod: PaymentMethod.transferBRI,
-        paymentMethodLabel: 'Transfer BRI',
-        bankAccountName: 'Kas Poktan / H. Sukirman',
-        bankAccountNumber: '0129-01-098234-56-1',
-        isVerified: true,
-        notes: 'Berasal dari petak A, kadar air aman (~14%).',
-      ),
-      SaleItem(
-        id: '2',
-        trxCode: 'TRX-JG-20241102-441',
-        commodityType: CommodityType.jagungManisPipil,
-        commodityName: 'Jagung Manis Hibrida Super',
-        commoditySubtitle: 'Kondisi: Pipil Kering Tongkol',
-        status: SaleStatus.lunas,
-        transactionDate: DateTime(2024, 11, 2),
-        timeStr: '14.15 WIB',
-        volumeKg: 1500,
-        pricePerKg: 5400,
-        totalValue: 8100000,
-        totalReceived: 8100000,
-        buyerName: 'Juragan Sayur Pasar Wage',
-        paymentMethod: PaymentMethod.tunaiKasPoktan,
-        paymentMethodLabel: 'Tunai / Kas Poktan',
-        isVerified: true,
-      ),
-      SaleItem(
-        id: '3',
-        trxCode: 'TRX-GG-20241025-221',
-        commodityType: CommodityType.gabahKeringGiling,
-        commodityName: 'Gabah Kering Giling',
-        commoditySubtitle: 'Volume: 2.000 Kg @ Rp 7.200',
-        status: SaleStatus.tempoAktif,
-        transactionDate: DateTime(2024, 10, 25),
-        timeStr: '10.00 WIB',
-        volumeKg: 2000,
-        pricePerKg: 7200,
-        totalValue: 14400000,
-        totalReceived: 10000000,
-        buyerName: 'UD Beras Berkah Tani (Gudang Sidabowa)',
-        paymentMethod: PaymentMethod.tempoMingguan,
-        paymentMethodLabel: 'Tempo 14 Hari',
-        isTempo: true,
-        tempoDays: 14,
-        dpAmount: 10000000,
-        remainingAmount: 4400000,
-        dueDateTempo: DateTime(2024, 12, 8),
-      ),
-    ];
   }
 
   Future<void> _fetchApiData() async {
     _fetchProducts();
     _fetchSales();
+    _fetchMarketPrices();
+  }
+
+  Future<void> _fetchMarketPrices() async {
+    setState(() => _isLoadingPrices = true);
+    try {
+      final res = await _apiService.getHargaPasarList();
+      if (res.success && res.data != null && mounted) {
+        setState(() => _marketPrices = res.data!);
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _isLoadingPrices = false);
   }
 
   Future<void> _fetchProducts() async {
@@ -133,7 +80,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
     setState(() => _isLoadingSales = true);
     try {
       final res = await _apiService.getPenjualanList();
-      if (res.success && res.data != null && res.data!.isNotEmpty && mounted) {
+      if (res.success && res.data != null && mounted) {
         setState(() => _allItems = res.data!);
       }
     } catch (_) {}
@@ -1265,6 +1212,15 @@ class _PenjualanScreenState extends State<PenjualanScreen>
     final borderColor = isDark ? const Color(0xFF28332C) : _borderColor;
     final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
 
+    // Ambil maksimal 3 item teratas dari data pasar dinamis backend (atau fallback terstruktur)
+    final items = _marketPrices.isNotEmpty
+        ? _marketPrices.take(3).toList()
+        : [
+            {'nama': 'Padi GKG', 'harga': 'Rp 6.800', 'change': '+3.8%'},
+            {'nama': 'Jagung Pipil', 'harga': 'Rp 5.200', 'change': '+2.9%'},
+            {'nama': 'Cabai Rawit', 'harga': 'Rp 38.000', 'change': '-8.4%'},
+          ];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -1289,11 +1245,17 @@ class _PenjualanScreenState extends State<PenjualanScreen>
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPriceItem('GKP Ciherang', 'Rp 6.900/Kg', '+2.5%'),
-              _buildPriceItem('GKG Super', 'Rp 7.400/Kg', 'Stabil'),
-              _buildPriceItem('Jagung Pipil', 'Rp 5.400/Kg', '+1.8%'),
-            ],
+            children: items.map((item) {
+              final nama = (item['nama'] ?? item['nama_komoditas'] ?? '-').toString();
+              final harga = (item['harga'] ?? '-').toString();
+              final change = (item['change'] ?? 'Stabil').toString();
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: _buildPriceItem(nama, harga, change),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),

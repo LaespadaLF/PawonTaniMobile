@@ -11,6 +11,19 @@ class MarketplacePenjualanApiService {
 
   MarketplacePenjualanApiService({DioClient? client}) : _client = client ?? DioClient();
 
+  // ================= HARGA PASAR =================
+
+  /// Ambil referensi harga pasar dari backend (sama dengan dashboard pengurus)
+  Future<ApiResponse<List<Map<String, dynamic>>>> getHargaPasarList() async {
+    return await _client.get<List<Map<String, dynamic>>>(
+      ApiConstants.hargaPasarEndpoint,
+      fromJson: (data) {
+        if (data is! List) return <Map<String, dynamic>>[];
+        return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      },
+    );
+  }
+
   // ================= PRODUK SAYA =================
 
   /// Ambil daftar produk marketplace milik petani login

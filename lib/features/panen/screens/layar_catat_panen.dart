@@ -68,11 +68,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
   // Metode Pemanenan (0: Mesin Combine Harvester, 1: Manual)
   int _selectedHarvestMethod = 0;
 
-  // Biaya Petik / Tebas & Harga
-  final TextEditingController _costController = TextEditingController();
-  final TextEditingController _workersController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-
   // Catatan Lapangan
   final TextEditingController _notesController = TextEditingController();
 
@@ -103,9 +98,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     _moistureController.dispose();
     _wholeGrainController.dispose();
     _wasteController.dispose();
-    _costController.dispose();
-    _workersController.dispose();
-    _priceController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -116,20 +108,23 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     if (!mounted) return;
 
     if (response.success && response.data != null && response.data!.isNotEmpty) {
-      final list = response.data!;
+      final allList = response.data!;
+      final list = allList.where((l) => l.status == StatusLahan.aktif || l.status == StatusLahan.persiapan || l.siklusBerjalan != null).toList();
       ItemLahan? preselected;
-      if (widget.initialLahanId != null) {
-        final targetId = widget.initialLahanId!.trim().toLowerCase();
-        final targetName = widget.initialLahanName?.trim().toLowerCase();
-        preselected = list.cast<ItemLahan?>().firstWhere(
-          (l) => l != null && (
-            l.id.trim().toLowerCase() == targetId ||
-            (targetName != null && targetName.isNotEmpty && l.nama.trim().toLowerCase() == targetName)
-          ),
-          orElse: () => _selectedItemLahan ?? list.first,
-        );
-      } else {
-        preselected = _selectedItemLahan ?? list.first;
+      if (list.isNotEmpty) {
+        if (widget.initialLahanId != null) {
+          final targetId = widget.initialLahanId!.trim().toLowerCase();
+          final targetName = widget.initialLahanName?.trim().toLowerCase();
+          preselected = list.cast<ItemLahan?>().firstWhere(
+            (l) => l != null && (
+              l.id.trim().toLowerCase() == targetId ||
+              (targetName != null && targetName.isNotEmpty && l.nama.trim().toLowerCase() == targetName)
+            ),
+            orElse: () => _selectedItemLahan ?? list.first,
+          );
+        } else {
+          preselected = _selectedItemLahan ?? list.first;
+        }
       }
 
       setState(() {
@@ -312,8 +307,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
     final harvestMethod = _selectedHarvestMethod == 0 ? 'Mesin Combine Harvester' : 'Manual / Sabit & Thresher';
 
     final dateIso = '${_harvestDate.year}-${_harvestDate.month.toString().padLeft(2, '0')}-${_harvestDate.day.toString().padLeft(2, '0')}';
-    final rawCost = _costController.text.replaceAll('.', '').replaceAll(',', '.').trim();
-    final rawPrice = _priceController.text.replaceAll('.', '').replaceAll(',', '.').trim();
 
     final payload = <String, dynamic>{
       'id_lahan': _selectedItemLahan!.id,
@@ -330,9 +323,9 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
       'persen_butir_utuh': double.tryParse(_wholeGrainController.text) ?? 95.0,
       'persen_hampa_kotoran': double.tryParse(_wasteController.text) ?? 2.0,
       'metode_panen': harvestMethod,
-      'biaya_panen': double.tryParse(rawCost) ?? 0.0,
-      'keterangan_tenaga_kerja': _workersController.text.trim(),
-      'harga_per_kg': double.tryParse(rawPrice) ?? 7000.0,
+      'biaya_panen': 0.0,
+      'keterangan_tenaga_kerja': '',
+      'harga_per_kg': 0.0,
       'catatan': _notesController.text.trim(),
     };
 
@@ -439,8 +432,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                     _buildJumlahPanenSection(),
                     const SizedBox(height: 18),
                     _buildMetodePemanenanSection(),
-                    const SizedBox(height: 18),
-                    _buildBiayaPetikSection(),
                     const SizedBox(height: 18),
                     _buildCatatanSection(),
                     const SizedBox(height: 18),
@@ -579,40 +570,65 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
             showModalBottomSheet(
               context: context,
               backgroundColor: cardBg,
+              isScrollControlled: true,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              builder: (ctx) => Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Pilih Lahan Garapan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
+              builder: (ctx) => ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.75,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    ..._lahanList.map((lhn) {
-                      return ListTile(
-                        leading: Icon(Icons.eco_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
-                        title: Text(lhn.nama, style: TextStyle(color: titleColor, fontWeight: FontWeight.w600)),
-                        subtitle: Text('${lhn.luas.toStringAsFixed(2)} Ha • ${lhn.komoditas.isNotEmpty ? lhn.komoditas : 'Pertanian'}', style: TextStyle(color: subtitleColor)),
-                        onTap: () {
-                          setState(() {
-                            _selectedItemLahan = lhn;
-                            _syncCommodityFromLahan(lhn);
-                          });
-                          Navigator.pop(ctx);
-                          _fetchSiklusForSelectedLahan(lhn.id);
-                        },
-                      );
-                    }),
-                  ],
+                      Text(
+                        'Pilih Lahan Garapan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _lahanList.length,
+                          itemBuilder: (context, idx) {
+                            final lhn = _lahanList[idx];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              leading: Icon(Icons.eco_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
+                              title: Text(lhn.nama, style: TextStyle(color: titleColor, fontWeight: FontWeight.w600)),
+                              subtitle: Text('${lhn.luas.toStringAsFixed(2)} Ha • ${lhn.komoditas.isNotEmpty ? lhn.komoditas : 'Pertanian'}', style: TextStyle(color: subtitleColor)),
+                              onTap: () {
+                                setState(() {
+                                  _selectedItemLahan = lhn;
+                                  _syncCommodityFromLahan(lhn);
+                                });
+                                Navigator.pop(ctx);
+                                _fetchSiklusForSelectedLahan(lhn.id);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1038,73 +1054,6 @@ class _RecordHarvestScreenState extends State<RecordHarvestScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBiayaPetikSection() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderField;
-    final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDarkGreen;
-    final hintColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.grayGreenMuted;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFieldLabel('Estimasi Harga Jual & Biaya Petik'),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
-                ),
-                child: TextField(
-                  controller: _priceController,
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: titleColor),
-                  decoration: InputDecoration(
-                    labelText: 'Harga / Kg (Rp)',
-                    hintText: 'Contoh: 7000',
-                    hintStyle: TextStyle(fontSize: 12, color: hintColor),
-                    labelStyle: TextStyle(fontSize: 11, color: hintColor),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
-                ),
-                child: TextField(
-                  controller: _costController,
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: titleColor),
-                  decoration: InputDecoration(
-                    labelText: 'Biaya Panen (Rp)',
-                    hintText: 'Contoh: 1200000',
-                    hintStyle: TextStyle(fontSize: 12, color: hintColor),
-                    labelStyle: TextStyle(fontSize: 11, color: hintColor),
-                    border: InputBorder.none,
-                    isDense: true,
                   ),
                 ),
               ),
