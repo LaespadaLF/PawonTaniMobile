@@ -32,7 +32,6 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
   final LahanApiService _lahanService = LahanApiService();
   final PanenApiService _panenService = PanenApiService();
 
-  List<ItemLahan> _lahanList = [];
   ItemLahan? _selectedItemLahan;
   bool _isLoadingLahan = true;
   bool _isSaving = false;
@@ -128,7 +127,6 @@ class _EditHarvestScreenState extends State<EditHarvestScreen> {
           );
 
       setState(() {
-        _lahanList = list;
         _selectedItemLahan = matched;
         _isLoadingLahan = false;
       });

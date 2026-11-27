@@ -916,11 +916,9 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildInfoGridCard(
-                        Icons.layers_outlined,
-                        'Status Petak',
-                        _item.status == StatusLahan.aktif
-                            ? 'Aktif Ditanami'
-                            : (_item.status == StatusLahan.persiapan ? 'Persiapan' : 'Istirahat'),
+                        Icons.verified_user_outlined,
+                        'Penguasaan',
+                        _item.statusPenguasaan.isNotEmpty ? _item.statusPenguasaan : 'Milik Sendiri',
                       ),
                     ),
                   ],
@@ -930,17 +928,19 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                   children: [
                     Expanded(
                       child: _buildInfoGridCard(
-                        Icons.description_outlined,
-                        'Dokumen SPPT',
-                        _isLoadingSpptDocuments ? '...' : '${_spptDocuments.length} Berkas',
+                        Icons.layers_outlined,
+                        'Status Petak',
+                        _item.status == StatusLahan.aktif
+                            ? 'Aktif Ditanami'
+                            : (_item.status == StatusLahan.persiapan ? 'Persiapan' : 'Istirahat'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildInfoGridCard(
-                        Icons.history_edu_outlined,
-                        'Aktivitas Tercatat',
-                        _isLoadingActivities ? '...' : '${_activities.length} Catatan',
+                        Icons.description_outlined,
+                        'Dokumen SPPT',
+                        _isLoadingSpptDocuments ? '...' : '${_spptDocuments.length} Berkas',
                       ),
                     ),
                   ],

@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/network/dio_client.dart';
+import 'package:pawon_mobile/core/storage/pawon_database_service.dart';
 import 'package:pawon_mobile/features/lahan/models/item_dokumen_sppt.dart';
 import 'package:pawon_mobile/features/lahan/models/item_komoditas.dart';
 import 'package:pawon_mobile/features/lahan/models/item_lahan.dart';
@@ -24,20 +25,65 @@ class LahanApiService {
     if (page != null) queryParams['page'] = page;
     if (perPage != null) queryParams['per_page'] = perPage;
 
-    final response = await _client.get<List<ItemLahan>>(
-      ApiConstants.lahanEndpoint,
-      queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      fromJson: (data) {
-        if (data is! List) {
-          return <ItemLahan>[];
-        }
-        return data
-            .map((item) => ItemLahan.fromJson(Map<String, dynamic>.from(item as Map)))
-            .toList();
-      },
-    );
+    try {
+      final response = await _client.get<List<ItemLahan>>(
+        ApiConstants.lahanEndpoint,
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        fromJson: (data) {
+          if (data is! List) {
+            return <ItemLahan>[];
+          }
+          return data
+              .map((item) => ItemLahan.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+        },
+      );
 
-    return response;
+      if (response.success && response.data != null && response.data!.isNotEmpty) {
+        final cacheList = response.data!.map((l) => {
+          'id': l.id,
+          'nama': l.nama,
+          'luas': l.luas,
+          'lokasi': l.lokasi,
+          'komoditas': l.komoditas,
+          'status_penguasaan': l.statusPenguasaan,
+          'status_verifikasi': l.statusVerifikasi,
+          'latitude': l.latitude,
+          'longitude': l.longitude,
+          'foto_lahan': l.fotoLahan,
+        }).toList();
+        PawonDatabaseService.instance.cacheLahanList(cacheList);
+      }
+
+      return response;
+    } catch (e) {
+      // Fallback: ambil data dari SQLite lokal saat offline
+      try {
+        final localRows = await PawonDatabaseService.instance.getLocalLahanList();
+        if (localRows.isNotEmpty) {
+          final items = localRows.map((row) {
+            return ItemLahan(
+              id: row['id']?.toString() ?? '',
+              nama: row['nama_lahan']?.toString() ?? 'Lahan',
+              lokasi: row['alamat']?.toString() ?? '',
+              luas: (row['luas_m2'] as num?)?.toDouble() ?? 0.0,
+              komoditas: row['komoditas']?.toString() ?? '',
+              statusPenguasaan: row['status_penguasaan']?.toString() ?? 'Milik Sendiri',
+              status: StatusLahan.aktif,
+              latitude: (row['latitude'] as num?)?.toDouble(),
+              longitude: (row['longitude'] as num?)?.toDouble(),
+              fotoLahan: row['foto_lahan']?.toString(),
+              statusVerifikasi: row['status_verifikasi']?.toString() ?? 'menunggu_verifikasi',
+            );
+          }).toList();
+          return ApiResponse.success(
+            data: items,
+            message: 'Menampilkan data lahan dari penyimpanan offline.',
+          );
+        }
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// Mengambil detail lahan dari `GET /api/v1/lahan/{id}`.
@@ -57,11 +103,12 @@ class LahanApiService {
     );
   }
 
-  /// Mendaftarkan lahan baru beserta foto melalui `POST /api/v1/lahan`.
+  /// Mendaftarkan lahan baru beserta foto dan SPPT melalui `POST /api/v1/lahan`.
   Future<ApiResponse<ItemLahan>> createLahanWithFoto(
     Map<String, dynamic> payload,
     MultipartFile? fotoLahan, {
     List<MultipartFile>? fotoLahanList,
+    MultipartFile? dokumenSppt,
   }) async {
     final formData = FormData();
 
@@ -92,11 +139,39 @@ class LahanApiService {
       formData.files.add(MapEntry('foto_lahan', fotoLahan));
     }
 
-    return await _client.post<ItemLahan>(
-      ApiConstants.lahanEndpoint,
-      data: formData,
-      fromJson: (data) => ItemLahan.fromJson(Map<String, dynamic>.from(data as Map)),
-    );
+    if (dokumenSppt != null) {
+      formData.files.add(MapEntry('dokumen_sppt', dokumenSppt));
+    }
+
+    try {
+      return await _client.post<ItemLahan>(
+        ApiConstants.lahanEndpoint,
+        data: formData,
+        fromJson: (data) => ItemLahan.fromJson(Map<String, dynamic>.from(data as Map)),
+      );
+    } catch (e) {
+      // Simpan ke antrean sinkronisasi offline saat koneksi gagal
+      try {
+        await PawonDatabaseService.instance.enqueueOffline(
+          tipe: 'lahan',
+          aksi: 'create',
+          payload: payload,
+        );
+        return ApiResponse.success(
+          data: ItemLahan(
+            id: 'OFFLINE-${DateTime.now().millisecondsSinceEpoch}',
+            nama: payload['nama_lahan']?.toString() ?? 'Lahan Baru',
+            lokasi: payload['alamat_lahan']?.toString() ?? '',
+            luas: double.tryParse(payload['luas_lahan']?.toString() ?? '0') ?? 0.0,
+            komoditas: 'Belum Ditentukan',
+            statusPenguasaan: payload['status_penguasaan']?.toString() ?? 'Milik Sendiri',
+            status: StatusLahan.persiapan,
+          ),
+          message: 'Lahan tersimpan secara offline (draft). Akan disinkronkan saat terhubung internet.',
+        );
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// Memperbarui data lahan melalui `PUT /api/v1/lahan/{id}` (JSON biasa tanpa file).
@@ -108,13 +183,14 @@ class LahanApiService {
     );
   }
 
-  /// Memperbarui data lahan beserta foto melalui `POST /api/v1/lahan/{id}` dengan method spoofing `_method=PUT`.
+  /// Memperbarui data lahan beserta foto dan SPPT melalui `POST /api/v1/lahan/{id}` dengan method spoofing `_method=PUT`.
   /// Laravel memerlukan POST multipart/form-data dengan field _method=PUT karena PHP native tidak mem-parse body PUT multipart.
   Future<ApiResponse<ItemLahan>> updateLahanWithFoto(
     String id,
     Map<String, dynamic> payload,
     MultipartFile? fotoLahan, {
     List<MultipartFile>? fotoLahanList,
+    MultipartFile? dokumenSppt,
   }) async {
     final formData = FormData();
     formData.fields.add(const MapEntry('_method', 'PUT'));
@@ -144,6 +220,10 @@ class LahanApiService {
       }
     } else if (fotoLahan != null) {
       formData.files.add(MapEntry('foto_lahan', fotoLahan));
+    }
+
+    if (dokumenSppt != null) {
+      formData.files.add(MapEntry('dokumen_sppt', dokumenSppt));
     }
 
     return await _client.post<ItemLahan>(

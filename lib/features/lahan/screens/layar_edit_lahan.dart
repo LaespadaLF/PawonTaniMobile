@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
@@ -38,6 +39,7 @@ class _EditLandScreenState extends State<EditLandScreen> {
   final List<XFile> _selectedImages = [];
   final List<Uint8List> _selectedImageBytesList = [];
   final List<String> _keptOldPhotos = [];
+  PlatformFile? _selectedSpptFile;
 
   @override
   void initState() {
@@ -697,6 +699,84 @@ class _EditLandScreenState extends State<EditLandScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Dokumen SPPT (1 Lahan = 1 SPPT)
+              Text('Dokumen SPPT Lahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+              const SizedBox(height: 4),
+              Text('Perbarui atau unggah dokumen SPPT petak lahan ini (PDF/JPG, maks. 5 MB).', style: TextStyle(fontSize: 11, color: subtitleColor)),
+              const SizedBox(height: 8),
+              if (_selectedSpptFile != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: WarnaAplikasi.bgLightGreen,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: WarnaAplikasi.accentGreen.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description, color: WarnaAplikasi.primary, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedSpptFile!.name,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Berkas baru siap diunggah',
+                              style: TextStyle(fontSize: 10, color: subtitleColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red, size: 18),
+                        onPressed: () => setState(() => _selectedSpptFile = null),
+                        tooltip: 'Batalkan pemilihan',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              GestureDetector(
+                onTap: () async {
+                  final result = await FilePicker.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: const ['pdf', 'jpg', 'jpeg'],
+                  );
+                  if (result.isNotEmpty) {
+                    setState(() => _selectedSpptFile = result.first);
+                  }
+                },
+                child: Container(
+                  height: 52,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1D2420) : WarnaAplikasi.getCardColor(context),
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.file_present_outlined, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryLight, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        _selectedSpptFile == null ? 'Unggah / Ganti Berkas SPPT' : 'Pilih File Lain',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 32),
 
               // Buttons
@@ -1047,12 +1127,22 @@ class _EditLandScreenState extends State<EditLandScreen> {
       photoFiles.add(MultipartFile.fromBytes(_selectedImageBytesList[i], filename: name));
     }
 
+    MultipartFile? spptMultipart;
+    if (_selectedSpptFile != null) {
+      final bytes = await _selectedSpptFile!.readAsBytes();
+      spptMultipart = MultipartFile.fromBytes(
+        bytes,
+        filename: _selectedSpptFile!.name,
+      );
+    }
+
     final service = LahanApiService();
     final response = await service.updateLahanWithFoto(
       widget.item.id,
       payload,
       null,
       fotoLahanList: photoFiles.isEmpty ? null : photoFiles,
+      dokumenSppt: spptMultipart,
     );
 
     if (!mounted) return;

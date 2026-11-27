@@ -7,7 +7,7 @@ import 'package:pawon_mobile/features/penjualan/screens/layar_catat_penjualan.da
 import 'package:pawon_mobile/features/penjualan/screens/layar_detail_penjualan.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_form_produk.dart';
 import 'package:pawon_mobile/features/penjualan/services/marketplace_penjualan_api_service.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class PenjualanScreen extends StatefulWidget {
@@ -27,7 +27,6 @@ class _PenjualanScreenState extends State<PenjualanScreen>
 
   static const Color _primaryGreen = WarnaAplikasi.primary;
   static const Color _textDark = WarnaAplikasi.textDark;
-  static const Color _textMedium = WarnaAplikasi.textMedium;
   static const Color _textLight = WarnaAplikasi.textLight;
   static const Color _bgPage = WarnaAplikasi.primaryBackground;
   static const Color _cardBg = Colors.white;
@@ -40,8 +39,6 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   List<ItemProdukSaya> _myProducts = [];
   List<Map<String, dynamic>> _marketPrices = [];
   bool _isLoadingProducts = false;
-  bool _isLoadingSales = false;
-  bool _isLoadingPrices = false;
 
   @override
   void initState() {
@@ -56,14 +53,12 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Future<void> _fetchMarketPrices() async {
-    setState(() => _isLoadingPrices = true);
     try {
       final res = await _apiService.getHargaPasarList();
       if (res.success && res.data != null && mounted) {
         setState(() => _marketPrices = res.data!);
       }
     } catch (_) {}
-    if (mounted) setState(() => _isLoadingPrices = false);
   }
 
   Future<void> _fetchProducts() async {
@@ -78,14 +73,12 @@ class _PenjualanScreenState extends State<PenjualanScreen>
   }
 
   Future<void> _fetchSales() async {
-    setState(() => _isLoadingSales = true);
     try {
       final res = await _apiService.getPenjualanList();
       if (res.success && res.data != null && mounted) {
         setState(() => _allItems = res.data!);
       }
     } catch (_) {}
-    if (mounted) setState(() => _isLoadingSales = false);
   }
 
   List<SaleItem> get _filteredItems {
@@ -171,7 +164,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
       body: SafeArea(
         child: Column(
           children: [
-            const PawonFixedHeader(title: 'Penjualan'),
+            _buildHeader(),
             Expanded(
               child: RefreshIndicator(
                 color: _primaryGreen,

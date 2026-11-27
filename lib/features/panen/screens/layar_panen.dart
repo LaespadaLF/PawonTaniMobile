@@ -7,7 +7,7 @@ import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
 import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
 import 'package:pawon_mobile/features/panen/widgets/kartu_panen.dart';
 import 'package:pawon_mobile/features/panen/widgets/kartu_ringkasan_panen.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class HarvestScreen extends StatefulWidget {

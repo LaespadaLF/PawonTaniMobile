@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/features/beranda/models/beranda_ringkasan_model.dart';
 
 class FarmerBannerCard extends StatelessWidget {

@@ -444,6 +444,7 @@ class PawonFixedHeader extends StatelessWidget {
                         ? DecorationImage(
                             image: NetworkImage(currentUser.fotoProfil!),
                             fit: BoxFit.cover,
+                            onError: (_, __) {},
                           )
                         : null,
                   ),

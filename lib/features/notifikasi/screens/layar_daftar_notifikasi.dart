@@ -33,6 +33,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _repository.loadInitial();
+      _repository.markAllAsRead();
     });
   }
 

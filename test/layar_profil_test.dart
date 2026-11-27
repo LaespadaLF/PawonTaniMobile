@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawon_mobile/features/auth/models/auth_user_model.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 
 void main() {
   testWidgets('ProfileScreen menampilkan data lengkap pengguna, kontak, dan informasi poktan', (tester) async {
