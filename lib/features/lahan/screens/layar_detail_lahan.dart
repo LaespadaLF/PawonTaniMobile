@@ -7,6 +7,7 @@ import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/storage/secure_storage_service.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/core/widgets/pawon_form_header.dart';
+import 'package:pawon_mobile/core/widgets/pemilih_komoditas.dart';
 import 'package:pawon_mobile/features/aktivitas/models/item_aktivitas_tanam.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
@@ -866,34 +867,110 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                         ),
                       ),
                       Positioned(
-                        bottom: 20,
-                        left: 20,
-                        right: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        bottom: 16,
+                        left: 18,
+                        right: 18,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('PETAK SAWAH', style: TextStyle(color: WarnaAplikasi.accentGreen, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                            const SizedBox(height: 4),
-                            Text(_item.nama, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            Row(
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('PETAK SAWAH', style: TextStyle(color: WarnaAplikasi.accentGreen, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                  const SizedBox(height: 4),
+                                  Text(_item.nama, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.arrow_downward, color: WarnaAplikasi.accentGreen, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text('${_item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                      const SizedBox(width: 14),
+                                      const Icon(Icons.eco, color: WarnaAplikasi.accentGreen, size: 14),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          _siklusBerjalan != null
+                                              ? _siklusBerjalan!.komoditasNama
+                                              : (_item.status == StatusLahan.istirahat
+                                                  ? 'Masa Istirahat'
+                                                  : (_item.status == StatusLahan.persiapan ? 'Dalam Persiapan' : 'Belum Ada Siklus')),
+                                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Tombol Edit (atas) & Hapus (bawah) horizontal dengan nama lahan
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                const Icon(Icons.arrow_downward, color: WarnaAplikasi.accentGreen, size: 14),
-                                const SizedBox(width: 4),
-                                Text('${_item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                const SizedBox(width: 16),
-                                const Icon(Icons.eco, color: WarnaAplikasi.accentGreen, size: 14),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _siklusBerjalan != null
-                                      ? _siklusBerjalan!.komoditasNama
-                                      : (_item.status == StatusLahan.istirahat
-                                          ? 'Masa Istirahat'
-                                          : (_item.status == StatusLahan.persiapan ? 'Dalam Persiapan' : 'Belum Ada Siklus')),
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                                InkWell(
+                                  onTap: _navigateToEdit,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.65),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.3),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(Icons.edit_outlined, color: Colors.white, size: 15),
+                                        SizedBox(width: 6),
+                                        Text('Edit', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
                                 ),
+                                if (_item.isCanDelete) ...[
+                                  const SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: _confirmDelete,
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade900.withValues(alpha: 0.85),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: Colors.redAccent.shade100, width: 1.2),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.3),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.delete_outline, color: Colors.white, size: 15),
+                                          SizedBox(width: 6),
+                                          Text('Hapus', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
-                            )
+                            ),
                           ],
                         ),
                       )
@@ -997,16 +1074,21 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.water_drop_outlined, color: WarnaAplikasi.errorRedBright, size: 18),
+                          const Icon(Icons.calendar_today_outlined, color: WarnaAplikasi.primary, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
-                            flex: 2,
+                            flex: 1,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Sumber Irigasi', style: TextStyle(fontSize: 11, color: subtitleColor)),
+                                Text('Tanggal Tanam', style: TextStyle(fontSize: 11, color: subtitleColor)),
                                 const SizedBox(height: 4),
-                                Text('-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                                Text(
+                                  _siklusBerjalan?.tanggalMulai != null
+                                      ? '${_siklusBerjalan!.tanggalMulai!.day.toString().padLeft(2, '0')}/${_siklusBerjalan!.tanggalMulai!.month.toString().padLeft(2, '0')}/${_siklusBerjalan!.tanggalMulai!.year}'
+                                      : '-',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor),
+                                ),
                               ],
                             ),
                           ),
@@ -1016,9 +1098,14 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Tanggal Tanam', style: TextStyle(fontSize: 11, color: subtitleColor)),
+                                Text('Estimasi Panen', style: TextStyle(fontSize: 11, color: subtitleColor)),
                                 const SizedBox(height: 4),
-                                Text('-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor)),
+                                Text(
+                                  _siklusBerjalan?.estimasiPanen != null
+                                      ? '${_siklusBerjalan!.estimasiPanen!.day.toString().padLeft(2, '0')}/${_siklusBerjalan!.estimasiPanen!.month.toString().padLeft(2, '0')}/${_siklusBerjalan!.estimasiPanen!.year}'
+                                      : '-',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor),
+                                ),
                               ],
                             ),
                           ),
@@ -1176,9 +1263,6 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 // Riwayat Terkini / Aktivitas
                 _buildRiwayatAktivitasSection(),
 
-                // Riwayat Verifikasi (Audit Trail Backend)
-                _buildRiwayatVerifikasiList(),
-
                 const SizedBox(height: 32),
 
                 // Buttons
@@ -1258,38 +1342,6 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _navigateToEdit,
-                    icon: Icon(Icons.edit_outlined, color: titleColor, size: 18),
-                    label: Text('Edit Informasi Lahan', style: TextStyle(color: titleColor, fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: isDark ? const Color(0xFF1D2420) : WarnaAplikasi.backgroundLight,
-                      side: BorderSide(color: borderColor),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    ),
-                  ),
-                ),
-                if (_item.isCanDelete) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _confirmDelete,
-                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                      label: const Text('Hapus Lahan', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: WarnaAplikasi.errorRedBg,
-                        side: const BorderSide(color: WarnaAplikasi.errorRedBorder),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       ),
                     ),
                   ),
@@ -1816,123 +1868,6 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
     );
   }
 
-  Widget _buildRiwayatVerifikasiList() {
-    if (_item.riwayatVerifikasi.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 24),
-        const Row(
-          children: [
-            Icon(Icons.history_edu_rounded, size: 18, color: WarnaAplikasi.primaryDark),
-            SizedBox(width: 8),
-            Text(
-              'Riwayat Verifikasi',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: WarnaAplikasi.border),
-          ),
-          child: Column(
-            children: List.generate(_item.riwayatVerifikasi.length, (index) {
-              final riwayat = _item.riwayatVerifikasi[index];
-              final isLast = index == _item.riwayatVerifikasi.length - 1;
-
-              String tanggalStr = '-';
-              if (riwayat.createdAt != null) {
-                final dt = riwayat.createdAt!.toLocal();
-                tanggalStr = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-              }
-
-              IconData aksiIcon = Icons.info_outline;
-              Color iconColor = WarnaAplikasi.textGray;
-              String statusLabel = riwayat.aksi.replaceAll('_', ' ').toUpperCase();
-
-              if (riwayat.statusSesudahnya == 'terverifikasi') {
-                aksiIcon = Icons.check_circle_outline;
-                iconColor = WarnaAplikasi.primary;
-              } else if (riwayat.statusSesudahnya == 'perlu_perbaikan') {
-                aksiIcon = Icons.warning_amber_rounded;
-                iconColor = WarnaAplikasi.warningOrange;
-              } else if (riwayat.statusSesudahnya == 'menunggu_verifikasi') {
-                aksiIcon = Icons.hourglass_top_rounded;
-                iconColor = const Color(0xFF1D4ED8);
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(aksiIcon, size: 16, color: iconColor),
-                          const SizedBox(width: 6),
-                          Text(
-                            statusLabel,
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: iconColor),
-                          ),
-                          if (riwayat.nomorRevisi > 0)
-                            Text(
-                              ' (Rev #${riwayat.nomorRevisi})',
-                              style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
-                            ),
-                        ],
-                      ),
-                      Text(
-                        tanggalStr,
-                        style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
-                      ),
-                    ],
-                  ),
-                  if (riwayat.namaAktor != null && riwayat.namaAktor!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Oleh: ${riwayat.namaAktor}${riwayat.jabatanAktor != null && riwayat.jabatanAktor!.isNotEmpty ? ' (${riwayat.jabatanAktor})' : ''}',
-                      style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGray),
-                    ),
-                  ],
-                  if (riwayat.catatan != null && riwayat.catatan!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.backgroundLight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Catatan: "${riwayat.catatan}"',
-                        style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: WarnaAplikasi.primaryDark),
-                      ),
-                    ),
-                  ],
-                  if (!isLast)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(color: WarnaAplikasi.backgroundLight, thickness: 1),
-                    ),
-                ],
-              );
-            }),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildInfoGridCard(IconData icon, String title, String value) {
     return Builder(
       builder: (context) {
@@ -2323,7 +2258,6 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
         // Jika siklus aktif tersedia, seluruh informasi operasional murni bersumber dari siklus (Single Source of Truth)
         final komoditasNama = siklus.komoditasNama;
         final varietas = (siklus.varietas != null && siklus.varietas!.isNotEmpty) ? '(${siklus.varietas})' : '';
-        final musim = siklus.musimTanam;
 
         String formatDate(DateTime? date) {
           if (date == null) return '-';
@@ -2375,7 +2309,7 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: isMenunggu ? const Color(0xFF92400E) : WarnaAplikasi.primaryDark,
+                      color: isMenunggu ? const Color(0xFF92400E) : titleColor,
                     ),
                   ),
                 ],
@@ -2403,12 +2337,7 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
           const SizedBox(height: 12),
           Text(
             '$komoditasNama $varietas',
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Musim Tanam: $musim',
-            style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: titleColor),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
@@ -2420,11 +2349,11 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Mulai Tanam', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayLight)),
+                    Text('Mulai Tanam', style: TextStyle(fontSize: 10, color: subtitleColor)),
                     const SizedBox(height: 2),
                     Text(
                       formatDate(siklus.tanggalMulai),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
                     ),
                   ],
                 ),
@@ -2433,24 +2362,11 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Estimasi Panen', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayLight)),
+                    Text('Estimasi Panen', style: TextStyle(fontSize: 10, color: subtitleColor)),
                     const SizedBox(height: 2),
                     Text(
                       formatDate(siklus.estimasiPanen),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Target Hasil', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayLight)),
-                    const SizedBox(height: 2),
-                    Text(
-                      siklus.targetPanenTon != null ? '${siklus.targetPanenTon} Ton' : '-',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
                     ),
                   ],
                 ),
@@ -2458,58 +2374,27 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
             ],
           ),
 
-          // Realisasi Hasil Panen & Progress Bar
-          if (siklus.targetPanenTon != null || (siklus.totalPanenKg != null && siklus.totalPanenKg! > 0)) ...[
+          // Realisasi Hasil Panen
+          if (siklus.totalPanenKg != null && siklus.totalPanenKg! > 0) ...[
             const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF232C26) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: WarnaAplikasi.border),
+                border: Border.all(color: borderColor),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Realisasi Hasil Panen',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-                      ),
-                      Text(
-                        '${siklus.totalPanenTon ?? 0.0} Ton (${(siklus.totalPanenKg ?? 0).toInt()} Kg)',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
-                      ),
-                    ],
+                  Text(
+                    'Total Panen Tercatat',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: titleColor),
                   ),
-                  if (siklus.targetPanenTon != null && siklus.targetPanenTon! > 0) ...[
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: ((siklus.totalPanenTon ?? 0.0) / siklus.targetPanenTon!).clamp(0.0, 1.0),
-                        backgroundColor: Colors.grey.shade200,
-                        valueColor: const AlwaysStoppedAnimation<Color>(WarnaAplikasi.primary),
-                        minHeight: 6,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Target: ${siklus.targetPanenTon} Ton',
-                          style: const TextStyle(fontSize: 10, color: WarnaAplikasi.textGray),
-                        ),
-                        Text(
-                          '${siklus.persentaseTarget?.toStringAsFixed(1) ?? '0'}% tercapai',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-                        ),
-                      ],
-                    ),
-                  ],
+                  Text(
+                    '${siklus.totalPanenTon ?? 0.0} Ton (${(siklus.totalPanenKg ?? 0).toInt()} Kg)',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                  ),
                 ],
               ),
             ),
@@ -4039,8 +3924,6 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
 
   String? _selectedKomoditasId;
   final TextEditingController _varietasController = TextEditingController();
-  final TextEditingController _musimTanamController = TextEditingController(text: 'MT 1 - 2026');
-  final TextEditingController _targetPanenController = TextEditingController();
 
   DateTime _tanggalMulai = DateTime.now();
   DateTime? _estimasiPanen;
@@ -4058,12 +3941,25 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
     }
   }
 
+  void _hitungEstimasiPanen() {
+    if (_selectedKomoditasId == null) {
+      _estimasiPanen = null;
+      return;
+    }
+    final k = _komoditasList.where((item) => item.id == _selectedKomoditasId).firstOrNull;
+    final int hari = (k != null && k.umurPanenHari != null && k.umurPanenHari! > 0)
+        ? k.umurPanenHari!
+        : 90;
+    _estimasiPanen = _tanggalMulai.add(Duration(days: hari));
+  }
+
   void _initKomoditasSelection() {
     if (widget.lahan.idKomoditas != null && _komoditasList.any((k) => k.id == widget.lahan.idKomoditas)) {
       _selectedKomoditasId = widget.lahan.idKomoditas;
     } else if (_komoditasList.isNotEmpty) {
       _selectedKomoditasId = _komoditasList.first.id;
     }
+    _hitungEstimasiPanen();
   }
 
   Future<void> _loadKomoditas() async {
@@ -4087,8 +3983,6 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
   @override
   void dispose() {
     _varietasController.dispose();
-    _musimTanamController.dispose();
-    _targetPanenController.dispose();
     super.dispose();
   }
 
@@ -4108,28 +4002,22 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
     if (picked != null) {
       setState(() {
         _tanggalMulai = picked;
-        if (_estimasiPanen != null && _estimasiPanen!.isBefore(_tanggalMulai)) {
-          _estimasiPanen = null;
-        }
+        _hitungEstimasiPanen();
       });
     }
   }
 
-  Future<void> _pickEstimasiPanen() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _estimasiPanen ?? _tanggalMulai.add(const Duration(days: 90)),
-      firstDate: _tanggalMulai,
-      lastDate: DateTime(2035),
-      builder: (context, child) => Theme(
-        data: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(primary: WarnaAplikasi.primary),
-        ),
-        child: child!,
-      ),
+  Future<void> _pilihKomoditasModal() async {
+    final terpilih = await tampilkanPemilihKomoditas(
+      context,
+      daftar: _komoditasList,
+      idTerpilih: _selectedKomoditasId,
     );
-    if (picked != null) {
-      setState(() => _estimasiPanen = picked);
+    if (terpilih != null) {
+      setState(() {
+        _selectedKomoditasId = terpilih.id;
+        _hitungEstimasiPanen();
+      });
     }
   }
 
@@ -4149,12 +4037,9 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
       'id_lahan': widget.lahan.id,
       'id_komoditas': _selectedKomoditasId,
       'varietas': _varietasController.text.trim().isNotEmpty ? _varietasController.text.trim() : null,
-      'musim_tanam': _musimTanamController.text.trim(),
       'tanggal_mulai': '${_tanggalMulai.year}-${_tanggalMulai.month.toString().padLeft(2, '0')}-${_tanggalMulai.day.toString().padLeft(2, '0')}',
       if (_estimasiPanen != null)
         'estimasi_panen': '${_estimasiPanen!.year}-${_estimasiPanen!.month.toString().padLeft(2, '0')}-${_estimasiPanen!.day.toString().padLeft(2, '0')}',
-      if (_targetPanenController.text.trim().isNotEmpty)
-        'target_panen_ton': double.tryParse(_targetPanenController.text.trim()),
     };
 
     try {
@@ -4185,8 +4070,17 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF161C18) : Colors.white;
+    final titleColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final subColor = isDark ? const Color(0xFF94A3B8) : WarnaAplikasi.textGrayLight;
+    final inputBg = isDark ? const Color(0xFF1E2620) : WarnaAplikasi.bgInput;
+    final borderColor = isDark ? const Color(0xFF2A362D) : WarnaAplikasi.border;
+
+    final selectedKomoditas = _komoditasList.where((k) => k.id == _selectedKomoditasId).firstOrNull;
+
     String formatDate(DateTime? date) {
-      if (date == null) return 'Pilih Tanggal';
+      if (date == null) return '-';
       return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
     }
 
@@ -4197,9 +4091,9 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
         right: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -4213,7 +4107,7 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: WarnaAplikasi.borderField,
+                    color: isDark ? const Color(0xFF2E3D32) : WarnaAplikasi.borderField,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -4222,19 +4116,19 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Mulai Siklus Tanam',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: titleColor),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20, color: WarnaAplikasi.textGray),
+                    icon: Icon(Icons.close, size: 20, color: subColor),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const Text(
-                'Catat data awal komoditas dan musim tanam untuk memulai masa tanam aktif pada petak ini.',
-                style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayLight, height: 1.3),
+              Text(
+                'Catat data awal komoditas untuk memulai masa tanam aktif pada petak ini. Estimasi panen akan dikalkulasi otomatis.',
+                style: TextStyle(fontSize: 11.5, color: subColor, height: 1.3),
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 12),
@@ -4261,11 +4155,11 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
               ],
               const SizedBox(height: 16),
 
-              // Dropdown Komoditas
+              // Pemilih Komoditas (Search & Filter Modal)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Komoditas *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                  Text('Komoditas *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor)),
                   if (_isLoadingKomoditas)
                     const SizedBox(
                       width: 14,
@@ -4300,109 +4194,89 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
                   ),
                 )
               else
-                DropdownButtonFormField<String>(
-                  key: ValueKey(_selectedKomoditasId ?? 'komoditas_dropdown'),
-                  initialValue: _selectedKomoditasId,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                    filled: true,
-                    fillColor: WarnaAplikasi.bgInput,
-                  ),
-                  selectedItemBuilder: (context) {
-                    return _komoditasList.map((k) {
-                      final icon = _getKategoriIcon(k.kategori);
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '$icon ${k.nama} (${k.kategori})',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: WarnaAplikasi.primaryDark),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList();
-                  },
-                  items: _komoditasList.map((k) {
-                    final icon = _getKategoriIcon(k.kategori);
-                    return DropdownMenuItem<String>(
-                      value: k.id,
-                      child: Row(
-                        children: [
-                          Text(icon, style: const TextStyle(fontSize: 14)),
+                InkWell(
+                  onTap: _pilihKomoditasModal,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: inputBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        if (selectedKomoditas != null) ...[
+                          Text(
+                            _getKategoriIcon(selectedKomoditas.kategori),
+                            style: const TextStyle(fontSize: 16),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              k.nama,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                              overflow: TextOverflow.ellipsis,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selectedKomoditas.nama,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: titleColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  selectedKomoditas.kategori +
+                                      (selectedKomoditas.umurPanenHari != null
+                                          ? ' • Masa Panen ~${selectedKomoditas.umurPanenHari} hari'
+                                          : ''),
+                                  style: TextStyle(fontSize: 11, color: subColor),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: WarnaAplikasi.bgLightGreen,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
+                        ] else ...[
+                          Expanded(
                             child: Text(
-                              k.kategori,
-                              style: const TextStyle(fontSize: 10, color: WarnaAplikasi.primaryDark, fontWeight: FontWeight.w500),
+                              'Pilih komoditas tanaman...',
+                              style: TextStyle(fontSize: 12, color: subColor),
                             ),
                           ),
                         ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedKomoditasId = val),
-                  validator: (val) => val == null ? 'Komoditas wajib dipilih' : null,
+                        Icon(Icons.search, size: 18, color: subColor),
+                      ],
+                    ),
+                  ),
                 ),
               const SizedBox(height: 14),
 
               // TextField Varietas
-              const Text('Varietas (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+              Text('Varietas (Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _varietasController,
+                style: TextStyle(color: titleColor, fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'Contoh: Inpari 32, Ciherang',
-                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
+                  hintText: 'Contoh: Inpari 32, Ciherang, dsb',
+                  hintStyle: TextStyle(fontSize: 12, color: subColor),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary)),
                   filled: true,
-                  fillColor: WarnaAplikasi.bgInput,
+                  fillColor: inputBg,
                 ),
               ),
               const SizedBox(height: 14),
 
-              // TextField Musim Tanam
-              const Text('Musim Tanam *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _musimTanamController,
-                decoration: InputDecoration(
-                  hintText: 'Contoh: MT 1 - 2026',
-                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  filled: true,
-                  fillColor: WarnaAplikasi.bgInput,
-                ),
-                validator: (val) => (val == null || val.trim().isEmpty) ? 'Musim tanam wajib diisi' : null,
-              ),
-              const SizedBox(height: 14),
-
-              // Row Tanggal Mulai & Estimasi Panen
+              // Tanggal Mulai & Estimasi Panen Otomatis
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Tanggal Mulai *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
+                        Text('Tanggal Mulai *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor)),
                         const SizedBox(height: 6),
                         InkWell(
                           onTap: _pickTanggalMulai,
@@ -4410,9 +4284,9 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             decoration: BoxDecoration(
-                              color: WarnaAplikasi.bgInput,
+                              color: inputBg,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: WarnaAplikasi.border),
+                              border: Border.all(color: borderColor),
                             ),
                             child: Row(
                               children: [
@@ -4421,7 +4295,7 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
                                 Expanded(
                                   child: Text(
                                     formatDate(_tanggalMulai),
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: titleColor),
                                   ),
                                 ),
                               ],
@@ -4436,34 +4310,43 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Estimasi Panen', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-                        const SizedBox(height: 6),
-                        InkWell(
-                          onTap: _pickEstimasiPanen,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: WarnaAplikasi.bgInput,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: WarnaAplikasi.border),
+                        Row(
+                          children: [
+                            Text('Estimasi Panen', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor)),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E3A24) : WarnaAplikasi.bgLightGreen,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text('Otomatis', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary)),
                             ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.event_available, size: 14, color: WarnaAplikasi.primary),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    formatDate(_estimasiPanen),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: _estimasiPanen != null ? WarnaAplikasi.primaryDark : WarnaAplikasi.textGrayLight,
-                                    ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF19231B) : const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: isDark ? const Color(0xFF24482B) : const Color(0xFFBBF7D0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.event_available, size: 14, color: WarnaAplikasi.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  formatDate(_estimasiPanen),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _estimasiPanen != null ? (isDark ? const Color(0xFF6EE7B7) : WarnaAplikasi.primaryDark) : subColor,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -4471,25 +4354,7 @@ class _FormMulaiSiklusSheetState extends State<_FormMulaiSiklusSheet> {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-
-              // TextField Target Panen Ton
-              const Text('Target Hasil Panen (Ton - Opsional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark)),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _targetPanenController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  hintText: 'Contoh: 5.5',
-                  hintStyle: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGrayLight),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.border)),
-                  filled: true,
-                  fillColor: WarnaAplikasi.bgInput,
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
               // Tombol Submit
               SizedBox(

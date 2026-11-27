@@ -747,7 +747,7 @@ class _LandScreenState extends State<LandScreen> {
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) => Container(
+                                              errorBuilder: (_, _, _) => Container(
                                                 width: 80,
                                                 height: 80,
                                                 color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
@@ -797,33 +797,76 @@ class _LandScreenState extends State<LandScreen> {
                                               Icon(Icons.wb_sunny_outlined, size: 12, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryLight),
                                               const SizedBox(width: 4),
                                               Text('${item.luas.toStringAsFixed(1).replaceAll('.', ',')} Ha', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.textDarkGreen)),
-                                              const SizedBox(width: 12),
+                                              const SizedBox(width: 10),
                                               Icon(Icons.eco_outlined, size: 12, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.primaryLight),
                                               const SizedBox(width: 4),
-                                              Text(item.komoditas, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.textDarkGreen)),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () => _navigateToEditLand(item),
-                                                    child: Icon(Icons.edit_outlined, size: 18, color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayLight),
-                                                  ),
-                                                  const SizedBox(width: 16),
-                                                  InkWell(
-                                                    onTap: () => _deleteLand(item),
-                                                    child: const Icon(Icons.delete_outline, size: 18, color: WarnaAplikasi.errorRedBright),
-                                                  ),
-                                                ],
+                                              Expanded(
+                                                child: Text(
+                                                  item.komoditas,
+                                                  style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.textDarkGreen),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ],
                                       ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Kolom Aksi Sisi Kanan: Edit (atas) & Hapus (bawah)
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () => _navigateToEditLand(item),
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: isDark ? const Color(0xFF232D26) : const Color(0xFFF1F5F2),
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: isDark ? const Color(0xFF2E3D32) : WarnaAplikasi.border,
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Icon(
+                                                Icons.edit_outlined,
+                                                size: 18,
+                                                color: isDark ? const Color(0xFFE2E9E4) : WarnaAplikasi.primaryDark,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () => _deleteLand(item),
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: isDark ? const Color(0xFF321B1D) : const Color(0xFFFEE2E2).withValues(alpha: 0.6),
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: isDark ? const Color(0xFF5A2529) : const Color(0xFFFCA5A5),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.delete_outline_rounded,
+                                                size: 18,
+                                                color: WarnaAplikasi.errorRedBright,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
