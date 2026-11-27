@@ -275,7 +275,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               ),
                             ),
                           ),
-                          ),
                           const SizedBox(width: 8),
                           InkWell(
                             onTap: () => Navigator.push(

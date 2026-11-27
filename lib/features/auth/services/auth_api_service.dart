@@ -71,7 +71,6 @@ class AuthApiService {
       fromJson: (data) => AuthUserModel.fromJson(Map<String, dynamic>.from(data)),
     );
   }
-  }
 
   /// Mengirim permintaan pencabutan token ke `POST /api/v1/auth/logout`.
   Future<ApiResponse<void>> logout() async {

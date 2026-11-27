@@ -82,40 +82,6 @@ class AuthRepository {
     _authStatus.value = AuthStatus.unauthenticated;
   }
 
-  /// Memperbarui biodata profil pengguna dan menyimpan state terbaru
-  Future<ApiResponse<AuthUserModel>> updateProfile({
-    required String nama,
-    String? username,
-    String? email,
-    String? noTelepon,
-    String? alamat,
-    String? passwordBaru,
-    MultipartFile? fotoProfil,
-  }) async {
-    final response = await _apiService.updateProfile(
-      nama: nama,
-      username: username,
-      email: email,
-      noTelepon: noTelepon,
-      alamat: alamat,
-      passwordBaru: passwordBaru,
-      fotoProfil: fotoProfil,
-    );
-
-    if (response.success && response.data != null) {
-      _currentUser = response.data;
-      // Sinkronkan ke local storage jika ada
-      try {
-        await _storageService.saveUserData(
-          response.data!.toJson().toString(),
-        );
-      } catch (_) {}
-      _authStatus.value = AuthStatus.authenticated;
-    }
-
-    return response;
-  }
-
   /// Proses login anggota dengan identifier (username atau email) dan password.
   Future<ApiResponse<AuthUserModel>> login({
     required String identifier,

@@ -652,7 +652,7 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                       margin: const EdgeInsets.only(right: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.25),
+                        color: Colors.amber.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.amberAccent),
                       ),
@@ -666,7 +666,8 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                       ),
                     ),
                   ],
-                  Flexible(
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 110),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -685,8 +686,6 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                       ),
                     ),
                   ),
-                ],
-              ),
                 ],
               ),
             ],
@@ -892,9 +891,6 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                   ],
                 ),
               ),
-                  ],
-                ),
-              ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1012,7 +1008,6 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                     ),
                   ),
                 ),
-                ),
               ],
             ),
           ),
@@ -1045,7 +1040,6 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                           color: titleColor,
                         ),
                       ),
-                    ),
                     ),
                   ],
                 ),
@@ -1146,9 +1140,6 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
                   ],
                 ),
               ),
@@ -1389,41 +1380,6 @@ class _HarvestDetailScreenState extends State<HarvestDetailScreen> {
                 height: 46,
                 child: ElevatedButton.icon(
                   onPressed: _handleCetakPdf,
-                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
-                  label: const Text(
-                    'Cetak Bukti PDF',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: WarnaAplikasi.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    elevation: 0,
-                  ),
-                ),
-              ),
-            ),
-          ],
-                ),
-              ),
-            ),
-          ] else ...[
-            // Cetak Bukti PDF
-            Expanded(
-              child: SizedBox(
-                height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Menyiapkan berkas Cetak Bukti PDF...'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
                   icon: const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Colors.white),
                   label: const Text(
                     'Cetak Bukti PDF',
