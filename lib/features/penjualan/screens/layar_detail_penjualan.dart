@@ -376,6 +376,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
               title: 'Detail Transaksi',
               subtitle: 'Rincian penjualan hasil panen & pembayaran',
             ),
+            if (_isLoading)
+              const LinearProgressIndicator(color: WarnaAplikasi.primary, minHeight: 2),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),

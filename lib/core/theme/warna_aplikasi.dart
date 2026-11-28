@@ -45,6 +45,13 @@ class WarnaAplikasi {
         : borderPale;
   }
 
+  /// Helper warna background field/input yang dinamis mengikuti mode gelap / terang
+  static Color getInputColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF232C26)
+        : bgInput;
+  }
+
   static const Color primaryBackground = Color(0xFFF9FAF9);
   
   /// Helper warna background info banner yang dinamis mengikuti mode gelap / terang

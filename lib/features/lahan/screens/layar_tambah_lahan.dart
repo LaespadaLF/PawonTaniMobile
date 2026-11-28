@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,11 +28,13 @@ class _AddLandScreenState extends State<AddLandScreen> {
   late final MapController _mapController;
 
   String _selectedAreaUnit = 'Hektar (Ha)';
+  String _selectedStatusPenguasaan = 'Milik Sendiri';
   bool _isMapInteractive = false;
   String? _selectedCropId;
   bool _isSubmitting = false;
   final List<XFile> _selectedImages = [];
   final List<Uint8List> _selectedImageBytesList = [];
+  PlatformFile? _selectedSpptFile;
 
   @override
   void initState() {
@@ -174,6 +177,7 @@ class _AddLandScreenState extends State<AddLandScreen> {
     final payload = <String, dynamic>{
       'nama_lahan': _nameController.text.trim(),
       'luas': areaInHa,
+      'status_penguasaan': _selectedStatusPenguasaan,
       'alamat_lahan': address,
       'latitude': double.tryParse(_latitudeController.text.replaceAll(',', '.')) ?? -6.5621,
       'longitude': double.tryParse(_longitudeController.text.replaceAll(',', '.')) ?? 107.7589,
@@ -187,11 +191,21 @@ class _AddLandScreenState extends State<AddLandScreen> {
       photoFiles.add(MultipartFile.fromBytes(_selectedImageBytesList[i], filename: name));
     }
 
+    MultipartFile? spptMultipart;
+    if (_selectedSpptFile != null) {
+      final bytes = await _selectedSpptFile!.readAsBytes();
+      spptMultipart = MultipartFile.fromBytes(
+        bytes,
+        filename: _selectedSpptFile!.name,
+      );
+    }
+
     final service = LahanApiService();
     final response = await service.createLahanWithFoto(
       payload,
       null,
       fotoLahanList: photoFiles.isEmpty ? null : photoFiles,
+      dokumenSppt: spptMultipart,
     );
 
     if (!mounted) return;
@@ -397,6 +411,34 @@ class _AddLandScreenState extends State<AddLandScreen> {
                 const SizedBox(height: 4),
                 Text(_areaEquivalentText, style: TextStyle(fontSize: 11, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryLight, fontWeight: FontWeight.w600)),
               ],
+              const SizedBox(height: 16),
+
+              // Status Penguasaan Lahan (Tenure Type)
+              Text('Status Penguasaan Lahan *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+              const SizedBox(height: 8),
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  border: Border.all(color: borderColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedStatusPenguasaan,
+                    isExpanded: true,
+                    dropdownColor: cardBg,
+                    style: TextStyle(color: titleColor, fontSize: 13, fontWeight: FontWeight.w600),
+                    items: ['Milik Sendiri', 'Sewa', 'Garap', 'Bagi Hasil', 'Lainnya']
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: titleColor))))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedStatusPenguasaan = val);
+                    },
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
 
               // Location / Address Field
@@ -799,6 +841,84 @@ class _AddLandScreenState extends State<AddLandScreen> {
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: WarnaAplikasi.primary, width: 1.5)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Upload Dokumen SPPT (1 Lahan = 1 SPPT)
+              Text('Dokumen SPPT Lahan (Opsional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: titleColor)),
+              const SizedBox(height: 4),
+              Text('Lampirkan berkas SPPT kepemilikan/penguasaan lahan ini (Format: PDF/JPG, maks. 5 MB).', style: TextStyle(fontSize: 11, color: hintColor)),
+              const SizedBox(height: 8),
+              if (_selectedSpptFile != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: WarnaAplikasi.bgLightGreen,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: WarnaAplikasi.accentGreen.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description, color: WarnaAplikasi.primary, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedSpptFile!.name,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Berkas siap diunggah',
+                              style: TextStyle(fontSize: 10, color: hintColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red, size: 18),
+                        onPressed: () => setState(() => _selectedSpptFile = null),
+                        tooltip: 'Hapus file',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              GestureDetector(
+                onTap: () async {
+                  final result = await FilePicker.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: const ['pdf', 'jpg', 'jpeg'],
+                  );
+                  if (result.isNotEmpty) {
+                    setState(() => _selectedSpptFile = result.first);
+                  }
+                },
+                child: Container(
+                  height: 52,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.file_present_outlined, color: isDark ? WarnaAplikasi.accentGreen : WarnaAplikasi.primaryLight, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        _selectedSpptFile == null ? 'Pilih Berkas SPPT (PDF/JPG)' : 'Ganti Berkas SPPT',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: titleColor),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

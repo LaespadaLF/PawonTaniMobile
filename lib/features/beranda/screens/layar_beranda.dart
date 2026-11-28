@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
+import 'package:pawon_mobile/core/storage/pawon_database_service.dart';
+import 'package:pawon_mobile/core/sync/pawon_sync_service.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
 import 'package:pawon_mobile/features/artikel/models/item_artikel.dart';
@@ -41,9 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final PanenApiService _panenApiService = PanenApiService();
   BerandaRingkasanModel? _data;
   HarvestItem? _latestHarvest;
-  bool _isLoading = true;
   bool _isLoadingHarvest = true;
-  String? _errorMessage;
+  int _pendingSyncCount = 0;
+  bool _isSyncing = false;
 
   @override
   void initState() {
@@ -54,28 +56,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadBerandaData() async {
     setState(() {
-      _isLoading = true;
       _isLoadingHarvest = true;
-      _errorMessage = null;
     });
 
     NotifikasiRepository.instance.fetchUnreadCount();
     final berandaFuture = _apiService.getRingkasan();
     final panenFuture = _panenApiService.getPanenList();
+    final queueCountFuture = PawonDatabaseService.instance.getPendingQueueCount();
 
-    final results = await Future.wait([berandaFuture, panenFuture]);
+    final results = await Future.wait([berandaFuture, panenFuture, queueCountFuture]);
     final res = results[0] as ApiResponse<BerandaRingkasanModel>;
     final panenRes = results[1] as ApiResponse<List<HarvestItem>>;
+    final count = results[2] as int;
 
     if (!mounted) return;
 
     setState(() {
+      _pendingSyncCount = count;
       if (res.success && res.data != null) {
         _data = res.data;
-      } else {
-        _errorMessage = res.message;
       }
-      _isLoading = false;
 
       if (panenRes.success && panenRes.data != null && panenRes.data!.isNotEmpty) {
         _latestHarvest = panenRes.data!.first;
@@ -84,6 +84,37 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       _isLoadingHarvest = false;
     });
+  }
+
+  Future<void> _handleSyncNow() async {
+    setState(() => _isSyncing = true);
+    final summary = await PawonSyncService.instance.syncAllPending();
+    if (!mounted) return;
+    setState(() => _isSyncing = false);
+
+    if (summary.total == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak ada data offline yang perlu disinkronkan.')),
+      );
+      return;
+    }
+
+    if (summary.hasFailures) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${summary.successCount} data tersinkron, ${summary.failedCount} gagal.'),
+          backgroundColor: Colors.amber.shade800,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Berhasil menyinkronkan seluruh data offline (${summary.successCount} data)!'),
+          backgroundColor: WarnaAplikasi.primary,
+        ),
+      );
+    }
+    _loadBerandaData();
   }
 
   String _getGreeting() {
@@ -117,6 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 // 1. Top Header: Greeting, Notification, Avatar
                 _buildTopHeader(context, userName, userPhoto),
                 const SizedBox(height: 16),
+
+                // Banner Notifikasi Sinkronisasi Data Offline
+                _buildOfflineSyncBanner(),
 
                 // 2. Banner: Semangat Bertani + Cuaca Realtime
                 FarmerBannerCard(
@@ -235,6 +269,95 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOfflineSyncBanner() {
+    if (_pendingSyncCount <= 0) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.cloud_upload_outlined,
+              color: Color(0xFFD97706),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$_pendingSyncCount Data Offline Tersimpan',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Data siap disinkronkan ke server',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFFB45309),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: _isSyncing ? null : _handleSyncNow,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD97706),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: _isSyncing
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Sinkronkan',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -568,6 +691,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showNotificationsModal(BuildContext context) {
+    // Seketika bersihkan/tandai notifikasi telah dilihat saat tombol lonceng dipencet
+    NotifikasiRepository.instance.markAllAsRead();
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const NotificationScreen(),
@@ -638,9 +763,5 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => LayarDetailArtikel(article: article),
       ),
     );
-  }
-
-  void _showLatestHarvestDetail(BuildContext context) {
-    widget.onNavigateTab?.call(3);
   }
 }

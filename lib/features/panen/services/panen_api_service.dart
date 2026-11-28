@@ -255,9 +255,17 @@ class PanenApiService {
     } catch (_) {}
 
     // Fallback simpan lokal jika offline / backend belum terhubung
+    try {
+      await PawonDatabaseService.instance.enqueueOffline(
+        tipe: 'panen',
+        aksi: 'create',
+        payload: payload,
+      );
+    } catch (_) {}
+
     final newItem = HarvestItem.fromJson(payload);
     _inMemoryItems.insert(0, newItem);
-    return ApiResponse.success(data: newItem, message: 'Panen berhasil dicatat.');
+    return ApiResponse.success(data: newItem, message: 'Panen berhasil dicatat secara offline (draft).');
   }
 
   /// Memperbarui catatan panen (bisa dengan foto baru / multiple foto multipart).

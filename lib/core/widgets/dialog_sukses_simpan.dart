@@ -50,8 +50,6 @@ class SaveSuccessDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final harvestCode =
-        item.harvestCode.isNotEmpty ? item.harvestCode : 'PN-202410-09';
     final weightStr = _formatNumber(item.weightKg);
     final tonStr = item.weightTon.toStringAsFixed(2).replaceAll('.', ',');
 

@@ -87,6 +87,7 @@ class ItemLahan {
   final String lokasi;
   final double luas;
   final String komoditas;
+  final String statusPenguasaan;
   final StatusLahan status;
   final double? latitude;
   final double? longitude;
@@ -123,6 +124,7 @@ class ItemLahan {
     required this.lokasi,
     required this.luas,
     required this.komoditas,
+    this.statusPenguasaan = 'Milik Sendiri',
     required this.status,
     this.latitude,
     this.longitude,
@@ -207,6 +209,7 @@ class ItemLahan {
       lokasi: (json['lokasi'] ?? json['alamat_lahan'] ?? '').toString(),
       luas: json['luas'] != null ? (double.tryParse(json['luas'].toString()) ?? 0.0) : 0.0,
       komoditas: json['komoditas']?.toString() ?? '',
+      statusPenguasaan: (json['status_penguasaan'] ?? 'Milik Sendiri').toString(),
       status: status,
       latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
       longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
@@ -237,6 +240,7 @@ class ItemLahan {
       'alamat_lahan': lokasi,
       'luas': luas,
       'komoditas': komoditas,
+      'status_penguasaan': statusPenguasaan,
       'status': status.name,
       'latitude': latitude,
       'longitude': longitude,

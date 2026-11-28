@@ -19,7 +19,6 @@ class PawonPreferencesService {
   static const String _keyThemeMode = 'pref_theme_mode';
   static const String _keyUserCache = 'pref_user_cache';
   static const String _keyLastSync = 'pref_last_sync';
-  static const String _keyOfflineNotificationCount = 'pref_unread_notif';
 
   /// Simpan Mode Tema (light / dark / system)
   Future<bool> setThemeMode(String mode) async {
