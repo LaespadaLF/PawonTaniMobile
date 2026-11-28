@@ -34,11 +34,13 @@ class BerandaUserModel {
   final String nama;
   final String role;
   final String kelompok;
+  final String? fotoProfil;
 
   const BerandaUserModel({
     required this.nama,
     required this.role,
     required this.kelompok,
+    this.fotoProfil,
   });
 
   factory BerandaUserModel.fromJson(Map<String, dynamic> json) {
@@ -46,6 +48,7 @@ class BerandaUserModel {
       nama: json['nama'] as String? ?? 'Petani PawonTani',
       role: json['role'] as String? ?? 'Anggota',
       kelompok: json['kelompok'] as String? ?? 'Kelompok Tani',
+      fotoProfil: json['foto_profil'] as String?,
     );
   }
 }

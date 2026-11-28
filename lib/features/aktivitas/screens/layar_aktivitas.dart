@@ -6,7 +6,7 @@ import 'package:pawon_mobile/features/aktivitas/screens/layar_edit_aktivitas.dar
 import 'package:pawon_mobile/features/aktivitas/services/aktivitas_api_service.dart';
 import 'package:pawon_mobile/features/aktivitas/widgets/dialog_hapus_aktivitas.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 
 class ActivityScreen extends StatefulWidget {
   final VoidCallback? onBackToHome;
@@ -275,12 +275,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               ),
                             ),
                           ),
-                          ),
                           const SizedBox(width: 8),
                           InkWell(
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                              MaterialPageRoute(builder: (_) => const LayarProfil()),
                             ),
                             borderRadius: BorderRadius.circular(20),
                             child: Container(

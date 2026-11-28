@@ -8,7 +8,7 @@ import 'package:pawon_mobile/features/lahan/screens/layar_edit_lahan.dart';
 import 'package:pawon_mobile/features/lahan/screens/layar_detail_lahan.dart';
 import 'package:pawon_mobile/features/lahan/services/lahan_api_service.dart';
 import 'package:pawon_mobile/core/widgets/ikon_tanaman_kustom.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class LandScreen extends StatefulWidget {
@@ -398,7 +398,7 @@ class _LandScreenState extends State<LandScreen> {
               title: 'Lahan',
               onProfileTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                MaterialPageRoute(builder: (_) => const LayarProfil()),
               ),
               onNotificationTap: () => Navigator.push(
                 context,

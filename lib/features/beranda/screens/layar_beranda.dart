@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/core/network/api_response.dart';
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:pawon_mobile/features/aktivitas/screens/layar_catat_aktivitas.dart';
@@ -20,6 +21,7 @@ import 'package:pawon_mobile/features/notifikasi/repositories/notifikasi_reposit
 import 'package:pawon_mobile/features/notifikasi/screens/layar_daftar_notifikasi.dart';
 import 'package:pawon_mobile/features/panen/screens/layar_detail_panen.dart';
 import 'package:pawon_mobile/features/panen/services/panen_api_service.dart';
+import 'package:pawon_mobile/features/beranda/screens/layar_kalender_tanam.dart';
 import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -95,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUser = AuthRepository().currentUser;
+    final userPhoto = _data?.user.fotoProfil ?? currentUser?.fotoProfil;
     final userName = _data?.user.nama ?? currentUser?.nama ?? 'Petani';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF121A15) : WarnaAplikasi.primaryBackground;
@@ -112,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. Top Header: Greeting, Notification, Avatar
-                _buildTopHeader(context, userName),
+                _buildTopHeader(context, userName, userPhoto),
                 const SizedBox(height: 16),
 
                 // 2. Banner: Semangat Bertani + Cuaca Realtime
@@ -236,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTopHeader(BuildContext context, String name) {
+  Widget _buildTopHeader(BuildContext context, String name, [String? userPhoto]) {
     final firstName = name.trim().split(' ').first;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textGreeting = isDark ? Colors.grey.shade400 : WarnaAplikasi.textGray;
@@ -282,18 +285,18 @@ class _HomeScreenState extends State<HomeScreen> {
             // Notification Button with Dynamic Badge
             InkWell(
               onTap: () => _showNotificationsModal(context),
-              borderRadius: BorderRadius.circular(12),
+              customBorder: const CircleBorder(),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
                           ? const Color(0xFF283A2E)
                           : WarnaAplikasi.bgPaleGreen2,
-                      borderRadius: BorderRadius.circular(12),
+                      shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.notifications_outlined,
@@ -346,34 +349,43 @@ class _HomeScreenState extends State<HomeScreen> {
             // Profile Avatar Button
             InkWell(
               onTap: () => _showProfileModal(context),
-              borderRadius: BorderRadius.circular(12),
+              customBorder: const CircleBorder(),
               child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
                   color: WarnaAplikasi.primary,
-                  borderRadius: BorderRadius.circular(12),
-                  image: (AuthRepository().currentUser?.fotoProfil != null &&
-                          AuthRepository().currentUser!.fotoProfil!.isNotEmpty)
-                      ? DecorationImage(
-                          image: NetworkImage(AuthRepository().currentUser!.fotoProfil!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  shape: BoxShape.circle,
                 ),
-                child: (AuthRepository().currentUser?.fotoProfil == null ||
-                        AuthRepository().currentUser!.fotoProfil!.isEmpty)
-                    ? Center(
-                        child: Text(
-                          firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                child: ClipOval(
+                  child: (userPhoto != null && userPhoto.trim().isNotEmpty)
+                      ? Image.network(
+                          ApiConstants.resolveImageUrl(userPhoto) ?? userPhoto,
+                          fit: BoxFit.cover,
+                          width: 40,
+                          height: 40,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Text(
+                              firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      )
-                    : null,
+                ),
               ),
             ),
           ],
@@ -602,6 +614,15 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => RecordActivityScreen(onSave: (_) {})));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_month_rounded, color: WarnaAplikasi.primary),
+              title: const Text('Kalender Musim Tanam & Agronomi'),
+              subtitle: const Text('Panduan fase budidaya & rekomendasi pekan ini', style: TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGray)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LayarKalenderTanam()));
               },
             ),
           ],

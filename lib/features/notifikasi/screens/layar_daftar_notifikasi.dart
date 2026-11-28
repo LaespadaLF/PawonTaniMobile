@@ -239,22 +239,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgCol = WarnaAplikasi.getBackgroundColor(context);
+    final appBarBg = isDark ? const Color(0xFF161E19) : Colors.white;
+    final textDark = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+    final textSub = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
     return Scaffold(
-      backgroundColor: WarnaAplikasi.primaryBackground,
+      backgroundColor: bgCol,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: appBarBg,
         elevation: 0,
         scrolledUnderElevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: WarnaAplikasi.primaryDark),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: textDark),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Notifikasi',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: WarnaAplikasi.primaryDark,
+            color: textDark,
           ),
         ),
         centerTitle: false,
@@ -290,13 +296,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
-            color: Colors.white,
+            color: appBarBg,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
-                _buildFilterChip('semua', 'Semua'),
+                _buildFilterChip('semua', 'Semua', isDark),
                 const SizedBox(width: 8),
-                _buildFilterChip('belum_dibaca', 'Belum Dibaca'),
+                _buildFilterChip('belum_dibaca', 'Belum Dibaca', isDark),
               ],
             ),
           ),
@@ -381,10 +387,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               isUnreadFilter
                                   ? 'Tidak ada notifikasi belum dibaca'
                                   : 'Belum ada notifikasi',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: WarnaAplikasi.primaryDark,
+                                color: textDark,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -393,9 +399,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   ? 'Semua notifikasi Anda sudah dibaca.'
                                   : 'Aktivitas seputar lahan, siklus, dan panen akan muncul di sini.',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12.5,
-                                color: WarnaAplikasi.textGray,
+                                color: textSub,
                               ),
                             ),
                           ],
@@ -474,8 +480,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildFilterChip(String filterKey, String label) {
+  Widget _buildFilterChip(String filterKey, String label, bool isDark) {
     final isSelected = _repository.activeFilter == filterKey;
+    final unselectedBg = isDark ? const Color(0xFF28332C) : const Color(0xFFF3F4F6);
+    final unselectedText = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
 
     return InkWell(
       onTap: () => _repository.switchFilter(filterKey),
@@ -484,7 +492,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? WarnaAplikasi.primary : const Color(0xFFF3F4F6),
+          color: isSelected ? WarnaAplikasi.primary : unselectedBg,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -492,7 +500,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? Colors.white : WarnaAplikasi.textGray,
+            color: isSelected ? Colors.white : unselectedText,
           ),
         ),
       ),

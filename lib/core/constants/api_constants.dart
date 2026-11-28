@@ -110,12 +110,12 @@ class ApiConstants {
     } else if (clean.startsWith('http://') || clean.startsWith('https://')) {
       final uri = Uri.tryParse(clean);
       final p = uri?.path ?? '';
-      relative = p.replaceFirst(RegExp(r'^/(?:storage|media)/'), '');
+      relative = p.replaceFirst(RegExp(r'^/(?:api/v1/)?(?:storage|media)/'), '');
     } else {
       relative = clean.startsWith('/') ? clean.substring(1) : clean;
-      relative = relative.replaceFirst(RegExp(r'^(?:storage|media)/'), '');
+      relative = relative.replaceFirst(RegExp(r'^(?:api/v1/)?(?:storage|media)/'), '');
     }
 
-    return '$host/media/$relative';
+    return '$host/api/v1/media/$relative';
   }
 }

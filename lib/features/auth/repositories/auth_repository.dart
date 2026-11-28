@@ -84,11 +84,12 @@ class AuthRepository {
 
   /// Memperbarui biodata profil pengguna dan menyimpan state terbaru
   Future<ApiResponse<AuthUserModel>> updateProfile({
-    required String nama,
+    String? nama,
     String? username,
     String? email,
     String? noTelepon,
     String? alamat,
+    String? password,
     String? passwordBaru,
     MultipartFile? fotoProfil,
   }) async {
@@ -98,6 +99,7 @@ class AuthRepository {
       email: email,
       noTelepon: noTelepon,
       alamat: alamat,
+      password: password,
       passwordBaru: passwordBaru,
       fotoProfil: fotoProfil,
     );
@@ -107,7 +109,7 @@ class AuthRepository {
       // Sinkronkan ke local storage jika ada
       try {
         await _storageService.saveUserData(
-          response.data!.toJson().toString(),
+          jsonEncode(response.data!.toJson()),
         );
       } catch (_) {}
       _authStatus.value = AuthStatus.authenticated;
@@ -206,35 +208,6 @@ class AuthRepository {
     if (response.success && response.data != null) {
       _currentUser = response.data;
       await _storageService.saveUserData(jsonEncode(response.data!.toJson()));
-    }
-    return response;
-  }
-
-  /// Memperbarui data profil pengguna aktif dan menyimpannya ke cache lokal.
-  Future<ApiResponse<AuthUserModel>> updateProfile({
-    String? nama,
-    String? username,
-    String? email,
-    String? noTelepon,
-    String? alamat,
-    String? password,
-    String? passwordBaru,
-    MultipartFile? fotoProfil,
-  }) async {
-    final response = await _apiService.updateProfile(
-      nama: nama,
-      username: username,
-      email: email,
-      noTelepon: noTelepon,
-      alamat: alamat,
-      password: password,
-      passwordBaru: passwordBaru,
-      fotoProfil: fotoProfil,
-    );
-    if (response.success && response.data != null) {
-      _currentUser = response.data;
-      await _storageService.saveUserData(jsonEncode(response.data!.toJson()));
-      _authStatus.value = AuthStatus.authenticated;
     }
     return response;
   }

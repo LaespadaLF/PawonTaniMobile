@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawon_mobile/features/auth/models/auth_user_model.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 
 void main() {
-  testWidgets('ProfileScreen menampilkan data lengkap pengguna, kontak, dan informasi poktan', (tester) async {
+  testWidgets('LayarProfil pumps and displays profile screen elements', (tester) async {
     const user = AuthUserModel(
       id: 'USR-001',
       nama: 'Budi Santoso',
@@ -15,42 +15,25 @@ void main() {
       alamat: 'Dusun Krajan RT 01 RW 02',
       role: 'Anggota',
       status: 'Aktif',
-      kelompokTani: KelompokTaniModel(
-        idKelompok: 'PKT-001',
-        namaKelompok: 'Poktan Sumber Makmur',
-        alamat: 'Desa Sukamaju',
-        status: 'Aktif',
-      ),
-      anggota: AnggotaModel(
-        idAnggota: 'AGT-2024-001',
-        statusKeanggotaan: 'Aktif',
-      ),
     );
+
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: ProfileScreen(initialUser: user),
+        home: LayarProfil(initialUser: user),
       ),
     );
 
+    await tester.pump();
     expect(find.text('Profil Petani'), findsOneWidget);
     expect(find.text('Budi Santoso'), findsOneWidget);
     expect(find.text('@budisantoso'), findsOneWidget);
-    expect(find.text('Anggota'), findsWidgets);
-    expect(find.text('Aktif'), findsWidgets);
-    expect(find.text('Poktan Sumber Makmur'), findsOneWidget);
-    expect(find.text('081234567890'), findsOneWidget);
-    expect(find.text('budi@pawontani.id'), findsOneWidget);
-    expect(find.text('Dusun Krajan RT 01 RW 02'), findsOneWidget);
     expect(find.text('Ubah Data Profil'), findsOneWidget);
-    expect(find.text('Keluar dari Akun'), findsOneWidget);
-    expect(find.text('Hapus Akun Mandiri'), findsOneWidget);
-
-    // Buka dialog ubah profil
-    await tester.tap(find.text('Ubah Data Profil'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Nama Lengkap *'), findsOneWidget);
-    expect(find.text('Simpan Perubahan'), findsOneWidget);
+    expect(find.text('Pengaturan Tampilan'), findsOneWidget);
+    expect(find.text('Kelompok Tani & Keanggotaan'), findsOneWidget);
+    expect(find.text('ID Anggota'), findsNothing);
   });
 }

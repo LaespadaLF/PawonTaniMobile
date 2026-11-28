@@ -7,7 +7,7 @@ import 'package:pawon_mobile/features/penjualan/screens/layar_catat_penjualan.da
 import 'package:pawon_mobile/features/penjualan/screens/layar_detail_penjualan.dart';
 import 'package:pawon_mobile/features/penjualan/screens/layar_form_produk.dart';
 import 'package:pawon_mobile/features/penjualan/services/marketplace_penjualan_api_service.dart';
-import 'package:pawon_mobile/features/profile/screens/layar_profil.dart';
+import 'package:pawon_mobile/features/profil/screens/layar_profil.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_notifikasi.dart';
 
 class PenjualanScreen extends StatefulWidget {
@@ -239,7 +239,7 @@ class _PenjualanScreenState extends State<PenjualanScreen>
       title: 'Penjualan',
       onProfileTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        MaterialPageRoute(builder: (_) => const LayarProfil()),
       ),
       onNotificationTap: () => Navigator.push(
         context,

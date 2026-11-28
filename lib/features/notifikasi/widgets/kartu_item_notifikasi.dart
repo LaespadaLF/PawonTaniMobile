@@ -20,6 +20,8 @@ class NotificationItemCard extends StatelessWidget {
     final isUnread = !item.sudahDibaca;
     final entityType = item.entityType;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Tentukan konfigurasi ikon dan warna berdasarkan tipe entitas
     final IconData iconData;
     final Color iconColor;
@@ -28,31 +30,35 @@ class NotificationItemCard extends StatelessWidget {
     switch (entityType) {
       case 'lahan':
         iconData = Icons.landscape_rounded;
-        iconColor = const Color(0xFF2E7D32);
-        iconBgColor = const Color(0xFFE8F5E9);
+        iconColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+        iconBgColor = isDark ? const Color(0xFF1E3324) : const Color(0xFFE8F5E9);
         break;
       case 'siklus_tanam':
         iconData = Icons.eco_rounded;
-        iconColor = const Color(0xFF1B5E20);
-        iconBgColor = const Color(0xFFDCEDC8);
+        iconColor = isDark ? const Color(0xFFA5D6A7) : const Color(0xFF1B5E20);
+        iconBgColor = isDark ? const Color(0xFF233D2A) : const Color(0xFFDCEDC8);
         break;
       case 'panen':
         iconData = Icons.agriculture_rounded;
-        iconColor = const Color(0xFFE65100);
-        iconBgColor = const Color(0xFFFFF3E0);
+        iconColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100);
+        iconBgColor = isDark ? const Color(0xFF3E2C1C) : const Color(0xFFFFF3E0);
         break;
       default:
         iconData = Icons.notifications_active_rounded;
-        iconColor = WarnaAplikasi.primary;
-        iconBgColor = WarnaAplikasi.bgPaleGreen2;
+        iconColor = isDark ? const Color(0xFF66BB6A) : WarnaAplikasi.primary;
+        iconBgColor = isDark ? const Color(0xFF203627) : WarnaAplikasi.bgPaleGreen2;
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final normalCardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
-    final unreadCardBg = isDark ? const Color(0xFF283A2E) : const Color(0xFFF1F8F4);
-    final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.borderPale;
+    final unreadCardBg = isDark ? const Color(0xFF223027) : const Color(0xFFF1F8F4);
+    final borderColor = isDark ? const Color(0xFF2E3B33) : WarnaAplikasi.borderPale;
     final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.textDark;
     final bodyColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+
+    final metaColor = isDark ? const Color(0xFF7E9385) : WarnaAplikasi.textGray;
+    final timeColor = isUnread
+        ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+        : metaColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -151,7 +157,7 @@ class NotificationItemCard extends StatelessWidget {
                           Icon(
                             Icons.access_time_rounded,
                             size: 11,
-                            color: isUnread ? WarnaAplikasi.primary : WarnaAplikasi.textGray,
+                            color: timeColor,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -159,16 +165,16 @@ class NotificationItemCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
-                              color: isUnread ? WarnaAplikasi.primary : WarnaAplikasi.textGray,
+                              color: timeColor,
                             ),
                           ),
                           if (item.namaLahan != null && item.namaLahan!.isNotEmpty) ...[
                             const SizedBox(width: 8),
                             Text(
                               '•  ${item.namaLahan}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: WarnaAplikasi.textGray,
+                                color: metaColor,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

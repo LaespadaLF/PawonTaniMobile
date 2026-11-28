@@ -1,5 +1,6 @@
 import 'package:pawon_mobile/core/theme/warna_aplikasi.dart';
 import 'package:flutter/material.dart';
+import 'package:pawon_mobile/core/constants/api_constants.dart';
 import 'package:pawon_mobile/features/panen/models/item_panen.dart';
 import 'package:pawon_mobile/features/auth/repositories/auth_repository.dart';
 import 'package:pawon_mobile/features/notifikasi/screens/layar_daftar_notifikasi.dart';
@@ -369,16 +370,16 @@ class PawonFixedHeader extends StatelessWidget {
                     NotifikasiRepository.instance.fetchUnreadCount();
                   });
                 },
-                borderRadius: BorderRadius.circular(12),
+                customBorder: const CircleBorder(),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      width: 38,
-                      height: 38,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: iconBtnBg,
-                        borderRadius: BorderRadius.circular(12),
+                        shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.notifications_outlined,
@@ -433,32 +434,43 @@ class PawonFixedHeader extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const LayarProfil()),
                   );
                 },
-                borderRadius: BorderRadius.circular(12),
+                customBorder: const CircleBorder(),
                 child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
                     color: WarnaAplikasi.primary,
-                    borderRadius: BorderRadius.circular(12),
-                    image: (currentUser?.fotoProfil != null && currentUser!.fotoProfil!.isNotEmpty)
-                        ? DecorationImage(
-                            image: NetworkImage(currentUser.fotoProfil!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+                    shape: BoxShape.circle,
                   ),
-                  child: (currentUser?.fotoProfil == null || currentUser!.fotoProfil!.isEmpty)
-                      ? Center(
-                          child: Text(
-                            firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                  child: ClipOval(
+                    child: (currentUser?.fotoProfil != null && currentUser!.fotoProfil!.trim().isNotEmpty)
+                        ? Image.network(
+                            ApiConstants.resolveImageUrl(currentUser.fotoProfil) ?? currentUser.fotoProfil!,
+                            fit: BoxFit.cover,
+                            width: 40,
+                            height: 40,
+                            errorBuilder: (context, error, stackTrace) => Center(
+                              child: Text(
+                                firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              firstName.isNotEmpty ? firstName[0].toUpperCase() : 'P',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        )
-                      : null,
+                  ),
                 ),
               ),
             ],

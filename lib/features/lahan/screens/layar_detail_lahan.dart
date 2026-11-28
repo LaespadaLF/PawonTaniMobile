@@ -260,158 +260,172 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
   }
 
   Widget _buildSpptDocumentsSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WarnaAplikasi.greenLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.greenLight;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+        final subColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+        final itemBg = isDark ? const Color(0xFF28332C) : WarnaAplikasi.backgroundLight;
+        final badgeBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight;
+        final badgeText = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primaryDark;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
-                child: Text(
-                  'Dokumen SPPT',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: WarnaAplikasi.primaryDark,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Dokumen SPPT',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: titleColor,
+                      ),
+                    ),
                   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_spptDocuments.length} file',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: badgeText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Perbarui dokumen saat masa berlaku atau masa sewa lahan berubah. Format PDF/JPG, maksimal 5 MB per file.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: subColor,
+                  height: 1.4,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: WarnaAplikasi.greenLight,
-                  borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 12),
+              if (_isLoadingSpptDocuments)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                  ),
+                )
+              else if (_spptDocuments.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: itemBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Belum ada dokumen SPPT untuk lahan ini.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: subColor),
+                  ),
+                )
+              else
+                ..._spptDocuments.map(
+                  (document) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(11),
+                    decoration: BoxDecoration(
+                      color: itemBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.insert_drive_file_outlined,
+                          color: WarnaAplikasi.primary,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                document.namaFile,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: titleColor,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${_formatSpptSize(document.ukuranBytes)} · ${_formatSpptDate(document.diperbaruiPada)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: subColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Hapus dokumen SPPT',
+                          onPressed: () => _deleteSpptDocument(document),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.red,
+                            size: 21,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Text(
-                  '${_spptDocuments.length} file',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: WarnaAplikasi.primaryDark,
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isUploadingSppt ? null : _pickAndUploadSppt,
+                  icon: _isUploadingSppt
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                        )
+                      : const Icon(Icons.upload_file_rounded, size: 18),
+                  label: Text(
+                    _isUploadingSppt ? 'Mengunggah...' : 'Tambah SPPT Baru',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: titleColor,
+                    backgroundColor: isDark ? const Color(0xFF283A2E) : Colors.transparent,
+                    side: BorderSide(color: isDark ? const Color(0xFF3B5745) : WarnaAplikasi.greenLight),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Perbarui dokumen saat masa berlaku atau masa sewa lahan berubah. Format PDF/JPG, maksimal 5 MB per file.',
-            style: TextStyle(
-              fontSize: 11,
-              color: WarnaAplikasi.textGray,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (_isLoadingSpptDocuments)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else if (_spptDocuments.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-              decoration: BoxDecoration(
-                color: WarnaAplikasi.backgroundLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'Belum ada dokumen SPPT untuk lahan ini.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
-              ),
-            )
-          else
-            ..._spptDocuments.map(
-              (document) => Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(11),
-                decoration: BoxDecoration(
-                  color: WarnaAplikasi.backgroundLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.insert_drive_file_outlined,
-                      color: WarnaAplikasi.primary,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            document.namaFile,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: WarnaAplikasi.textDarkGreen,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${_formatSpptSize(document.ukuranBytes)} · ${_formatSpptDate(document.diperbaruiPada)}',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: WarnaAplikasi.textGray,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Hapus dokumen SPPT',
-                      onPressed: () => _deleteSpptDocument(document),
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Colors.red,
-                        size: 21,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _isUploadingSppt ? null : _pickAndUploadSppt,
-              icon: _isUploadingSppt
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.upload_file_rounded, size: 18),
-              label: Text(
-                _isUploadingSppt ? 'Mengunggah...' : 'Tambah SPPT Baru',
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: WarnaAplikasi.primaryDark,
-                side: const BorderSide(color: WarnaAplikasi.greenLight),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1065,10 +1079,10 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Peta Lokasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark)),
+                    Text('Peta Lokasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor)),
                     Text(
                       'Lat: ${(_item.latitude ?? -6.5621).toStringAsFixed(6)}, Long: ${(_item.longitude ?? 107.7589).toStringAsFixed(6)}',
-                      style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
+                      style: TextStyle(fontSize: 11, color: subtitleColor),
                     ),
                   ],
                 ),
@@ -1077,7 +1091,7 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                   height: 160,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: WarnaAplikasi.border),
+                    border: Border.all(color: borderColor),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
@@ -1175,9 +1189,6 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
 
                 // Riwayat Terkini / Aktivitas
                 _buildRiwayatAktivitasSection(),
-
-                // Riwayat Verifikasi (Audit Trail Backend)
-                _buildRiwayatVerifikasiList(),
 
                 const SizedBox(height: 32),
 
@@ -1368,451 +1379,478 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
 
   /// Bagian Dokumentasi Petak: Galeri Foto Aktivitas & Foto Profil Lahan
   Widget _buildGaleriDokumentasiSection() {
-    // Kumpulkan seluruh foto aktivitas yang memiliki foto
-    final List<Map<String, dynamic>> fotoList = [];
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+        final badgeBg = isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight;
+        final badgeText = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary;
+        final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+        final subColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayLight;
 
-    // 1. Kumpulan foto lahan (multi-photo) atau foto profil utama lahan
-    if (_item.photos.isNotEmpty) {
-      for (int i = 0; i < _item.photos.length; i++) {
-        fotoList.add({
-          'url': _item.photos[i],
-          'title': i == 0 ? 'Profil Petak' : 'Dokumentasi Petak #${i + 1}',
-          'subtitle': i == 0 ? 'Foto Utama Lahan' : 'Foto Petak Lahan',
-          'isMain': i == 0,
-        });
-      }
-    } else if (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty) {
-      fotoList.add({
-        'url': _item.fotoLahan!,
-        'title': 'Profil Petak',
-        'subtitle': 'Foto Utama Lahan',
-        'isMain': true,
-      });
-    }
+        // Kumpulkan seluruh foto aktivitas yang memiliki foto
+        final List<Map<String, dynamic>> fotoList = [];
 
-    // 2. Kumpulan foto dari setiap aktivitas tanam (multi-photo & single)
-    for (final akt in _activities) {
-      if (akt.photos.isNotEmpty) {
-        for (final p in akt.photos) {
+        // 1. Kumpulan foto lahan (multi-photo) atau foto profil utama lahan
+        if (_item.photos.isNotEmpty) {
+          for (int i = 0; i < _item.photos.length; i++) {
+            fotoList.add({
+              'url': _item.photos[i],
+              'title': i == 0 ? 'Profil Petak' : 'Dokumentasi Petak #${i + 1}',
+              'subtitle': i == 0 ? 'Foto Utama Lahan' : 'Foto Petak Lahan',
+              'isMain': i == 0,
+            });
+          }
+        } else if (_item.fotoLahan != null && _item.fotoLahan!.isNotEmpty) {
           fotoList.add({
-            'url': p,
-            'title': akt.title,
-            'subtitle': akt.date,
-            'isMain': false,
-            'item': akt,
+            'url': _item.fotoLahan!,
+            'title': 'Profil Petak',
+            'subtitle': 'Foto Utama Lahan',
+            'isMain': true,
           });
         }
-      } else if (akt.imageUrl != null && akt.imageUrl!.isNotEmpty) {
-        fotoList.add({
-          'url': akt.imageUrl!,
-          'title': akt.title,
-          'subtitle': akt.date,
-          'isMain': false,
-          'item': akt,
-        });
-      }
-    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // 2. Kumpulan foto dari setiap aktivitas tanam (multi-photo & single)
+        for (final akt in _activities) {
+          if (akt.photos.isNotEmpty) {
+            for (final p in akt.photos) {
+              fotoList.add({
+                'url': p,
+                'title': akt.title,
+                'subtitle': akt.date,
+                'isMain': false,
+                'item': akt,
+              });
+            }
+          } else if (akt.imageUrl != null && akt.imageUrl!.isNotEmpty) {
+            fotoList.add({
+              'url': akt.imageUrl!,
+              'title': akt.title,
+              'subtitle': akt.date,
+              'isMain': false,
+              'item': akt,
+            });
+          }
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Dokumentasi Petak',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark),
-                ),
-                if (fotoList.isNotEmpty) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: WarnaAplikasi.greenLight,
-                      borderRadius: BorderRadius.circular(8),
+                Row(
+                  children: [
+                    Text(
+                      'Dokumentasi Petak',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor),
                     ),
+                    if (fotoList.isNotEmpty) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${fotoList.length} Foto',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: badgeText),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                InkWell(
+                  onTap: _navigateToCatatAktivitas,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     child: Text(
-                      '${fotoList.length} Foto',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                      '+ Tambah Foto',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary),
                     ),
                   ),
-                ],
+                ),
               ],
             ),
-            InkWell(
-              onTap: _navigateToCatatAktivitas,
-              borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Text(
-                  '+ Tambah Foto',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+            const SizedBox(height: 12),
+
+            if (fotoList.isEmpty)
+              InkWell(
+                onTap: _navigateToCatatAktivitas,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.add_a_photo_outlined, color: badgeText, size: 22),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Belum Ada Foto Dokumentasi',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: titleColor),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Ambil foto saat mencatat pemupukan, pengairan, atau kegiatan rawat petak.',
+                        style: TextStyle(fontSize: 11, color: subColor),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _navigateToCatatAktivitas,
+                        icon: const Icon(Icons.camera_alt_outlined, size: 14),
+                        label: const Text('Ambil Foto Kegiatan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: WarnaAplikasi.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 155,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  itemCount: fotoList.length + 1, // +1 untuk kartu tambah cepat
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    // Kartu terakhir: tombol tambah cepat
+                    if (index == fotoList.length) {
+                      return InkWell(
+                        onTap: _navigateToCatatAktivitas,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 110,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: borderColor, style: BorderStyle.solid),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_circle_outline, color: badgeText, size: 26),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Tambah\nFoto',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: titleColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    final foto = fotoList[index];
+                    final url = foto['url'] as String;
+                    final title = foto['title'] as String;
+                    final subtitle = foto['subtitle'] as String;
+                    final isMain = foto['isMain'] == true;
+
+                    return InkWell(
+                      onTap: () => _showImagePreviewDialog(url, title, subtitle),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: 140,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: borderColor),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x08000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              url,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return const Center(
+                                  child: SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
+                                child: const Center(
+                                  child: Icon(Icons.broken_image, color: Colors.grey, size: 24),
+                                ),
+                              ),
+                            ),
+                            // Gradient Overlay & Info Bar
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.85),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      subtitle,
+                                      style: const TextStyle(color: Colors.white70, fontSize: 9.5),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Badge jika foto profil lahan
+                            if (isMain)
+                              Positioned(
+                                top: 6,
+                                left: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: WarnaAplikasi.buttonDark,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text('Foto Utama', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
           ],
-        ),
-        const SizedBox(height: 12),
-
-        if (fotoList.isEmpty)
-          InkWell(
-            onTap: _navigateToCatatAktivitas,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: WarnaAplikasi.border),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: WarnaAplikasi.greenLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.add_a_photo_outlined, color: WarnaAplikasi.primary, size: 22),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Belum Ada Foto Dokumentasi',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Ambil foto saat mencatat pemupukan, pengairan, atau kegiatan rawat petak.',
-                    style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: _navigateToCatatAktivitas,
-                    icon: const Icon(Icons.camera_alt_outlined, size: 14),
-                    label: const Text('Ambil Foto Kegiatan'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: WarnaAplikasi.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          SizedBox(
-            height: 155,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              itemCount: fotoList.length + 1, // +1 untuk kartu tambah cepat
-              separatorBuilder: (context, index) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                // Kartu terakhir: tombol tambah cepat
-                if (index == fotoList.length) {
-                  return InkWell(
-                    onTap: _navigateToCatatAktivitas,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: 110,
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.greenLight.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: WarnaAplikasi.borderField, style: BorderStyle.solid),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.add_circle_outline, color: WarnaAplikasi.primary, size: 26),
-                          SizedBox(height: 6),
-                          Text(
-                            'Tambah\nFoto',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                final foto = fotoList[index];
-                final url = foto['url'] as String;
-                final title = foto['title'] as String;
-                final subtitle = foto['subtitle'] as String;
-                final isMain = foto['isMain'] == true;
-
-                return InkWell(
-                  onTap: () => _showImagePreviewDialog(url, title, subtitle),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: 140,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: WarnaAplikasi.border),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x08000000),
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.network(
-                          url,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return const Center(
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: WarnaAplikasi.greenLight,
-                            child: const Center(
-                              child: Icon(Icons.broken_image, color: Colors.grey, size: 24),
-                            ),
-                          ),
-                        ),
-                        // Gradient Overlay & Info Bar
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.85),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  title,
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  subtitle,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 9.5),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Badge jika foto profil lahan
-                        if (isMain)
-                          Positioned(
-                            top: 6,
-                            left: 6,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: WarnaAplikasi.buttonDark,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text('Foto Utama', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-      ],
+        );
+      },
     );
   }
 
   Widget _buildRiwayatAktivitasSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final titleColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+        final cardBg = isDark ? const Color(0xFF1D2420) : Colors.white;
+        final borderColor = isDark ? const Color(0xFF28332C) : WarnaAplikasi.border;
+        final subColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayLight;
+        final notesColor = isDark ? const Color(0xFFD1DDD5) : WarnaAplikasi.textGrayDark;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Riwayat Aktivitas',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: WarnaAplikasi.primaryDark),
-            ),
-            if (_activities.isNotEmpty)
-              Text(
-                '${_activities.length} Kegiatan',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (_isLoadingActivities)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: WarnaAplikasi.border),
-            ),
-            child: const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
-              ),
-            ),
-          )
-        else if (_activities.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: WarnaAplikasi.border),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.history_toggle_off_rounded, color: WarnaAplikasi.textGrayLight, size: 36),
-                SizedBox(height: 8),
                 Text(
-                  'Belum Ada Riwayat Aktivitas',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                  'Riwayat Aktivitas',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor),
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Riwayat pemupukan, penyemprotan, dan perawatan petak ini akan tercatat di sini setelah Anda mencatat aktivitas.',
-                  style: TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
-                  textAlign: TextAlign.center,
-                ),
+                if (_activities.isNotEmpty)
+                  Text(
+                    '${_activities.length} Kegiatan',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primary),
+                  ),
               ],
             ),
-          )
-        else
-          Column(
-            children: _activities.take(5).map((akt) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
+            const SizedBox(height: 12),
+            if (_isLoadingActivities)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: WarnaAplikasi.border),
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: WarnaAplikasi.primary),
+                  ),
+                ),
+              )
+            else if (_activities.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: WarnaAplikasi.greenLight,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.spa_rounded, color: WarnaAplikasi.primary, size: 18),
+                    const Icon(Icons.history_toggle_off_rounded, color: WarnaAplikasi.textGrayLight, size: 36),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum Ada Riwayat Aktivitas',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: titleColor),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                akt.title,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: WarnaAplikasi.primaryDark),
-                              ),
-                              Row(
-                                children: [
-                                  if (akt.isLegacy) ...[
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 6),
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: WarnaAplikasi.bgGray,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: const Text(
-                                        'Legacy',
-                                        style: TextStyle(
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: WarnaAplikasi.textGrayDark,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: akt.condition == PlantCondition.sehat ? WarnaAplikasi.bgSuccessLight : WarnaAplikasi.statusTempoBg,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      akt.condition.badgeText,
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: akt.condition == PlantCondition.sehat ? WarnaAplikasi.primary : WarnaAplikasi.warningOrange,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${akt.date} ${akt.time.isNotEmpty ? "• ${akt.time}" : ""}',
-                            style: const TextStyle(fontSize: 11, color: WarnaAplikasi.textGrayLight),
-                          ),
-                          if (akt.notes.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              akt.notes,
-                              style: const TextStyle(fontSize: 11.5, color: WarnaAplikasi.textGrayDark),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Riwayat pemupukan, penyemprotan, dan perawatan petak ini akan tercatat di sini setelah Anda mencatat aktivitas.',
+                      style: TextStyle(fontSize: 11, color: subColor),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-              );
-            }).toList(),
-          ),
-      ],
+              )
+            else
+              Column(
+                children: _activities.take(5).map((akt) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF283A2E) : WarnaAplikasi.greenLight,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.spa_rounded, color: isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary, size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    akt.title,
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: titleColor),
+                                  ),
+                                  Row(
+                                    children: [
+                                      if (akt.isLegacy) ...[
+                                        Container(
+                                          margin: const EdgeInsets.only(right: 6),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF28332C) : WarnaAplikasi.bgGray,
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'Legacy',
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGrayDark,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: akt.condition == PlantCondition.sehat
+                                              ? (isDark ? const Color(0xFF1E3A28) : WarnaAplikasi.bgSuccessLight)
+                                              : (isDark ? const Color(0xFF382314) : WarnaAplikasi.statusTempoBg),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          akt.condition.badgeText,
+                                          style: TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: akt.condition == PlantCondition.sehat
+                                                ? (isDark ? const Color(0xFF81C784) : WarnaAplikasi.primary)
+                                                : (isDark ? const Color(0xFFFDBA74) : WarnaAplikasi.warningOrange),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${akt.date} ${akt.time.isNotEmpty ? "• ${akt.time}" : ""}',
+                                style: TextStyle(fontSize: 11, color: subColor),
+                              ),
+                              if (akt.notes.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  akt.notes,
+                                  style: TextStyle(fontSize: 11.5, color: notesColor),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -2335,18 +2373,27 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
         final isKetuaOrPengurus = currentUser != null && !currentUser.isAnggota;
         final isOwnerAnggota = _item.isCanEdit && (currentUser == null || currentUser.isAnggota);
 
+        final normalSiklusBg = isDark ? const Color(0xFF1D2E24) : WarnaAplikasi.greenLight.withValues(alpha: 0.5);
+        final normalSiklusBorder = isDark ? const Color(0xFF285438) : WarnaAplikasi.greenPill;
+        final siklusTitleColor = isDark ? const Color(0xFF81C784) : WarnaAplikasi.primaryDark;
+        final siklusKomoditasColor = isDark ? Colors.white : WarnaAplikasi.primaryDark;
+        final siklusSubColor = isDark ? const Color(0xFFA0B3A6) : WarnaAplikasi.textGray;
+        final siklusMetaLabelColor = isDark ? const Color(0xFF7E9385) : WarnaAplikasi.textGrayLight;
+        final siklusMetaValColor = isDark ? const Color(0xFFF1F5F2) : WarnaAplikasi.primaryDark;
+        final siklusDividerColor = isDark ? const Color(0xFF2E4535) : WarnaAplikasi.borderField;
+
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isMenunggu
                 ? (isDark ? const Color(0xFF382314) : const Color(0xFFFFFBEB))
-                : (isDark ? const Color(0xFF1B2E22) : WarnaAplikasi.greenLight.withValues(alpha: 0.5)),
+                : normalSiklusBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isMenunggu
                   ? (isDark ? const Color(0xFF78350F) : const Color(0xFFFBBF24))
-                  : (isDark ? const Color(0xFF285438) : WarnaAplikasi.greenPill),
+                  : normalSiklusBorder,
             ),
           ),
           child: Column(
@@ -2375,7 +2422,7 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: isMenunggu ? const Color(0xFF92400E) : WarnaAplikasi.primaryDark,
+                      color: isMenunggu ? const Color(0xFF92400E) : siklusTitleColor,
                     ),
                   ),
                 ],
@@ -2383,16 +2430,16 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isMenunggu ? const Color(0xFFFEF3C7) : WarnaAplikasi.greenPill,
+                  color: isMenunggu ? const Color(0xFFFEF3C7) : (isDark ? const Color(0xFF1E3A28) : WarnaAplikasi.greenPill),
                   borderRadius: BorderRadius.circular(12),
-                  border: isMenunggu ? Border.all(color: const Color(0xFFF59E0B)) : null,
+                  border: isMenunggu ? Border.all(color: const Color(0xFFF59E0B)) : (isDark ? Border.all(color: const Color(0xFF2E6340)) : null),
                 ),
                 child: Text(
                   isMenunggu
                       ? (siklus.jenisPengakhiran == 'gagal' ? 'MENUNGGU GAGAL' : 'MENUNGGU SELESAI')
                       : siklus.status.toUpperCase(),
                   style: TextStyle(
-                    color: isMenunggu ? const Color(0xFFB45309) : WarnaAplikasi.greenText,
+                    color: isMenunggu ? const Color(0xFFB45309) : (isDark ? const Color(0xFF81C784) : WarnaAplikasi.greenText),
                     fontSize: 9.5,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2403,16 +2450,16 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
           const SizedBox(height: 12),
           Text(
             '$komoditasNama $varietas',
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: siklusKomoditasColor),
           ),
           const SizedBox(height: 4),
           Text(
             'Musim Tanam: $musim',
-            style: const TextStyle(fontSize: 12, color: WarnaAplikasi.textGray),
+            style: TextStyle(fontSize: 12, color: siklusSubColor),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(color: WarnaAplikasi.borderField, thickness: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Divider(color: siklusDividerColor, thickness: 1),
           ),
           Row(
             children: [
@@ -2420,11 +2467,11 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Mulai Tanam', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayLight)),
+                    Text('Mulai Tanam', style: TextStyle(fontSize: 10, color: siklusMetaLabelColor)),
                     const SizedBox(height: 2),
                     Text(
                       formatDate(siklus.tanggalMulai),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: siklusMetaValColor),
                     ),
                   ],
                 ),
@@ -2433,11 +2480,11 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Estimasi Panen', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayLight)),
+                    Text('Estimasi Panen', style: TextStyle(fontSize: 10, color: siklusMetaLabelColor)),
                     const SizedBox(height: 2),
                     Text(
                       formatDate(siklus.estimasiPanen),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: siklusMetaValColor),
                     ),
                   ],
                 ),
@@ -2446,11 +2493,11 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Target Hasil', style: TextStyle(fontSize: 10, color: WarnaAplikasi.textGrayLight)),
+                    Text('Target Hasil', style: TextStyle(fontSize: 10, color: siklusMetaLabelColor)),
                     const SizedBox(height: 2),
                     Text(
                       siklus.targetPanenTon != null ? '${siklus.targetPanenTon} Ton' : '-',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: siklusMetaValColor),
                     ),
                   ],
                 ),
@@ -2587,14 +2634,14 @@ class _LandDetailScreenState extends State<LandDetailScreen> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => _showOpsiPengakhiranSheet(siklus),
-                icon: const Icon(Icons.pending_actions_rounded, size: 16, color: WarnaAplikasi.primaryDark),
-                label: const Text(
+                icon: Icon(Icons.pending_actions_rounded, size: 16, color: isDark ? Colors.white : WarnaAplikasi.primaryDark),
+                label: Text(
                   'Opsi Pengakhiran Siklus',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: WarnaAplikasi.primaryDark),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white : WarnaAplikasi.primaryDark),
                 ),
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: WarnaAplikasi.primary),
+                  backgroundColor: isDark ? const Color(0xFF283A2E) : Colors.white,
+                  side: BorderSide(color: isDark ? const Color(0xFF3B5745) : WarnaAplikasi.primary),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
